@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TRPG 핸드아웃 허브 — 로컬 파일 뷰어</title>
+  <meta name="description" content="TRPG 온라인 세션을 위한 로컬 HTML/Markdown/이미지 핸드아웃 뷰어. 커스텀 CSS 적용, 프리젠트 모드, 갤러리, 설정 포함." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#0b0d10; --panel:#12151b; --fg:#e9edf3; --muted:#a9b4c3; --line:#262c36; --accent:#6dd3ff; --accent2:#ffd66d; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35); --h:56px; --sidebar:300px; --fs:16px; --lh:1.6 }
+    [data-theme="light"]{ --bg:#f7f9fc; --panel:#ffffff; --fg:#0b0d10; --muted:#5b6675; --line:#e6ebf1; }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    html{scroll-behavior:smooth}
+    body{font-family:"Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,"Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--fg);line-height:var(--lh);font-size:var(--fs)}
+    img{max-width:100%;display:block}
+    a{color:inherit;text-decoration:none}
+    button{cursor:pointer}
+    .app{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--h) 1fr;height:100vh}
+
+    /* Header */
+    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:var(--h);background:linear-gradient(180deg,rgba(11,13,16,.92),rgba(11,13,16,.6) 60%,rgba(11,13,16,0));backdrop-filter:saturate(180%) blur(8px)}
+    [data-theme="light"] header{background:linear-gradient(180deg,rgba(247,249,252,.92),rgba(247,249,252,.6) 60%,rgba(247,249,252,0))}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 16px rgba(0,0,0,.25)}
+    .wordmark{font-weight:800}
+    .toolbar{display:flex;align-items:center;gap:8px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--fg);color:var(--bg);font-weight:800;border:0}
+    .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+    .btn.ghost:hover{background:rgba(255,255,255,.04)}
+    .btn.small{padding:6px 10px;font-weight:700}
+
+    /* Sidebar */
+    aside{border-right:1px solid var(--line);background:var(--panel);padding:12px;overflow:auto}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+    .hint{color:var(--muted);font-size:12px}
+    .drop{border:1px dashed var(--line);border-radius:12px;padding:12px;text-align:center;color:var(--muted);margin-bottom:10px}
+    .drop.drag{outline:2px solid var(--accent)}
+    .file-input{width:100%}
+    .search{display:flex;gap:8px;margin:8px 0}
+    input[type="text"], input[type="search"], textarea, select {width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+    .list{display:flex;flex-direction:column;gap:6px}
+    .row{padding:10px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.02));display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .row .meta{display:flex;flex-direction:column}
+    .row .name{font-weight:700}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
+
+    /* Main */
+    main{overflow:auto;background:radial-gradient(80% 60% at 50% 0%,rgba(109,211,255,.08),transparent 50%), radial-gradient(80% 60% at 50% 100%,rgba(255,214,109,.06),transparent 55%)}
+    .wrap{max-width:1100px;margin:18px auto;padding:0 18px}
+
+    /* Tabs */
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+    .tab.active{color:var(--fg);background:rgba(255,255,255,.06)}
+
+    /* Viewer */
+    .viewer{display:grid;grid-template-columns:1fr 320px;gap:14px}
+    .stage{min-height:60vh;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;position:relative}
+    .stage iframe{width:100%;height:100%;border:0;background:white}
+    .stage .stage-plain{padding:16px}
+    .stage .stage-plain img{border-radius:10px}
+    .side{display:flex;flex-direction:column;gap:10px}
+    .panel{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+    .panel h3{margin:0 0 6px;font-size:15px}
+    .css-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
+
+    .presenting header, .presenting aside, .presenting .tabs, .presenting .side, .presenting .actions-bar{display:none}
+    .presenting main{grid-column:1/-1}
+
+    /* Gallery */
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+    .card .cap{padding:10px;border-top:1px solid var(--line)}
+
+    /* Settings */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+    /* Responsive */
+    @media (max-width:1100px){ .viewer{grid-template-columns:1fr} }
+    @media (max-width:800px){ .gallery{grid-template-columns:1fr 1fr} .grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="wordmark">TRPG 핸드아웃 허브</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn ghost" id="themeBtn">🌗 테마</button>
+        <button class="btn ghost" id="presentBtn" title="프리젠트 모드 (UI 숨김)">🖥️ 프리젠트</button>
+        <button class="btn small" id="exportBtn">📦 내보내기</button>
+        <label class="btn small" for="packInput">📥 불러오기</label>
+        <input id="packInput" type="file" accept="application/json" style="display:none" />
+      </div>
+    </header>
+
+    <aside>
+      <div class="section">
+        <div class="section-title">
+          <strong>라이브러리</strong>
+          <span class="hint">HTML · MD · TXT · 이미지</span>
+        </div>
+        <div id="drop" class="drop">여기로 드래그&드롭 또는 아래에서 선택</div>
+        <input id="fileInput" class="file-input" type="file" multiple accept=".html,.htm,.md,.txt,.css,image/*" />
+        <div class="search">
+          <input id="query" type="search" placeholder="파일 검색…" />
+        </div>
+        <div class="list" id="fileList"></div>
+      </div>
+
+      <div class="section" style="margin-top:16px">
+        <div class="section-title"><strong>태그</strong><span class="hint">필터</span></div>
+        <div class="chips" id="tagList"></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="wrap">
+        <div class="tabs">
+          <a class="tab active" data-tab="viewer">뷰어</a>
+          <a class="tab" data-tab="gallery">갤러리</a>
+          <a class="tab" data-tab="settings">설정</a>
+        </div>
+
+        <!-- Viewer -->
+        <section id="viewer" class="viewer tabpane">
+          <div class="stage" id="stage">
+            <div class="stage-plain" id="plain">
+              <h2>파일을 선택하거나 추가하세요</h2>
+              <p class="hint">HTML은 샌드박스 iframe으로 렌더링, Markdown/TXT는 변환 렌더링, 이미지/PNG/JPG/GIF/SVG는 그대로 표시됩니다.</p>
+            </div>
+          </div>
+          <aside class="side">
+            <div class="panel">
+              <h3>적용할 CSS</h3>
+              <div id="cssList" class="css-list"></div>
+            </div>
+            <div class="panel">
+              <h3>커스텀 CSS</h3>
+              <textarea id="customCss" rows="6" placeholder="여기에 CSS를 작성하면 미리보기(HTML)에 적용됩니다."></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn small" id="applyCss">적용</button>
+                <button class="btn ghost small" id="clearCss">지움</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>핸드아웃 만들기</h3>
+              <input id="hnTitle" type="text" placeholder="제목" />
+              <textarea id="hnBody" rows="6" placeholder="내용 (간단한 Markdown 지원)"></textarea>
+              <input id="hnTags" type="text" placeholder="태그 (쉼표로 구분)" />
+              <button class="btn small" id="addHandout" style="margin-top:8px">➕ 추가</button>
+            </div>
+          </aside>
+        </section>
+
+        <!-- Gallery -->
+        <section id="gallery" class="tabpane" style="display:none">
+          <div class="gallery" id="galleryGrid"></div>
+        </section>
+
+        <!-- Settings -->
+        <section id="settings" class="tabpane" style="display:none">
+          <div class="grid">
+            <div class="panel">
+              <h3>테마 & 타이포</h3>
+              <label>기본 글자 크기(px)
+                <input id="fsRange" type="range" min="14" max="20" value="16" />
+              </label>
+              <label style="display:block;margin-top:8px">줄 간격
+                <input id="lhRange" type="range" min="1.4" max="1.9" step="0.05" value="1.6" />
+              </label>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn small" id="lightBtn">라이트</button>
+                <button class="btn ghost small" id="darkBtn">다크</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>데이터</h3>
+              <p class="hint">브라우저 메모리에 저장됩니다. 필요하면 JSON으로 내보내거나 불러오세요.</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn small" id="sampleBtn">샘플 채우기</button>
+                <button class="btn ghost small" id="resetBtn">모두 초기화</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="actions-bar" style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <span class="hint">Tip: 파일을 사이드바에 드롭하거나, 이미지/HTML/CSS/MD를 한 번에 올려 보세요.</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ====== State ======
+    const state = {
+      files: [], // {id,name,type,ext,mime,content(dataURL or text),tags:[],isCSS}
+      handouts: [], // {id,title,body,tags:[]}
+      currentFileId: null,
+      customCss: '',
+      theme: localStorage.getItem('theme') || 'dark',
+      fs: parseInt(localStorage.getItem('fs')||'16',10),
+      lh: parseFloat(localStorage.getItem('lh')||'1.6'),
+    }
+    document.documentElement.setAttribute('data-theme', state.theme)
+    document.documentElement.style.setProperty('--fs', state.fs + 'px')
+    document.documentElement.style.setProperty('--lh', state.lh)
+
+    const $ = sel => document.querySelector(sel)
+    const $$ = sel => Array.from(document.querySelectorAll(sel))
+
+    // ====== UI Elements ======
+    const fileInput = $('#fileInput')
+    const packInput = $('#packInput')
+    const drop = $('#drop')
+    const fileList = $('#fileList')
+    const tagList = $('#tagList')
+    const query = $('#query')
+    const stage = $('#stage')
+    const plain = $('#plain')
+    const cssList = $('#cssList')
+    const customCss = $('#customCss')
+    const applyCssBtn = $('#applyCss')
+    const clearCssBtn = $('#clearCss')
+    const addHandoutBtn = $('#addHandout')
+    const hnTitle = $('#hnTitle')
+    const hnBody = $('#hnBody')
+    const hnTags = $('#hnTags')
+    const galleryGrid = $('#galleryGrid')
+    const fsRange = $('#fsRange')
+    const lhRange = $('#lhRange')
+
+    // Tabs
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{
+      $$('.tab').forEach(x=>x.classList.remove('active'))
+      t.classList.add('active')
+      $$('.tabpane').forEach(p=>p.style.display='none')
+      $('#' + t.dataset.tab).style.display = ''
+    }))
+
+    // Theme
+    $('#themeBtn').addEventListener('click',()=>{
+      state.theme = (state.theme==='light'?'dark':'light')
+      document.documentElement.setAttribute('data-theme', state.theme)
+      localStorage.setItem('theme', state.theme)
+    })
+    $('#lightBtn').addEventListener('click',()=>{state.theme='light';document.documentElement.setAttribute('data-theme','light');localStorage.setItem('theme','light')})
+    $('#darkBtn').addEventListener('click',()=>{state.theme='dark';document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('theme','dark')})
+
+    // Present mode
+    const app = $('#app')
+    $('#presentBtn').addEventListener('click',()=>{ app.classList.toggle('presenting') })
+
+    // Font settings
+    fsRange.value = state.fs
+    lhRange.value = state.lh
+    fsRange.addEventListener('input',()=>{ state.fs = parseInt(fsRange.value,10); document.documentElement.style.setProperty('--fs', state.fs + 'px'); localStorage.setItem('fs', state.fs) })
+    lhRange.addEventListener('input',()=>{ state.lh = parseFloat(lhRange.value); document.documentElement.style.setProperty('--lh', state.lh); localStorage.setItem('lh', state.lh) })
+
+    // Search filter
+    query.addEventListener('input', renderFileList)
+
+    // File handling
+    fileInput.addEventListener('change', e=> handleFiles(Array.from(e.target.files)))
+    ;['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag') }))
+    ;['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag') }))
+    drop.addEventListener('drop', e=> handleFiles(Array.from(e.dataTransfer.files)))
+
+    function handleFiles(files){
+      files.forEach(async f=>{
+        const ext = (f.name.split('.').pop()||'').toLowerCase()
+        const mime = f.type
+        const isText = /^text\//.test(mime) || ['md','txt','css','html','htm'].includes(ext)
+        const content = await readFile(f, isText)
+        const obj = { id: uid(), name: f.name, type: isText?'text':'binary', ext, mime, content, tags:[], isCSS: ext==='css' }
+        state.files.push(obj)
+      })
+      save()
+      render()
+    }
+    function readFile(file, isText){
+      return new Promise((res,rej)=>{
+        const r = new FileReader()
+        r.onerror = ()=>rej('read error')
+        if(isText){ r.onload = ()=>res(r.result); r.readAsText(file) }
+        else { r.onload = ()=>res(r.result); r.readAsDataURL(file) }
+      })
+    }
+
+    function uid(){ return Math.random().toString(36).slice(2,10) }
+
+    // Renderers
+    function render(){ renderFileList(); renderTags(); renderCssList(); renderGallery(); }
+
+    function renderFileList(){
+      const q = query.value.trim().toLowerCase()
+      const files = state.files.filter(f=> !q || f.name.toLowerCase().includes(q) || (f.tags||[]).some(t=>t.includes(q)))
+      fileList.innerHTML = ''
+      files.forEach(f=>{
+        const row = document.createElement('div'); row.className='row'
+        const left = document.createElement('div'); left.className='meta'
+        const name = document.createElement('div'); name.className='name'; name.textContent = f.name
+        const sub = document.createElement('div'); sub.className='hint'; sub.textContent = f.ext.toUpperCase() + (f.isCSS?' · CSS':'')
+        left.appendChild(name); left.appendChild(sub)
+        const right = document.createElement('div')
+        const open = document.createElement('button'); open.className='btn small'; open.textContent='열기'; open.onclick=()=>openFile(f.id)
+        const tagBtn = document.createElement('button'); tagBtn.className='btn ghost small'; tagBtn.textContent='태그'; tagBtn.onclick=()=>editTags(f)
+        const del = document.createElement('button'); del.className='btn ghost small'; del.textContent='삭제'; del.onclick=()=>removeFile(f.id)
+        right.append(open, tagBtn, del)
+        row.append(left,right)
+        fileList.appendChild(row)
+      })
+    }
+
+    function renderTags(){
+      const tagMap = {}
+      state.files.forEach(f=> (f.tags||[]).forEach(t=> tagMap[t]=(tagMap[t]||0)+1))
+      state.handouts.forEach(h=> (h.tags||[]).forEach(t=> tagMap[t]=(tagMap[t]||0)+1))
+      tagList.innerHTML = ''
+      Object.entries(tagMap).forEach(([t,c])=>{
+        const chip = document.createElement('span'); chip.className='chip'; chip.textContent = t+' · '+c
+        chip.onclick = ()=>{ query.value=t; renderFileList(); renderGallery(); }
+        tagList.appendChild(chip)
+      })
+    }
+
+    function renderCssList(){
+      cssList.innerHTML = ''
+      state.files.filter(f=>f.isCSS).forEach(css=>{
+        const row = document.createElement('label')
+        row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.gap='8px'; row.style.border='1px solid var(--line)'; row.style.padding='8px'; row.style.borderRadius='8px'
+        const span = document.createElement('span'); span.textContent = css.name
+        const btn = document.createElement('button'); btn.className='btn ghost small'; btn.textContent='적용'
+        btn.onclick()=> applyCssFile(css)
+        row.append(span, btn)
+        cssList.appendChild(row)
+      })
+    }
+
+    function renderGallery(){
+      const q = query.value.trim().toLowerCase()
+      galleryGrid.innerHTML=''
+      // Images from files
+      state.files.filter(f=> /^image\//.test(f.mime) && (!q || f.name.toLowerCase().includes(q))).forEach(img=>{
+        const card = document.createElement('div'); card.className='card'
+        const pic = document.createElement('img'); pic.src = img.content; pic.alt = img.name
+        const cap = document.createElement('div'); cap.className='cap'; cap.textContent = img.name
+        card.append(pic, cap)
+        galleryGrid.appendChild(card)
+      })
+      // Handouts (text)
+      state.handouts.filter(h=> !q || h.title.toLowerCase().includes(q) || (h.tags||[]).some(t=>t.includes(q))).forEach(h=>{
+        const card = document.createElement('div'); card.className='card'
+        const body = document.createElement('div'); body.style.padding='12px'; body.innerHTML = mdToHtml(h.body)
+        const cap = document.createElement('div'); cap.className='cap'; cap.textContent = h.title
+        card.append(body, cap)
+        galleryGrid.appendChild(card)
+      })
+    }
+
+    // Open & preview
+    function openFile(id){
+      state.currentFileId = id
+      const f = state.files.find(x=>x.id===id)
+      if(!f) return
+      if(['html','htm'].includes(f.ext)){
+        const ifr = document.createElement('iframe'); ifr.setAttribute('sandbox','allow-same-origin allow-forms allow-scripts')
+        stage.innerHTML=''; stage.appendChild(ifr)
+        const doc = ifr.contentDocument
+        doc.open(); doc.write(f.content); doc.close()
+        // inject custom css
+        injectCssIntoIframe(ifr, state.customCss)
+      } else if (f.type==='text' && ['md','txt',''].includes(f.ext)){
+        stage.innerHTML = `<div class="stage-plain">${mdToHtml(f.content)}</div>`
+      } else if(/^image\//.test(f.mime)){
+        stage.innerHTML = `<div class="stage-plain"><img src="${f.content}" alt="${f.name}"></div>`
+      } else if (f.type==='text' && f.ext==='css'){
+        // show css as code
+        stage.innerHTML = `<div class="stage-plain"><h3>${f.name}</h3><pre style="white-space:pre-wrap">${escapeHtml(f.content)}</pre></div>`
+      } else {
+        stage.innerHTML = `<div class="stage-plain"><p>미지원 형식: ${f.name}</p></div>`
+      }
+    }
+
+    function applyCssFile(cssFile){
+      const ifr = stage.querySelector('iframe')
+      if(!ifr){ alert('HTML 미리보기를 연 뒤 적용하세요.'); return }
+      injectCssIntoIframe(ifr, cssFile.content)
+    }
+
+    function injectCssIntoIframe(ifr, cssText){
+      const doc = ifr.contentDocument
+      const style = doc.createElement('style'); style.id = 'user-css-' + Math.random().toString(36).slice(2,7)
+      style.textContent = cssText
+      doc.head.appendChild(style)
+    }
+
+    applyCssBtn.addEventListener('click',()=>{
+      state.customCss = customCss.value
+      const ifr = stage.querySelector('iframe'); if(ifr) injectCssIntoIframe(ifr, state.customCss)
+      save()
+    })
+    clearCssBtn.addEventListener('click',()=>{ customCss.value=''; state.customCss=''; save() })
+
+    // Tags
+    function editTags(file){
+      const v = prompt('태그를 쉼표로 구분해 입력', (file.tags||[]).join(','))
+      if(v!==null){ file.tags = v.split(',').map(s=>s.trim()).filter(Boolean); save(); render() }
+    }
+
+    function removeFile(id){
+      const i = state.files.findIndex(f=>f.id===id); if(i>-1) state.files.splice(i,1); if(state.currentFileId===id) state.currentFileId=null; save(); render()
+    }
+
+    // Handouts
+    addHandoutBtn.addEventListener('click',()=>{
+      const title = hnTitle.value.trim(); const body = hnBody.value.trim(); const tags = hnTags.value.split(',').map(s=>s.trim()).filter(Boolean)
+      if(!title||!body){ alert('제목과 내용을 입력하세요.'); return }
+      state.handouts.push({id:uid(), title, body, tags})
+      hnTitle.value=''; hnBody.value=''; hnTags.value=''
+      save(); renderGallery(); renderTags()
+    })
+
+    // Markdown (very small subset)
+    function mdToHtml(src){
+      const esc = s=> s.replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]))
+      let s = src.replace(/\r\n?/g,'\n')
+      // code block ```
+      s = s.replace(/```([\s\S]*?)```/g, (m,code)=> `<pre><code>${esc(code)}</code></pre>`) 
+      // headings
+      s = s.replace(/^######\s?(.*)$/gm,'<h6>$1</h6>')
+             .replace(/^#####\s?(.*)$/gm,'<h5>$1</h5>')
+             .replace(/^####\s?(.*)$/gm,'<h4>$1</h4>')
+             .replace(/^###\s?(.*)$/gm,'<h3>$1</h3>')
+             .replace(/^##\s?(.*)$/gm,'<h2>$1</h2>')
+             .replace(/^#\s?(.*)$/gm,'<h1>$1</h1>')
+      // bold/italic
+      s = s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+           .replace(/\*(.*?)\*/g,'<em>$1</em>')
+      // links
+      s = s.replace(/\[(.*?)\]\((.*?)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+      // lists
+      s = s.replace(/^\s*\-\s+(.*)$/gm,'<li>$1</li>')
+      s = s.replace(/(<li>.*<\/li>\n?)+/g, m=>'<ul>'+m+'</ul>')
+      // paragraphs
+      s = s.replace(/^(?!<h\d|<ul|<pre|<li|<\/li|<\/ul)(.+)$/gm,'<p>$1</p>')
+      return s
+    }
+
+    function escapeHtml(s){ return s.replace(/[&<>]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m])) }
+
+    // Export / Import
+    $('#exportBtn').addEventListener('click',()=>{
+      const data = JSON.stringify({files: state.files, handouts: state.handouts, customCss: state.customCss, fs: state.fs, lh: state.lh, theme: state.theme})
+      const blob = new Blob([data], {type:'application/json'})
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'trpg-handouts-pack.json'; a.click(); URL.revokeObjectURL(a.href)
+    })
+    packInput.addEventListener('change', async e=>{
+      const f = e.target.files[0]; if(!f) return
+      const text = await f.text();
+      try{ const data = JSON.parse(text); Object.assign(state, { files:data.files||[], handouts:data.handouts||[], customCss:data.customCss||'', fs:data.fs||16, lh:data.lh||1.6, theme:data.theme||'dark' });
+        document.documentElement.setAttribute('data-theme', state.theme); document.documentElement.style.setProperty('--fs', state.fs + 'px'); document.documentElement.style.setProperty('--lh', state.lh); customCss.value = state.customCss; save(); render(); }
+      catch{ alert('불러오기 실패: 올바른 JSON이 아닙니다.') }
+    })
+
+    // Sample data
+    $('#sampleBtn').addEventListener('click',()=>{
+      state.handouts.push({id:uid(), title:'세션 3 — 던전 브리핑', body:'**목표**\n- 폐역 지하 2층 진입\n- 표식 수거\n\n**단서**\n- 파손된 문양 조각 3개\n- *비가역성, 소음에 반응*', tags:['브리핑','던전']})
+      state.handouts.push({id:uid(), title:'NPC — 사서(라이브러리안)', body:'이름: **에리**\n성향: 중립\n설명: 녹청색 머리, 오드아이. 고풍스러운 정장.\n단서: 금서의 위치를 *암시*.', tags:['NPC']})
+      state.files.push({id:uid(), name:'prop-oldmap.png', type:'binary', ext:'png', mime:'image/png', content:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2P8z/C/HwAFiwJ7WbH0lQAAAABJRU5ErkJggg==', tags:['지도']})
+      save(); render()
+    })
+
+    $('#resetBtn').addEventListener('click',()=>{ if(confirm('모든 데이터(파일/핸드아웃/설정)를 초기화할까요?')){ state.files=[]; state.handouts=[]; state.customCss=''; customCss.value=''; state.currentFileId=null; save(); render() } })
+
+    // Storage
+    function save(){ localStorage.setItem('trpg_hub', JSON.stringify({files:state.files,handouts:state.handouts,customCss:state.customCss})) }
+    function load(){ try{ const d = JSON.parse(localStorage.getItem('trpg_hub')||'{}'); state.files=d.files||[]; state.handouts=d.handouts||[]; state.customCss=d.customCss||''; customCss.value = state.customCss }catch{} }
+
+    // Init
+    load(); render();
+  </script>
+</body>
+</html>
