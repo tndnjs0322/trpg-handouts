@@ -3,126 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — vertical hover spread (Mist Horizon)</title>
+  <title>the craft of ui — vertical hover (Mist + Runes)</title>
   <style>
     @import url('https://unpkg.com/normalize.css') layer(normalize);
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&family=Cinzel:wght@800&display=swap') layer(base);
+
     @layer normalize, base, demo;
 
-    /* ===== DEMO (Mist Horizon) ===== */
-    @layer demo {
-      /* 배경: 상단 청록 그라디언트 + 하단 딥 블랙, 중앙엔 옅은 안개띠 */
-      body{
-        background:
-          radial-gradient(160% 80% at 50% -20%, #0e2c34 0, transparent 55%),
-          linear-gradient(180deg, #07141a 0%, #061018 55%, #02060a 100%);
-        color: canvasText;
-        display:flex;align-items:center;justify-content:center;
-        flex-direction:column;gap:1rem;padding-block:2rem;
-      }
-
-      /* 기존 그리드(눈금) 완전 제거 */
-      body::before{ display:none; }
-
-      /* 수면 광택 + 안개 띠 */
-      @keyframes surge { to { transform: translate3d(2%, -2%, 0) scale(1.02); } }
-      body::after{
-        content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-        background:
-          /* 중앙 안개 띠 */
-          radial-gradient(60% 26% at 50% 46%,
-            rgba(255,255,255,.06) 0,
-            rgba(255,255,255,.03) 40%,
-            transparent 70%),
-          /* 하단 수면빛 */
-          radial-gradient(80% 60% at 50% 100%,
-            rgba(20,140,160,.05),
-            transparent 60%);
-        filter: blur(12px) saturate(1.05);
-        mix-blend-mode: screen;
-        animation: surge 22s ease-in-out infinite alternate;
-        opacity:.85;
-      }
-
-      /* -------- 기존 UI 스타일 -------- */
-      h1, p { margin: 0; }
-      h1.fluid { --font-size-min: 22; --font-level: 4.25; }
-      h3 { white-space: nowrap; margin: 0; }
-
-      body > p{
-        width: 74ch; max-width: calc(100% - 4rem); text-wrap: balance;
-        font-family: monospace; margin-bottom: 4rem; line-height: 1.5;
-        opacity: .8; font-weight: 400;
-      }
-      @media (max-width: 768px){ body > p { text-align: center; } }
-
-      li :is(svg, h3){ opacity: .6; transition: opacity calc(var(--speed)*1.2) var(--easing); }
-      li :is(a, p){ opacity: 0; transition: opacity calc(var(--speed)*1.2) var(--easing); width: fit-content; }
-      li img{
-        filter: grayscale(1) brightness(1.5); scale: 1.1;
-        transition-property: filter, scale;
-        transition-duration: calc(var(--speed)*1.2);
-        transition-timing-function: var(--easing);
-      }
-      [data-active='true'] :is(a, p, h3, svg){ opacity: var(--opacity, 1); }
-      [data-active='true'] :is(a, p){ transition-delay: calc(var(--speed)*.25); }
-      [data-active='true'] img{ filter: grayscale(0) brightness(1); scale: 1; transition-delay: calc(var(--speed)*.25); }
-
-      article{
-        width: calc(var(--article-width) * 1px); height: 100%; position: absolute; top: 0; left: 0;
-        font-family: monospace; display: flex; flex-direction: column; justify-content: flex-end; gap: 1rem;
-        padding-inline: calc(var(--base)*.5 - 9px); padding-bottom: 1rem; overflow: hidden;
-      }
-      article h3{
-        position: absolute; top: 1rem; left: calc(var(--base)*.5);
-        transform-origin: 0 50%; rotate: 90deg; font-size: 1rem; font-weight: 300; text-transform: uppercase;
-      }
-      article svg{ width: 18px; fill: none; }
-      article p{ font-size: 13px; text-wrap: balance; line-height: 1.25; --opacity: .8; }
-      article a{ position: absolute; bottom: 1rem; height: 18px; line-height: 1; color: inherit; }
-      article a:is(:focus-visible, :hover) span{ text-decoration: underline; text-underline-offset: 4px; }
-      article a span{ display:inline-block; line-height:18px; translate: calc(var(--base)*.5); font-weight:500; }
-      article img{
-        position: absolute; pointer-events: none; inset: 0; width: 100%; height: 100%;
-        object-fit: cover; mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
-      }
-
-      :root{
-        --gap: 8px;
-        --base: clamp(2rem, 8cqi, 80px);
-        --easing: linear(
-          0 0%, 0.1538 4.09%, 0.2926 8.29%, 0.4173 12.63%, 0.5282 17.12%,
-          0.6255 21.77%, 0.7099 26.61%, 0.782 31.67%, 0.8425 37%,
-          0.8887 42.23%, 0.9257 47.79%, 0.9543 53.78%, 0.9752 60.32%,
-          0.9883 67.11%, 0.9961 75%, 1 100%
-        );
-        --speed: .6s;
-      }
-      ul{
-        display: grid; container-type: inline-size;
-        grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr; /* 7개 항목 */
-        gap: var(--gap); list-style: none; justify-content: center; padding: 0; margin: 0;
-        height: clamp(300px, 40dvh, 474px);
-        width: 820px; max-width: calc(100% - 4rem);
-        transition: grid-template-columns var(--speed) var(--easing);
-      }
-
-      li{
-        background: light-dark(#fff,#000);
-        position: relative; overflow: hidden; min-width: var(--base);
-        border-radius: 8px;
-        border: 1px solid color-mix(in hsl, #6dd3ff, transparent 75%);
-        box-shadow: inset 0 0 60px rgba(20,120,120,.06);
-      }
-    }
-
-    /* ===== BASE (공통) ===== */
+    /* =========================
+       BASE (공통)
+    ==========================*/
     @layer base {
       :root{
         --font-size-min: 16; --font-size-max: 20;
         --font-ratio-min: 1.2; --font-ratio-max: 1.33;
         --font-width-min: 375; --font-width-max: 1500;
+
+        /* 룬 문자열(여유 있게 반복) */
+        --runes:
+          "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ "
+          "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ "
+          "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ ";
       }
       html { color-scheme: light dark; }
+      *, *::before, *::after { box-sizing: border-box; }
 
       :where(.fluid){
         --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
@@ -136,27 +40,193 @@
         font-size: var(--fluid-type);
       }
 
-      *, *::before, *::after { box-sizing: border-box; }
-
       body{
-        display: grid; place-items: center; min-height: 100vh;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif;
-      }
-
-      /* 기본 그리드 오버레이(데모에서 끔) */
-      body::before{
-        --size: 45px; --line: color-mix(in hsl, canvasText, transparent 70%);
-        content:""; position: fixed; inset: 0;
-        background:
-          linear-gradient(90deg,var(--line) 1px,transparent 1px var(--size)) 50% 50%/var(--size) var(--size),
-          linear-gradient(var(--line) 1px,transparent 1px var(--size)) 50% 50%/var(--size) var(--size);
-        mask: linear-gradient(-20deg, transparent 50%, white);
-        pointer-events: none; z-index: -1;
+        display:grid; place-items:center; min-height:100vh;
+        font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       }
 
       .sr-only{
-        position: absolute; width:1px; height:1px; padding:0; margin:-1px;
-        overflow:hidden; clip: rect(0,0,0,0); white-space: nowrap; border:0;
+        position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+        overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+      }
+    }
+
+    /* =========================
+       DEMO (Mist Horizon + Runes)
+    ==========================*/
+    @layer demo {
+      /* 배경: 상단 청록 그라디언트 + 하단 딥 블랙, 중앙 안개띠 */
+      body{
+        background:
+          radial-gradient(160% 80% at 50% -20%, #0e2c34 0, transparent 55%),
+          linear-gradient(180deg, #07141a 0%, #061018 55%, #02060a 100%);
+        color: canvasText;
+        display:flex; align-items:center; justify-content:center;
+        flex-direction:column; gap:1rem; padding-block:2rem;
+      }
+
+      /* 제목 주변의 '의식 원' – 아주 은은하게 */
+      @keyframes eldritch-spin { to { transform: rotate(360deg); } }
+      body::before{
+        content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+        background:
+          radial-gradient(closest-side, rgba(110,220,200,.08), transparent 72%) 50% 14%/480px 480px no-repeat,
+          conic-gradient(from 0deg, rgba(110,220,200,.18) 0 6deg, transparent 6deg 12deg) 50% 14%/480px 480px no-repeat;
+        -webkit-mask: radial-gradient(closest-side at 50% 14%, transparent 60%, #000 61%);
+                mask: radial-gradient(closest-side at 50% 14%, transparent 60%, #000 61%);
+        mix-blend-mode: screen;
+        animation: eldritch-spin 80s linear infinite;
+        opacity:.32;
+        filter: blur(.2px);
+      }
+
+      /* 수면 광택 + 중앙 안개 */
+      @keyframes surge { to { transform: translate3d(2%,-2%,0) scale(1.02); } }
+      body::after{
+        content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+        background:
+          radial-gradient(60% 26% at 50% 46%, rgba(255,255,255,.06) 0, rgba(255,255,255,.03) 40%, transparent 70%),
+          radial-gradient(80% 60% at 50% 100%, rgba(20,140,160,.05), transparent 60%);
+        filter: blur(12px) saturate(1.05);
+        mix-blend-mode: screen;
+        animation: surge 22s ease-in-out infinite alternate;
+        opacity:.85;
+      }
+
+      /* 헤더 텍스트 */
+      h1, p { margin:0; }
+      h1.fluid{ --font-size-min:22; --font-level:4.25; font-family:'Cinzel',serif; letter-spacing:.6px; text-shadow:0 0 18px rgba(60,180,160,.18); }
+      h3{ white-space:nowrap; margin:0; }
+
+      body > p{
+        width:74ch; max-width:calc(100% - 4rem); text-wrap:balance;
+        font-family:monospace; margin-bottom:4rem; line-height:1.5;
+        opacity:.8; font-weight:400; text-align:center;
+      }
+
+      /* 리스트/카드 기본 */
+      :root{
+        --gap:8px; --base:clamp(2rem, 8cqi, 80px);
+        --easing:linear(
+          0 0%, 0.1538 4.09%, 0.2926 8.29%, 0.4173 12.63%,
+          0.5282 17.12%, 0.6255 21.77%, 0.7099 26.61%, 0.782 31.67%,
+          0.8425 37%, 0.8887 42.23%, 0.9257 47.79%, 0.9543 53.78%,
+          0.9752 60.32%, 0.9883 67.11%, 0.9961 75%, 1 100%
+        );
+        --speed:.6s;
+      }
+      ul{
+        display:grid; container-type:inline-size;
+        grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr; /* 7개 항목 */
+        gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
+        height:clamp(300px, 40dvh, 474px);
+        width:820px; max-width:calc(100% - 4rem);
+        transition:grid-template-columns var(--speed) var(--easing);
+      }
+      li{
+        background: light-dark(#fff,#000);
+        position:relative; overflow:hidden; min-width:var(--base);
+        border-radius:8px;
+        border:1px solid color-mix(in hsl, #6dd3ff, transparent 75%);
+        box-shadow: inset 0 0 60px rgba(20,120,120,.06);
+        transition: transform .35s var(--easing), box-shadow .35s var(--easing);
+      }
+
+      /* 카드 내부 콘텐츠 */
+      li :is(svg, h3){ opacity:.6; transition:opacity calc(var(--speed)*1.2) var(--easing); }
+      li :is(a, p){ opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing); width:fit-content; }
+      li img{
+        filter:grayscale(1) brightness(1.5); scale:1.1;
+        transition-property:filter, scale;
+        transition-duration:calc(var(--speed)*1.2);
+        transition-timing-function:var(--easing);
+      }
+      [data-active='true'] :is(a, p, h3, svg){ opacity:var(--opacity,1); }
+      [data-active='true'] :is(a, p){ transition-delay:calc(var(--speed)*.25); }
+      [data-active='true'] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay:calc(var(--speed)*.25); }
+
+      article{
+        width:calc(var(--article-width)*1px); height:100%; position:absolute; top:0; left:0;
+        font-family:monospace; display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
+        padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
+      }
+      article h3{
+        position:absolute; top:1rem; left:calc(var(--base)*.5);
+        transform-origin:0 50%; rotate:90deg; font-size:1rem; font-weight:300; text-transform:uppercase;
+      }
+      article svg{ width:18px; fill:none; }
+      article p{ font-size:13px; text-wrap:balance; line-height:1.25; --opacity:.85; }
+      article a{ position:absolute; bottom:1rem; height:18px; line-height:1; color:inherit; }
+      article a:is(:focus-visible, :hover) span{ text-decoration:underline; text-underline-offset:4px; }
+      article a span{ display:inline-block; line-height:18px; translate:calc(var(--base)*.5); font-weight:600; letter-spacing:.2px; }
+      article img{
+        position:absolute; pointer-events:none; inset:0; width:100%; height:100%;
+        object-fit:cover; mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
+      }
+
+      /* -------------------------------
+         활성 카드: 룬 문자가 은은하게 떠다니는 레이어
+         두 겹(가깝고/먼)으로 만들어 입체감
+      --------------------------------*/
+      @keyframes runeFloatA {
+        0%   { transform: translateY(18%) rotate(-2deg); opacity:.0; }
+        25%  { opacity:.22; }
+        50%  { transform: translateY(-6%) rotate(-1deg); opacity:.28; }
+        100% { transform: translateY(-22%) rotate(0deg); opacity:0; }
+      }
+      @keyframes runeFloatB {
+        0%   { transform: translateY(24%) rotate(2deg); opacity:.0; }
+        30%  { opacity:.18; }
+        60%  { transform: translateY(-8%) rotate(1deg); opacity:.24; }
+        100% { transform: translateY(-26%) rotate(2deg); opacity:0; }
+      }
+
+      /* 가까운 층 */
+      li[data-active="true"] article::after{
+        content: var(--runes);
+        position:absolute; inset:8% 6% 12% 6%;
+        pointer-events:none; white-space:pre-wrap;
+        line-height:1.8; letter-spacing:.55em;
+        font-size: clamp(11px, 1.6cqi, 14px);
+        color: rgba(120,220,210,.28);
+        text-shadow: 0 0 6px rgba(80,200,200,.12);
+        mix-blend-mode: screen;
+        filter: blur(.15px);
+        animation: runeFloatA 18s linear infinite;
+      }
+      /* 먼 층 (느리고 옅게, 반대 기울기) */
+      li[data-active="true"] article::before{
+        content: var(--runes);
+        position:absolute; inset:14% 8% 16% 8%;
+        pointer-events:none; white-space:pre-wrap;
+        line-height:2; letter-spacing:.6em;
+        font-size: clamp(10px, 1.3cqi, 13px);
+        color: rgba(110,190,255,.18);
+        text-shadow: 0 0 8px rgba(80,150,255,.10);
+        mix-blend-mode: screen;
+        filter: blur(.25px);
+        transform: rotate(4deg);
+        animation: runeFloatB 26s linear infinite;
+      }
+
+      /* 활성 카드 하이라이트(아주 얌전하게) */
+      li[data-active='true']{
+        box-shadow:
+          0 0 0 1px rgba(110, 210, 255, .28),
+          0 0 24px rgba(80, 200, 255, .14),
+          inset 0 0 80px rgba(40, 160, 200, .08);
+      }
+      ul{ perspective: 900px; }
+      li[data-active='true']:hover{ transform: translateZ(12px) rotateY(-1.6deg); }
+
+      /* 접근성: 모션 최소화 */
+      @media (prefers-reduced-motion: reduce){
+        body::after, body::before,
+        li[data-active="true"] article::before,
+        li[data-active="true"] article::after{
+          animation: none;
+        }
+        li[data-active='true']:hover{ transform:none; }
       }
     }
   </style>
@@ -236,7 +306,7 @@
   </ul>
 
   <script>
-    // 세로 카드 확장 인터랙션
+    // 세로 카드 확장/하이라이트
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
 
