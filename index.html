@@ -1,378 +1,289 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — vertical hover (Mist + Diagonal Fading Runes)</title>
-  <style>
-    @import url('https://unpkg.com/normalize.css') layer(normalize);
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&family=Cinzel:wght@800&display=swap') layer(base);
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>the craft of ui — diagonal rune bands</title>
+<style>
+  @import url('https://unpkg.com/normalize.css') layer(n);
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&family=Cinzel:wght@800&display=swap') layer(b);
 
-    @layer normalize, base, demo;
-
-    /* ========== BASE ========== */
-    @layer base {
-      :root{
-        --font-size-min: 16; --font-size-max: 20;
-        --font-ratio-min: 1.2; --font-ratio-max: 1.33;
-        --font-width-min: 375; --font-width-max: 1500;
-      }
-      html { color-scheme: light dark; }
-      *, *::before, *::after { box-sizing: border-box; }
-
-      :where(.fluid){
-        --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
-        --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
-        --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
-        --fluid-type: clamp(
-          (var(--fluid-min)/16)*1rem,
-          ((var(--fluid-min)/16)*1rem) - (((var(--fluid-preferred)*var(--font-width-min))/16)*1rem) + (var(--fluid-preferred)*var(--variable-unit,100vi)),
-          (var(--fluid-max)/16)*1rem
-        );
-        font-size: var(--fluid-type);
-      }
-
-      body{
-        display:grid; place-items:center; min-height:100vh;
-        font-family: 'Noto Sans KR', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      }
+  @layer b {
+    html{color-scheme:light dark}
+    *,*:before,*:after{box-sizing:border-box}
+    body{
+      min-height:100vh; display:flex; flex-direction:column; align-items:center; gap:1rem; padding-block:2rem;
+      font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      /* Mist Horizon 배경 */
+      background:
+        radial-gradient(160% 80% at 50% -20%, #0e2c34 0, transparent 55%),
+        linear-gradient(180deg, #07141a 0%, #061018 55%, #02060a 100%);
+      color: canvasText;
     }
-
-    /* ========== DEMO (Mist Horizon + Diagonal/Fading Runes) ========== */
-    @layer demo {
-      /* 배경: 상단 청록 + 하단 딥 블랙 + 중앙 안개 */
-      body{
-        background:
-          radial-gradient(160% 80% at 50% -20%, #0e2c34 0, transparent 55%),
-          linear-gradient(180deg, #07141a 0%, #061018 55%, #02060a 100%);
-        color: canvasText;
-        display:flex; align-items:center; justify-content:center;
-        flex-direction:column; gap:1rem; padding-block:2rem;
-      }
-
-      /* 아주 옅은 ‘의식 원’ */
-      @keyframes eldritch-spin { to { transform: rotate(360deg); } }
-      body::before{
-        content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
-        background:
-          radial-gradient(closest-side, rgba(110,220,200,.07), transparent 72%) 50% 14%/460px 460px no-repeat,
-          conic-gradient(from 0deg, rgba(110,220,200,.14) 0 6deg, transparent 6deg 12deg) 50% 14%/460px 460px no-repeat;
-        -webkit-mask: radial-gradient(closest-side at 50% 14%, transparent 60%, #000 61%);
-                mask: radial-gradient(closest-side at 50% 14%, transparent 60%, #000 61%);
-        mix-blend-mode: screen;
-        animation: eldritch-spin 90s linear infinite;
-        opacity:.22; filter: blur(.2px);
-      }
-
-      /* 수면 광택 + 중앙 안개 */
-      @keyframes surge { to { transform: translate3d(2%,-2%,0) scale(1.02); } }
-      body::after{
-        content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-        background:
-          radial-gradient(60% 26% at 50% 46%, rgba(255,255,255,.06) 0, rgba(255,255,255,.03) 40%, transparent 70%),
-          radial-gradient(80% 60% at 50% 100%, rgba(20,140,160,.05), transparent 60%);
-        filter: blur(12px) saturate(1.05);
-        mix-blend-mode: screen;
-        animation: surge 22s ease-in-out infinite alternate;
-        opacity:.85;
-      }
-
-      /* 헤더 */
-      h1, p { margin:0; }
-      h1.fluid{
-        --font-size-min:22; --font-level:4.25;
-        font-family:'Cinzel',serif; letter-spacing:.6px;
-        text-shadow:0 0 18px rgba(60,180,160,.18);
-      }
-      h3{ white-space:nowrap; margin:0; }
-      body > p{
-        width:74ch; max-width:calc(100% - 4rem); text-wrap:balance;
-        font-family:monospace; margin-bottom:4rem; line-height:1.5;
-        opacity:.85; font-weight:400; text-align:center;
-      }
-
-      /* 리스트/카드 */
-      :root{
-        --gap:8px; --base:clamp(2rem, 8cqi, 80px);
-        --easing:linear(
-          0 0%, 0.1538 4.09%, 0.2926 8.29%, 0.4173 12.63%,
-          0.5282 17.12%, 0.6255 21.77%, 0.7099 26.61%, 0.782 31.67%,
-          0.8425 37%, 0.8887 42.23%, 0.9257 47.79%, 0.9543 53.78%,
-          0.9752 60.32%, 0.9883 67.11%, 0.9961 75%, 1 100%
-        );
-        --speed:.6s;
-      }
-      ul{
-        display:grid; container-type:inline-size;
-        grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr; /* 7개 */
-        gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
-        height:clamp(300px, 40dvh, 474px);
-        width:820px; max-width:calc(100% - 4rem);
-        transition:grid-template-columns var(--speed) var(--easing);
-      }
-      li{
-        background: light-dark(#fff,#000);
-        position:relative; overflow:hidden; min-width:var(--base);
-        border-radius:8px;
-        border:1px solid color-mix(in hsl, #6dd3ff, transparent 72%);
-        box-shadow: inset 0 0 60px rgba(20,120,120,.06);
-        transition: transform .35s var(--easing), box-shadow .35s var(--easing);
-      }
-
-      /* 콘텐츠 */
-      li :is(svg, h3){ opacity:.6; transition:opacity calc(var(--speed)*1.2) var(--easing); }
-      li :is(a, p){ opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing); width:fit-content; }
-      li img{
-        filter:grayscale(1) brightness(1.5); scale:1.1;
-        transition-property:filter, scale;
-        transition-duration:calc(var(--speed)*1.2);
-        transition-timing-function:var(--easing);
-      }
-      [data-active='true'] :is(a, p, h3, svg){ opacity:var(--opacity,1); }
-      [data-active='true'] :is(a, p){ transition-delay:calc(var(--speed)*.25); }
-      [data-active='true'] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay:calc(var(--speed)*.25); }
-
-      article{
-        width:calc(var(--article-width)*1px); height:100%; position:absolute; top:0; left:0;
-        font-family:monospace; display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
-        padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
-      }
-      article h3{
-        position:absolute; top:1rem; left:calc(var(--base)*.5);
-        transform-origin:0 50%; rotate:90deg; font-size:1rem; font-weight:300; text-transform:uppercase;
-      }
-      article svg{ width:18px; fill:none; }
-      article p{ font-size:13px; text-wrap:balance; line-height:1.25; --opacity:.9; }
-      article a{ position:absolute; bottom:1rem; height:18px; line-height:1; color:inherit; }
-      article a:is(:focus-visible, :hover) span{ text-decoration:underline; text-underline-offset:4px; }
-      article a span{ display:inline-block; line-height:18px; translate:calc(var(--base)*.5); font-weight:600; letter-spacing:.2px; }
-      article img{
-        position:absolute; pointer-events:none; inset:0; width:100%; height:100%;
-        object-fit:cover; mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
-      }
-
-      /* ===== 룬 레이어(자동 생성) =====
-         - .runes 컨테이너가 활성 상태에서 천천히 "연해지는" 페이드
-         - 각 줄(span)은 대각선 이동 + 약간의 회전(비스듬)
-         - 각 줄의 em은 추가적으로 은근한 페이드(라인별 들쑥날쑥)
-      */
-      @keyframes mistFade {
-        0%   { opacity: .95; }
-        100% { opacity: .45; }
-      }
-      @keyframes driftSkew {
-        0%   { transform: translate(-14%, 8%)   rotate(-2deg); }
-        50%  { transform: translate(  4%,-2%)   rotate( 0deg); }
-        100% { transform: translate( 16%,-10%)  rotate( 2deg); }
-      }
-      @keyframes lineFade {
-        0%   { opacity: .9;  }
-        60%  { opacity: .6;  }
-        100% { opacity: .35; }
-      }
-
-      .runes{
-        position:absolute; inset:6% 5% 12% 5%;
-        pointer-events:none; mix-blend-mode: screen;
-        filter: url(#fog) blur(.3px);
-        opacity: 0; transition: opacity .45s ease;
-        font-family: 'Noto Sans KR', 'Segoe UI Symbol', 'Noto Sans', system-ui, sans-serif;
-      }
-      /* 활성일 때: 장기 페이드(시간 지나며 연해짐) */
-      li[data-active="true"] .runes{
-        opacity:.95;
-        animation: mistFade var(--fadeDur, 90s) ease-in-out infinite alternate;
-      }
-
-      .runes span{
-        position:absolute; left:-25%; width:230%;
-        top: var(--top, 50%);
-        animation: driftSkew var(--dur, 28s) cubic-bezier(.37,0,.63,1) var(--delay, 0s) infinite alternate;
-        will-change: transform, opacity;
-      }
-      .runes span em{
-        display:inline-block; white-space: nowrap; letter-spacing: .6em;
-        color: rgba(135, 240, 230, .44);
-        text-shadow:
-          0 0 10px rgba(90, 220, 220, .22),
-          0 0 18px rgba(60, 160, 220, .16);
-        font-size: clamp(12px, 1.9cqi, 17px);
-        transform: rotate(var(--rot, 0deg));
-        animation: lineFade var(--dur2, 32s) ease-in-out var(--delay2, 0s) infinite alternate;
-      }
-
-      /* 활성 카드 하이라이트 + 살짝 3D */
-      li[data-active='true']{
-        box-shadow:
-          0 0 0 1px rgba(110, 210, 255, .28),
-          0 0 24px rgba(80, 200, 255, .14),
-          inset 0 0 80px rgba(40, 160, 200, .08);
-      }
-      ul{ perspective: 900px; }
-      li[data-active='true']:hover{ transform: translateZ(12px) rotateY(-1.6deg); }
-
-      /* 모션 최소화 */
-      @media (prefers-reduced-motion: reduce){
-        body::after, body::before,
-        .runes, .runes span, .runes span em{ animation: none !important; }
-        li[data-active='true']:hover{ transform:none; }
-      }
+    h1{margin:0; font-family:'Cinzel',serif; letter-spacing:.6px; text-shadow:0 0 18px rgba(60,180,160,.18)}
+    p{margin:0}
+    .lead{
+      width:74ch; max-width:calc(100% - 4rem); text-align:center; text-wrap:balance;
+      font-family:monospace; line-height:1.5; opacity:.85; margin-bottom:3rem;
     }
-  </style>
+  }
+
+  :root{
+    --gap:8px; --base:clamp(2rem, 8cqi, 80px);
+    --easing: cubic-bezier(.2,.6,.2,1);
+    --speed: .6s;
+  }
+
+  /* 그리드(세로 카드) */
+  ul{
+    display:grid; container-type:inline-size;
+    grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap:var(--gap); list-style:none; margin:0; padding:0;
+    height:clamp(300px, 40dvh, 474px);
+    width:820px; max-width:calc(100% - 4rem);
+    transition:grid-template-columns var(--speed) var(--easing);
+  }
+  li{
+    position:relative; overflow:hidden; min-width:var(--base);
+    border-radius:10px;
+    background: light-dark(#fff,#000);
+    border:1px solid color-mix(in hsl, #6dd3ff, transparent 72%);
+    box-shadow: inset 0 0 60px rgba(20,120,120,.06);
+    transition: transform .35s var(--easing), box-shadow .35s var(--easing);
+  }
+
+  /* 카드 본문 */
+  article{
+    position:absolute; inset:0; container-type:size; /* cqh 단위 사용 위해 */
+    display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
+    padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
+    font-family:monospace;
+  }
+  article h3{
+    position:absolute; top:1rem; left:calc(var(--base)*.5);
+    transform-origin:0 50%; rotate:90deg;
+    font-size:1rem; font-weight:300; text-transform:uppercase; margin:0; white-space:nowrap;
+  }
+  article p{font-size:13px; line-height:1.25; opacity:.95}
+  article a{position:absolute; bottom:1rem; color:inherit; text-decoration:none; font-weight:600}
+  article a span{display:inline-block; translate:calc(var(--base)*.5)}
+  article a:hover span{text-decoration:underline; text-underline-offset:4px}
+  article img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; mask:radial-gradient(100% 100% at 100% 0, #fff, #0000)}
+
+  li :is(svg,h3){opacity:.6; transition:opacity calc(var(--speed)*1.2) var(--easing)}
+  li :is(a,p){opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing)}
+  li img{filter:grayscale(1) brightness(1.5); scale:1.1; transition:filter calc(var(--speed)*1.2), scale calc(var(--speed)*1.2) var(--easing)}
+  [data-active="true"] :is(a,p,h3,svg){opacity:1}
+  [data-active="true"] :is(a,p){transition-delay:.15s}
+  [data-active="true"] img{filter:grayscale(0) brightness(1); scale:1; transition-delay:.15s}
+
+  /* ====== 룬 밴드 ====== */
+  /* 전체 컨테이너 */
+  .runes{
+    position:absolute; inset:6% 5% 12% 5%;
+    pointer-events:none; opacity:0; transition:opacity .35s ease;
+    mix-blend-mode:screen; filter:url(#fog) blur(.2px);
+  }
+  li[data-active="true"] .runes{opacity:.96}
+
+  /* 밴드: 일정한 두께로 비스듬히 흐르는 레이어 */
+  @keyframes bandDrift {
+    0%   { transform: translateX(-2%) rotate(var(--rot)); }
+    100% { transform: translateX( 2%) rotate(var(--rot)); }
+  }
+  @keyframes bandFade {
+    0%   { opacity:.9; }
+    100% { opacity:.45; }
+  }
+  .band{
+    position:absolute; left:-25%; width:150%;
+    top:var(--top,10%);
+    height:var(--band, 8cqh);           /* 카드 높이 기준 일정 두께 */
+    overflow:hidden;
+    transform: rotate(var(--rot,-18deg));
+    opacity:.8;
+    animation:
+      bandDrift var(--drift,18s) ease-in-out var(--delay,0s) infinite alternate,
+      bandFade  var(--wane, 80s) ease-in-out var(--delay,0s) infinite alternate;
+    will-change:transform,opacity;
+  }
+
+  /* 밴드 안에서 룬 문자열이 ‘아래로’ 흐름 */
+  @keyframes slideDown { to { transform: translateY(240%); } }
+  .line{
+    position:absolute; left:0; right:0; top:-120%;
+    display:flex; justify-content:space-around;
+    animation: slideDown var(--speedY,28s) linear var(--offset,0s) infinite;
+  }
+  .line em{
+    white-space:nowrap; letter-spacing:.6em;
+    color: rgba(140,240,230,.66);
+    text-shadow:
+      0 0 12px rgba(80,200,200,.25),
+      0 0 22px rgba(50,150,200,.18);
+    font-size: clamp(12px, 2.2cqi, 18px);
+    transform: rotate(var(--trot,0deg));
+  }
+
+  /* 활성 카드 강조/살짝 깊이감 */
+  ul{perspective:900px}
+  li[data-active="true"]{
+    box-shadow:
+      0 0 0 1px rgba(110,210,255,.28),
+      0 0 24px rgba(80,200,255,.14),
+      inset 0 0 80px rgba(40,160,200,.08);
+  }
+  li[data-active="true"]:hover{ transform: translateZ(12px) rotateY(-1.6deg) }
+
+  /* 모션 최소화 사용자 배려 */
+  @media (prefers-reduced-motion:reduce){
+    .band,.line{animation:none !important}
+    li[data-active="true"]:hover{transform:none}
+  }
+</style>
 </head>
 <body>
-  <!-- SVG 필터(안개 왜곡) -->
+  <!-- 안개 왜곡 필터 -->
   <svg width="0" height="0" style="position:absolute">
     <filter id="fog" x="-20%" y="-20%" width="140%" height="140%">
       <feTurbulence type="fractalNoise" baseFrequency="0.004 0.007" numOctaves="2" seed="11">
         <animate attributeName="baseFrequency" dur="60s"
-                 values="0.004 0.007; 0.006 0.009; 0.004 0.007"
-                 repeatCount="indefinite"/>
+                 values="0.004 0.007; 0.006 0.009; 0.004 0.007" repeatCount="indefinite"/>
       </feTurbulence>
       <feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G">
-        <animate attributeName="scale" values="7;12;8;7" dur="42s" repeatCount="indefinite"/>
+        <animate attributeName="scale" dur="42s" values="7;12;8;7" repeatCount="indefinite"/>
       </feDisplacementMap>
-      <feGaussianBlur stdDeviation="0.35" />
+      <feGaussianBlur stdDeviation="0.35"/>
     </filter>
   </svg>
 
-  <h1 class="fluid">the craft of ui</h1>
-  <p>
-    Unlock the art and science of interface development. This isn’t just about pushing
-    pixels or following documentation — it’s about mastering the tools, understanding
-    the nuances, and shaping experiences with intention.
+  <h1 style="font-size:clamp(28px,6vw,56px);text-transform:uppercase">THE CRAFT OF UI</h1>
+  <p class="lead">
+    Unlock the art and science of interface development. This isn’t just about pushing pixels or
+    following documentation — it’s about mastering the tools, understanding the nuances, and
+    shaping experiences with intention.
   </p>
 
   <ul>
     <li data-active="true">
       <article data-runes="true">
-        <h3>The Craft</h3>
+        <h3>THE CRAFT</h3>
         <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=12" alt="" />
+        <img src="https://picsum.photos/720/720?random=12" alt="">
       </article>
     </li>
     <li>
       <article data-runes="true">
-        <h3>CSS Animation</h3>
+        <h3>CSS ANIMATION</h3>
         <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=17" alt="" />
+        <img src="https://picsum.photos/720/720?random=17" alt="">
       </article>
     </li>
     <li>
       <article data-runes="true">
-        <h3>SVG Filters</h3>
+        <h3>SVG FILTERS</h3>
         <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=19" alt="" />
+        <img src="https://picsum.photos/720/720?random=19" alt="">
       </article>
     </li>
     <li>
       <article data-runes="true">
-        <h3>Scroll Animation</h3>
+        <h3>SCROLL ANIMATION</h3>
         <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=42" alt="" />
+        <img src="https://picsum.photos/720/720?random=42" alt="">
       </article>
     </li>
     <li>
       <article data-runes="true">
-        <h3>Taming Canvas</h3>
-        <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+        <h3>TAMING CANVAS</h3>
+        <p>Grasp how to tame the pixel playground and when to do so. Whilst building with performance in mind.</p>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=128" alt="" />
+        <img src="https://picsum.photos/720/720?random=128" alt="">
       </article>
     </li>
     <li>
       <article data-runes="true">
-        <h3>Layout Tricks</h3>
-        <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+        <h3>LAYOUT TRICKS</h3>
+        <p>Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=56" alt="" />
+        <img src="https://picsum.photos/720/720?random=56" alt="">
       </article>
     </li>
     <li>
       <article data-runes="true">
-        <h3>Mastering Time</h3>
-        <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+        <h3>MASTERING TIME</h3>
+        <p>Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
         <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=39" alt="" />
+        <img src="https://picsum.photos/720/720?random=39" alt="">
       </article>
     </li>
   </ul>
 
-  <script>
-    // 세로 카드 확장/하이라이트
-    const list = document.querySelector('ul');
-    const items = list.querySelectorAll('li');
+<script>
+  // 카드 확장/하이라이트
+  const list = document.querySelector('ul');
+  const items = list.querySelectorAll('li');
+  function setIndex(e){
+    const li = e.target.closest('li'); if(!li) return;
+    const idx = [...items].indexOf(li);
+    list.style.setProperty('grid-template-columns',
+      [...items].map((_,i)=> (items[i].dataset.active = (i===idx).toString(), i===idx?'10fr':'1fr')).join(' ')
+    );
+  }
+  list.addEventListener('pointermove', setIndex);
+  list.addEventListener('click', setIndex);
+  list.addEventListener('focus', setIndex, true);
 
-    function setIndex(event){
-      const closest = event.target.closest('li');
-      if (!closest) return;
-      const idx = [...items].indexOf(closest);
-      const cols = [...items].map((_, i) => {
-        items[i].dataset.active = (i === idx).toString();
-        return i === idx ? '10fr' : '1fr';
-      }).join(' ');
-      list.style.setProperty('grid-template-columns', cols);
-    }
-    list.addEventListener('pointermove', setIndex);
-    list.addEventListener('click', setIndex);
-    list.addEventListener('focus', setIndex, true);
+  // ===== 룬 밴드 자동 생성 =====
+  const RUNES = 'ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ';
+  const LINE = (RUNES + '   ').repeat(4);
 
-    function resync(){
-      const w = Math.max(...[...items].map(i => i.offsetWidth));
-      list.style.setProperty('--article-width', w);
-    }
-    window.addEventListener('resize', resync);
-    resync();
+  const rand = (a,b)=> Math.random()*(b-a)+a;
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 
-    // ===== 룬 자동 생성 =====
-    const RUNE_STR = 'ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ';
-    const RUNE_LINE = (RUNE_STR + '   ').repeat(3); // 길게
+  document.querySelectorAll('article[data-runes="true"]').forEach(article=>{
+    const box = document.createElement('div');
+    box.className = 'runes';
 
-    function rand(min, max){ return Math.random() * (max - min) + min; }
-    function choice(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+    // 밴드 개수와 공통 두께(카드 높이 기준) — 필요시 숫자만 조절
+    const bandCount = Math.floor(rand(3,6));
+    const bandThick = `${Math.round(rand(6,10))}cqh`; // 6~10cqh
 
-    document.querySelectorAll('article[data-runes="true"]').forEach(article => {
-      const box = document.createElement('div');
-      box.className = 'runes';
+    for(let i=0;i<bandCount;i++){
+      const band = document.createElement('div');
+      band.className = 'band';
 
-      const lines = 12; // 줄 수
-      for (let i=0; i<lines; i++){
-        const span = document.createElement('span');
+      // 불규칙 위치/각도/속도
+      band.style.setProperty('--top', `${Math.round(rand(5,90))}%`);
+      band.style.setProperty('--rot', `${rand(-28,-14).toFixed(1)}deg`);
+      band.style.setProperty('--drift', `${rand(16,26).toFixed(1)}s`);
+      band.style.setProperty('--wane',  `${rand(70,110).toFixed(0)}s`);
+      band.style.setProperty('--delay', `${(-rand(0,10)).toFixed(1)}s`);
+      band.style.setProperty('--band', bandThick);
+
+      // 밴드 내부에 여러 줄을 넣어 밀도 확보 (2~3줄)
+      const rows = Math.floor(rand(2,4));
+      for(let r=0;r<rows;r++){
+        const line = document.createElement('div');
+        line.className = 'line';
+        line.style.setProperty('--speedY', `${rand(22,36).toFixed(1)}s`);
+        line.style.setProperty('--offset', `${(-rand(0,12)).toFixed(1)}s`);
         const em = document.createElement('em');
-        em.textContent = RUNE_LINE;
-
-        // 랜덤 파라미터(불규칙/비스듬)
-        const top = Math.round(rand(6, 90));             // %
-        const dur = rand(18, 38).toFixed(2) + 's';       // driftSkew
-        const dur2 = rand(24, 42).toFixed(2) + 's';      // lineFade
-        const delay = (-rand(0, 12)).toFixed(2) + 's';   // 시작 위상 어긋남
-        const delay2 = (-rand(0, 8)).toFixed(2) + 's';
-        const rot = (rand(-3, 3)).toFixed(2) + 'deg';    // 각 줄 회전
-
-        span.style.setProperty('--top', top + '%');
-        span.style.setProperty('--dur', dur);
-        span.style.setProperty('--delay', delay);
-        em.style.setProperty('--dur2', dur2);
-        em.style.setProperty('--delay2', delay2);
-        em.style.setProperty('--rot', rot);
-
-        span.appendChild(em);
-        box.appendChild(span);
+        em.style.setProperty('--trot', `${rand(-3,3).toFixed(1)}deg`);
+        em.textContent = LINE;
+        line.appendChild(em);
+        band.appendChild(line);
       }
 
-      article.appendChild(box);
-    });
-  </script>
+      box.appendChild(band);
+    }
+
+    article.appendChild(box);
+  });
+</script>
 </body>
 </html>
