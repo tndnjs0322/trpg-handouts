@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — vertical hover (Mist + Runes)</title>
+  <title>the craft of ui — vertical hover (Mist + Floating Runes)</title>
   <style>
     @import url('https://unpkg.com/normalize.css') layer(normalize);
+    /* 제목과 본문 폰트 */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&family=Cinzel:wght@800&display=swap') layer(base);
 
     @layer normalize, base, demo;
@@ -18,12 +19,8 @@
         --font-size-min: 16; --font-size-max: 20;
         --font-ratio-min: 1.2; --font-ratio-max: 1.33;
         --font-width-min: 375; --font-width-max: 1500;
-
-        /* 룬 문자열(여유 있게 반복) */
-        --runes:
-          "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ "
-          "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ "
-          "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ ";
+        /* 룬 문자열(여유 있게 길게) */
+        --runes-line: "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ ";
       }
       html { color-scheme: light dark; }
       *, *::before, *::after { box-sizing: border-box; }
@@ -52,7 +49,7 @@
     }
 
     /* =========================
-       DEMO (Mist Horizon + Runes)
+       DEMO (Mist Horizon + Floating Runes)
     ==========================*/
     @layer demo {
       /* 배경: 상단 청록 그라디언트 + 하단 딥 블랙, 중앙 안개띠 */
@@ -65,18 +62,18 @@
         flex-direction:column; gap:1rem; padding-block:2rem;
       }
 
-      /* 제목 주변의 '의식 원' – 아주 은은하게 */
+      /* 제목 위 아주 옅은 ‘의식 원’ (너무 눈에 띄면 opacity 낮추기) */
       @keyframes eldritch-spin { to { transform: rotate(360deg); } }
       body::before{
         content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
         background:
-          radial-gradient(closest-side, rgba(110,220,200,.08), transparent 72%) 50% 14%/480px 480px no-repeat,
-          conic-gradient(from 0deg, rgba(110,220,200,.18) 0 6deg, transparent 6deg 12deg) 50% 14%/480px 480px no-repeat;
+          radial-gradient(closest-side, rgba(110,220,200,.07), transparent 72%) 50% 14%/460px 460px no-repeat,
+          conic-gradient(from 0deg, rgba(110,220,200,.14) 0 6deg, transparent 6deg 12deg) 50% 14%/460px 460px no-repeat;
         -webkit-mask: radial-gradient(closest-side at 50% 14%, transparent 60%, #000 61%);
                 mask: radial-gradient(closest-side at 50% 14%, transparent 60%, #000 61%);
         mix-blend-mode: screen;
-        animation: eldritch-spin 80s linear infinite;
-        opacity:.32;
+        animation: eldritch-spin 90s linear infinite;
+        opacity:.25;
         filter: blur(.2px);
       }
 
@@ -95,13 +92,17 @@
 
       /* 헤더 텍스트 */
       h1, p { margin:0; }
-      h1.fluid{ --font-size-min:22; --font-level:4.25; font-family:'Cinzel',serif; letter-spacing:.6px; text-shadow:0 0 18px rgba(60,180,160,.18); }
+      h1.fluid{
+        --font-size-min:22; --font-level:4.25;
+        font-family:'Cinzel',serif; letter-spacing:.6px;
+        text-shadow:0 0 18px rgba(60,180,160,.18);
+      }
       h3{ white-space:nowrap; margin:0; }
 
       body > p{
         width:74ch; max-width:calc(100% - 4rem); text-wrap:balance;
         font-family:monospace; margin-bottom:4rem; line-height:1.5;
-        opacity:.8; font-weight:400; text-align:center;
+        opacity:.85; font-weight:400; text-align:center;
       }
 
       /* 리스트/카드 기본 */
@@ -127,7 +128,7 @@
         background: light-dark(#fff,#000);
         position:relative; overflow:hidden; min-width:var(--base);
         border-radius:8px;
-        border:1px solid color-mix(in hsl, #6dd3ff, transparent 75%);
+        border:1px solid color-mix(in hsl, #6dd3ff, transparent 72%);
         box-shadow: inset 0 0 60px rgba(20,120,120,.06);
         transition: transform .35s var(--easing), box-shadow .35s var(--easing);
       }
@@ -155,7 +156,7 @@
         transform-origin:0 50%; rotate:90deg; font-size:1rem; font-weight:300; text-transform:uppercase;
       }
       article svg{ width:18px; fill:none; }
-      article p{ font-size:13px; text-wrap:balance; line-height:1.25; --opacity:.85; }
+      article p{ font-size:13px; text-wrap:balance; line-height:1.25; --opacity:.9; }
       article a{ position:absolute; bottom:1rem; height:18px; line-height:1; color:inherit; }
       article a:is(:focus-visible, :hover) span{ text-decoration:underline; text-underline-offset:4px; }
       article a span{ display:inline-block; line-height:18px; translate:calc(var(--base)*.5); font-weight:600; letter-spacing:.2px; }
@@ -165,51 +166,63 @@
       }
 
       /* -------------------------------
-         활성 카드: 룬 문자가 은은하게 떠다니는 레이어
-         두 겹(가깝고/먼)으로 만들어 입체감
+         활성 카드: 룬 문자가 ‘안개처럼’ 불규칙하게 흐르는 레이어
+         - 여러 줄(span) 각각이 다른 속도/위치/회전으로 이동
+         - SVG 노이즈 필터로 몽롱한 왜곡
       --------------------------------*/
-      @keyframes runeFloatA {
-        0%   { transform: translateY(18%) rotate(-2deg); opacity:.0; }
-        25%  { opacity:.22; }
-        50%  { transform: translateY(-6%) rotate(-1deg); opacity:.28; }
-        100% { transform: translateY(-22%) rotate(0deg); opacity:0; }
+      /* 수평 드리프트 */
+      @keyframes driftX { from { transform: translateX(-12%); } to { transform: translateX(16%); } }
+      /* 수직 스웨이(안개처럼 위아래로) */
+      @keyframes swayY { from { transform: translateY(-6%); } to { transform: translateY(6%); } }
+
+      /* 룬 컨테이너(기본은 숨김) */
+      .runes{
+        position:absolute; inset:6% 5% 12% 5%;
+        pointer-events:none; mix-blend-mode: screen;
+        /* SVG 필터로 흐릿한 안개 왜곡 + 살짝 블러 */
+        filter: url(#fog) blur(.25px);
+        opacity: 0; transition: opacity .45s ease;
+        font-family: 'Noto Sans KR', 'Segoe UI Symbol', 'Noto Sans', system-ui, sans-serif;
       }
-      @keyframes runeFloatB {
-        0%   { transform: translateY(24%) rotate(2deg); opacity:.0; }
-        30%  { opacity:.18; }
-        60%  { transform: translateY(-8%) rotate(1deg); opacity:.24; }
-        100% { transform: translateY(-26%) rotate(2deg); opacity:0; }
+      /* 활성 카드에서만 보이게 */
+      li[data-active="true"] .runes{ opacity: .95; }
+
+      /* 각 줄은 바깥 span이 좌우 드리프트, 안쪽 em이 상하 스웨이/회전 */
+      .runes span{
+        position:absolute; left:-20%; width:200%;
+        top: var(--top);           /* 각 줄 위치 */
+        animation: driftX var(--dur) linear infinite;
+        will-change: transform;
+      }
+      .runes span em{
+        display:inline-block;
+        white-space: nowrap;
+        letter-spacing: .6em;
+        /* 가독성 ↑ : 색/광/두께 */
+        color: rgba(135, 240, 230, .38);
+        text-shadow:
+          0 0 10px rgba(90, 220, 220, .22),
+          0 0 18px rgba(60, 160, 220, .16);
+        font-size: clamp(12px, 1.9cqi, 17px);
+        transform: rotate(var(--rot));
+        animation: swayY calc(var(--dur) * .8) ease-in-out infinite alternate;
       }
 
-      /* 가까운 층 */
-      li[data-active="true"] article::after{
-        content: var(--runes);
-        position:absolute; inset:8% 6% 12% 6%;
-        pointer-events:none; white-space:pre-wrap;
-        line-height:1.8; letter-spacing:.55em;
-        font-size: clamp(11px, 1.6cqi, 14px);
-        color: rgba(120,220,210,.28);
-        text-shadow: 0 0 6px rgba(80,200,200,.12);
-        mix-blend-mode: screen;
-        filter: blur(.15px);
-        animation: runeFloatA 18s linear infinite;
-      }
-      /* 먼 층 (느리고 옅게, 반대 기울기) */
-      li[data-active="true"] article::before{
-        content: var(--runes);
-        position:absolute; inset:14% 8% 16% 8%;
-        pointer-events:none; white-space:pre-wrap;
-        line-height:2; letter-spacing:.6em;
-        font-size: clamp(10px, 1.3cqi, 13px);
-        color: rgba(110,190,255,.18);
-        text-shadow: 0 0 8px rgba(80,150,255,.10);
-        mix-blend-mode: screen;
-        filter: blur(.25px);
-        transform: rotate(4deg);
-        animation: runeFloatB 26s linear infinite;
-      }
+      /* 불규칙성을 위한 nth-child 매개변수(라인 12개) */
+      .runes span:nth-child(1)  { --top: 6%;  --dur: 22s; --rot: -2deg; }
+      .runes span:nth-child(2)  { --top: 13%; --dur: 28s; --rot:  3deg; }
+      .runes span:nth-child(3)  { --top: 19%; --dur: 19s; --rot: -1deg; }
+      .runes span:nth-child(4)  { --top: 26%; --dur: 31s; --rot:  2deg; }
+      .runes span:nth-child(5)  { --top: 34%; --dur: 24s; --rot: -3deg; }
+      .runes span:nth-child(6)  { --top: 42%; --dur: 33s; --rot:  1deg; }
+      .runes span:nth-child(7)  { --top: 50%; --dur: 21s; --rot:  0deg; }
+      .runes span:nth-child(8)  { --top: 58%; --dur: 29s; --rot: -2deg; }
+      .runes span:nth-child(9)  { --top: 66%; --dur: 26s; --rot:  2deg; }
+      .runes span:nth-child(10) { --top: 74%; --dur: 18s; --rot: -1deg; }
+      .runes span:nth-child(11) { --top: 82%; --dur: 35s; --rot:  3deg; }
+      .runes span:nth-child(12) { --top: 90%; --dur: 23s; --rot: -2deg; }
 
-      /* 활성 카드 하이라이트(아주 얌전하게) */
+      /* 활성 카드 하이라이트(얌전하게) + 살짝 3D */
       li[data-active='true']{
         box-shadow:
           0 0 0 1px rgba(110, 210, 255, .28),
@@ -222,16 +235,28 @@
       /* 접근성: 모션 최소화 */
       @media (prefers-reduced-motion: reduce){
         body::after, body::before,
-        li[data-active="true"] article::before,
-        li[data-active="true"] article::after{
-          animation: none;
-        }
+        .runes span, .runes span em{ animation: none !important; }
         li[data-active='true']:hover{ transform:none; }
       }
     }
   </style>
 </head>
 <body>
+  <!-- SVG 필터(안개/왜곡) 정의: 페이지 어디든 1번만 있으면 됨 -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="fog" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.004 0.007" numOctaves="2" seed="7">
+        <animate attributeName="baseFrequency" dur="60s"
+                 values="0.004 0.007; 0.006 0.009; 0.004 0.007"
+                 repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" scale="8" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="6;10;7;6" dur="38s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+      <feGaussianBlur stdDeviation="0.35" />
+    </filter>
+  </svg>
+
   <h1 class="fluid">the craft of ui</h1>
   <p>
     Unlock the art and science of interface development. This isn’t just about pushing
@@ -242,6 +267,22 @@
   <ul>
     <li data-active="true">
       <article>
+        <!-- 룬 레이어 -->
+        <div class="runes" aria-hidden="true">
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+        </div>
+
         <h3>The Craft</h3>
         <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
@@ -249,8 +290,25 @@
         <img src="https://picsum.photos/720/720?random=12" alt="" />
       </article>
     </li>
+
+    <!-- 이하 카드들도 동일하게 .runes 블록 포함 -->
     <li>
       <article>
+        <div class="runes" aria-hidden="true">
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ  &nbsp; ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+        </div>
+
         <h3>CSS Animation</h3>
         <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
@@ -258,8 +316,25 @@
         <img src="https://picsum.photos/720/720?random=17" alt="" />
       </article>
     </li>
+
     <li>
       <article>
+        <div class="runes" aria-hidden="true">
+          <!-- 12줄 복사/반복 -->
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ...</em></span>
+        </div>
+
         <h3>SVG Filters</h3>
         <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
@@ -267,8 +342,17 @@
         <img src="https://picsum.photos/720/720?random=19" alt="" />
       </article>
     </li>
+
     <li>
       <article>
+        <div class="runes" aria-hidden="true">
+          <!-- 12줄 복사/반복 -->
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+        </div>
+
         <h3>Scroll Animation</h3>
         <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>
@@ -276,8 +360,17 @@
         <img src="https://picsum.photos/720/720?random=42" alt="" />
       </article>
     </li>
+
     <li>
       <article>
+        <div class="runes" aria-hidden="true">
+          <!-- 12줄 복사/반복 -->
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+        </div>
+
         <h3>Taming Canvas</h3>
         <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
@@ -285,8 +378,17 @@
         <img src="https://picsum.photos/720/720?random=128" alt="" />
       </article>
     </li>
+
     <li>
       <article>
+        <div class="runes" aria-hidden="true">
+          <!-- 12줄 복사/반복 -->
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+        </div>
+
         <h3>Layout Tricks</h3>
         <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
@@ -294,8 +396,17 @@
         <img src="https://picsum.photos/720/720?random=56" alt="" />
       </article>
     </li>
+
     <li>
       <article>
+        <div class="runes" aria-hidden="true">
+          <!-- 12줄 복사/반복 -->
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+          <span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span><span><em>ᚠ ᚢ ᚦ ...</em></span>
+        </div>
+
         <h3>Mastering Time</h3>
         <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
@@ -306,7 +417,7 @@
   </ul>
 
   <script>
-    // 세로 카드 확장/하이라이트
+    // 세로 카드 확장/하이라이트 (그대로)
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
 
