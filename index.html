@@ -3,57 +3,55 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>네버엔딩 크툴루 1호점 — 세로형 랜딩</title>
-  <meta name="description" content="네버엔딩 크툴루 1호점 — 세로 스택 카드, 호버시 커서 Y축에 반응하는 디스크로저." />
+  <title>네버엔딩 크툴루 1호점</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#07090c; --panel:#0f1319; --fg:#e7f2ef; --muted:#9eb1ac; --line:#1c2530;
-      --acc1:#7cffd4; --acc2:#b677ff; --rad:18px; --gap:14px;
-    }
+    :root{ --bg:#080a0e; --panel:#0f1319; --fg:#e9f2ee; --muted:#a1b0ad; --line:#1c2530; --acc1:#7cffd4; --acc2:#b677ff; --rad:16px; --gap:14px }
     *{box-sizing:border-box}
     html,body{margin:0}
-    body{font-family:"Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7}
-    a{color:inherit;text-decoration:none}
+    body{font-family:"Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--fg); line-height:1.7}
+    a{color:inherit; text-decoration:none}
+    .wrap{max-width:980px; margin:0 auto; padding:28px 16px 64px}
 
-    .wrap{max-width:940px;margin:0 auto;padding:28px 16px 60px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:30px;height:30px;border-radius:8px;background:conic-gradient(from 0deg,var(--acc1),var(--acc2),var(--acc1));box-shadow:0 0 18px rgba(124,255,212,.35);animation:spin 18s linear infinite}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
+    .brand{display:flex; align-items:center; gap:10px}
+    .logo{width:30px; height:30px; border-radius:8px; background:conic-gradient(from 0deg,var(--acc1),var(--acc2),var(--acc1)); box-shadow:0 0 18px rgba(124,255,212,.35); animation:spin 18s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .wordmark{font-weight:900}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);color:var(--fg)}
-    .btn.primary{background:linear-gradient(180deg,var(--acc1),var(--acc2));color:#0b0d10;font-weight:900}
 
-    .hero h1{font:900 clamp(28px,6vw,56px)/1.05 "Noto Sans KR",sans-serif;margin:.2em 0 .25em;letter-spacing:.5px;background:linear-gradient(90deg,var(--acc1),var(--acc2),var(--acc1));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 12s linear infinite;text-shadow:0 0 22px rgba(124,255,212,.12)}
+    h1.fluid{font:900 clamp(28px,6vw,56px)/1.05 "Noto Sans KR", sans-serif; margin:.2em 0 .25em; background:linear-gradient(90deg,var(--acc1),var(--acc2),var(--acc1)); background-size:200% 100%; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:shine 12s linear infinite; text-shadow:0 0 22px rgba(124,255,212,.12)}
     @keyframes shine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
-    .hero p{margin:0 0 10px;color:var(--muted)}
+    .lede{color:var(--muted); margin:0 0 12px}
 
-    /* Vertical stack cards */
-    .stack{display:flex;flex-direction:column;gap:var(--gap)}
-    .card{position:relative;overflow:hidden;border-radius:var(--rad);border:1px solid var(--line);background:var(--panel);min-height:220px;isolation:isolate}
-    .media{position:absolute;inset:0;opacity:.55}
-    .media img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.05)}
-    .veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.55) 80%)}
+    /* ===== Vertical list, each item reveals content where the pointer is ===== */
+    ul.cards{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--gap)}
+    .cards > li{position:relative; border:1px solid var(--line); border-radius:var(--rad); overflow:hidden; background:var(--panel)}
+    .cards > li article{position:relative; min-height:230px; isolation:isolate}
 
-    /* Hover disclosure that follows cursor Y */
-    .reveal{position:absolute;left:0;right:0;top:var(--y,100%);transform:translateY(-50%);height:110px;pointer-events:none;
-      background:linear-gradient(180deg, rgba(124,255,212,.00), rgba(124,255,212,.18), rgba(124,255,212,.00));
+    /* background image */
+    .cards img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.55; filter:saturate(1.05) contrast(1.05)}
+
+    /* disclosure band that follows pointer Y inside LI */
+    .reveal{position:absolute; left:0; right:0; top:var(--y,50%); transform:translateY(-50%); height:110px; pointer-events:none; opacity:0; transition:opacity .25s ease;
+      background:linear-gradient(180deg, rgba(124,255,212,0), rgba(124,255,212,.18), rgba(124,255,212,0));
       border-top:1px solid rgba(124,255,212,.35); border-bottom:1px solid rgba(124,255,212,.35);
-      opacity:0; transition:opacity .25s ease}
-    .card:hover .reveal{opacity:1}
+    }
+    .cards > li:hover .reveal{opacity:1}
 
-    .meta{position:absolute;left:18px;top:var(--y,100%);transform:translateY(calc(-50% + -6px));display:flex;flex-direction:column;gap:6px;z-index:2}
-    .meta h3{margin:0;font:800 22px/1.1 "Noto Sans KR",sans-serif;text-shadow:0 1px 0 rgba(0,0,0,.35)}
-    .meta p{margin:0;color:#d7f5ee}
-    .cta{display:inline-flex;align-items:center;gap:8px;color:#0b0d10;background:linear-gradient(180deg,var(--acc1),var(--acc2));border-radius:999px;padding:8px 12px;text-decoration:none;font-weight:800;width:max-content}
-    .cta svg{width:18px;height:18px}
+    /* content pinned to the band */
+    .meta{position:absolute; left:18px; top:var(--y,50%); transform:translateY(calc(-50% + -6px)); display:flex; flex-direction:column; gap:6px; z-index:2}
+    .meta h3{margin:0; font:800 22px/1.1 "Noto Sans KR", sans-serif; text-shadow:0 1px 0 rgba(0,0,0,.35)}
+    .meta p{margin:0; color:#d7f5ee; max-width:60ch}
+    .cta{display:inline-flex; align-items:center; gap:8px; color:#0b0d10; background:linear-gradient(180deg,var(--acc1),var(--acc2)); border-radius:999px; padding:8px 12px; font-weight:800; width:max-content}
+    .cta svg{width:18px; height:18px}
 
-    footer{margin-top:26px;color:var(--muted);font-size:13px}
+    /* keyboard/initial active */
+    .cards > li[data-active="true"]{outline:2px solid rgba(124,255,212,.35)}
 
-    @media (max-width:700px){ .meta h3{font-size:18px} .meta p{font-size:14px} .reveal{height:90px} }
+    footer{margin-top:26px; color:var(--muted); font-size:13px}
+    @media (max-width:720px){ .meta h3{font-size:18px} .meta p{font-size:14px} .reveal{height:90px} }
   </style>
 </head>
 <body>
@@ -63,107 +61,63 @@
         <div class="logo" aria-hidden="true"></div>
         <div class="wordmark">네버엔딩 크툴루 1호점</div>
       </div>
-      <nav style="display:flex;gap:8px">
-        <a class="btn" href="./index.html">핸드아웃 허브 열기</a>
-        <a class="btn primary" href="#stack">바로 보기</a>
-      </nav>
     </header>
 
-    <section class="hero">
-      <h1>불가해의 기록 보관소</h1>
-      <p>세로형 스택 카드. 커서를 위아래로 움직이면 그 위치에서 정보가 드러나요.</p>
-    </section>
+    <h1 class="fluid">불가해의 기록 보관소</h1>
+    <p class="lede">세로 스택 카드 — 커서를 올리면 해당 높이에 맞춰 정보가 드러나는 패턴.</p>
 
-    <section id="stack" class="stack">
-      <!-- 카드 1 -->
-      <a class="card" href="./index.html" title="핸드아웃 허브로 이동">
-        <div class="media"><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1400&auto=format&fit=crop" alt="Book" /></div>
-        <div class="veil"></div>
-        <div class="reveal"></div>
-        <div class="meta">
-          <h3>시나리오 & 단서</h3>
-          <p>플롯 요약, 단서 이미지, HTML 핸드아웃</p>
-          <span class="cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>열기</span>
-        </div>
-      </a>
+    <ul class="cards">
+      <li data-active="true">
+        <article>
+          <div class="meta"><h3>시나리오 & 단서</h3><p>플롯 요약, 단서 이미지, HTML 핸드아웃</p><a class="cta" href="./index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg><span>열기</span></a></div>
+          <div class="reveal"></div>
+          <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1400&auto=format&fit=crop" alt="book" />
+        </article>
+      </li>
+      <li>
+        <article>
+          <div class="meta"><h3>NPC 도감</h3><p>초상화와 메모, 관계도</p><a class="cta" href="./index.html#gallery"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg><span>보기</span></a></div>
+          <div class="reveal"></div>
+          <img src="https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=1400&auto=format&fit=crop" alt="portrait" />
+        </article>
+      </li>
+      <li>
+        <article>
+          <div class="meta"><h3>지도 & 프로프</h3><p>현장 사진, 지도, 스크랩</p><a class="cta" href="./index.html#gallery"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg><span>보기</span></a></div>
+          <div class="reveal"></div>
+          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop" alt="map" />
+        </article>
+      </li>
+      <li>
+        <article>
+          <div class="meta"><h3>룰 요약 & 체크리스트</h3><p>모듈, 판정표, GM 메모</p><a class="cta" href="./index.html#viewer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg><span>열기</span></a></div>
+          <div class="reveal"></div>
+          <img src="https://images.unsplash.com/photo-1512295767273-ac109ac3acfa?q=80&w=1400&auto=format&fit=crop" alt="notes" />
+        </article>
+      </li>
+      <li>
+        <article>
+          <div class="meta"><h3>세션 로그</h3><p>요약, 하이라이트, 다음 훅</p><a class="cta" href="./index.html#gallery"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg><span>보기</span></a></div>
+          <div class="reveal"></div>
+          <img src="https://images.unsplash.com/photo-1447069387593-a5de0862481e?q=80&w=1400&auto=format&fit=crop" alt="journal" />
+        </article>
+      </li>
+    </ul>
 
-      <!-- 카드 2 -->
-      <a class="card" href="./index.html#gallery" title="갤러리로 이동">
-        <div class="media"><img src="https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=1400&auto=format&fit=crop" alt="Portrait" /></div>
-        <div class="veil"></div>
-        <div class="reveal"></div>
-        <div class="meta">
-          <h3>NPC 도감</h3>
-          <p>초상화와 메모, 관계도</p>
-          <span class="cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>보기</span>
-        </div>
-      </a>
-
-      <!-- 카드 3 -->
-      <a class="card" href="./index.html#gallery" title="갤러리로 이동">
-        <div class="media"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop" alt="Map" /></div>
-        <div class="veil"></div>
-        <div class="reveal"></div>
-        <div class="meta">
-          <h3>지도 & 프로프</h3>
-          <p>현장 사진, 지도, 스크랩</p>
-          <span class="cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>보기</span>
-        </div>
-      </a>
-
-      <!-- 카드 4 -->
-      <a class="card" href="./index.html#viewer" title="뷰어로 이동">
-        <div class="media"><img src="https://images.unsplash.com/photo-1512295767273-ac109ac3acfa?q=80&w=1400&auto=format&fit=crop" alt="Notes" /></div>
-        <div class="veil"></div>
-        <div class="reveal"></div>
-        <div class="meta">
-          <h3>룰 요약 & 체크리스트</h3>
-          <p>모듈, 판정표, GM 메모</p>
-          <span class="cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>열기</span>
-        </div>
-      </a>
-
-      <!-- 카드 5 -->
-      <a class="card" href="./index.html#gallery" title="갤러리로 이동">
-        <div class="media"><img src="https://images.unsplash.com/photo-1447069387593-a5de0862481e?q=80&w=1400&auto=format&fit=crop" alt="Journal" /></div>
-        <div class="veil"></div>
-        <div class="reveal"></div>
-        <div class="meta">
-          <h3>세션 로그</h3>
-          <p>요약, 하이라이트, 다음 훅</p>
-          <span class="cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>보기</span>
-        </div>
-      </a>
-
-      <!-- 카드 6 -->
-      <a class="card" href="./index.html" title="핸드아웃 허브로 이동">
-        <div class="media"><img src="https://images.unsplash.com/photo-1534790566855-4cb788d389ec?q=80&w=1400&auto=format&fit=crop" alt="Custom" /></div>
-        <div class="veil"></div>
-        <div class="reveal"></div>
-        <div class="meta">
-          <h3>커스텀</h3>
-          <p>원하는 섹션으로 링크를 바꾸세요</p>
-          <span class="cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>열기</span>
-        </div>
-      </a>
-    </section>
-
-    <footer>
-      <small>Vertical hover-disclosure pattern. 커서 Y축에 맞춰 정보가 드러납니다.</small>
-    </footer>
+    <footer><small>원본 아이디어: Animated Hover Disclosures 패턴.</small></footer>
   </div>
 
   <script>
-    // 각 카드에서 마우스 Y 위치를 받아 CSS 변수 --y에 넣어줌
-    document.querySelectorAll('.card').forEach(card=>{
+    // 각 <li> 내부에서 포인터 Y 위치를 CSS 변수 --y 로 반영
+    document.querySelectorAll('.cards > li').forEach(li=>{
       const set = (e)=>{
-        const r = card.getBoundingClientRect();
-        const y = (e.touches? e.touches[0].clientY : e.clientY) - r.top;
-        card.style.setProperty('--y', y + 'px');
+        const r = li.getBoundingClientRect();
+        const y = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
+        li.style.setProperty('--y', y + 'px');
       };
-      card.addEventListener('mousemove', set);
-      card.addEventListener('touchstart', set, {passive:true});
-      card.addEventListener('touchmove', set, {passive:true});
+      li.addEventListener('mousemove', set);
+      li.addEventListener('touchstart', set, {passive:true});
+      li.addEventListener('touchmove', set, {passive:true});
     });
   </script>
 </body>
