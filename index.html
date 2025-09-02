@@ -8,126 +8,107 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#080a0e; --panel:#0f1319; --fg:#e9f2ee; --muted:#a1b0ad; --line:#1c2530; --acc1:#7cffd4; --acc2:#b677ff; --rad:16px }
+    :root{ --bg:#07090c; --panel:#0f1319; --fg:#e7f2ef; --muted:#9eb1ac; --line:#1c2530; --acc1:#7cffd4; --acc2:#b677ff; --rad:16px; --gap:14px }
     *{box-sizing:border-box}
     html,body{margin:0}
     body{font-family:"Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7}
     a{color:inherit;text-decoration:none}
     .wrap{max-width:980px;margin:0 auto;padding:28px 16px 64px}
 
-    h1.fluid{font:900 clamp(28px,6vw,56px)/1.05 "Noto Sans KR",sans-serif;margin:.2em 0 .25em;background:linear-gradient(90deg,var(--acc1),var(--acc2),var(--acc1));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 12s linear infinite;text-shadow:0 0 22px rgba(124,255,212,.12)}
+    h1{font:900 clamp(28px,6vw,56px)/1.05 "Noto Sans KR",sans-serif;margin:.25em 0 .3em;letter-spacing:.3px;background:linear-gradient(90deg,var(--acc1),var(--acc2),var(--acc1));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 12s linear infinite}
     @keyframes shine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
-    p.lede{color:var(--muted);margin:0 0 12px}
+    .lede{margin:0 0 12px;color:var(--muted)}
 
-    /* ===== vertical list ===== */
-    ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
-    li{position:relative;border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;background:var(--panel)}
-    li[data-active="true"]{outline:2px solid rgba(124,255,212,.35)}
-    article{position:relative;min-height:240px;isolation:isolate}
+    /* ===== vertical stack ===== */
+    ul.stack{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--gap)}
+    .stack > li{position:relative;border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;background:var(--panel)}
+    .stack > li article{position:relative;min-height:240px;isolation:isolate}
 
     /* background */
-    article img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;filter:saturate(1.05) contrast(1.05)}
+    .media{position:absolute;inset:0;opacity:.55}
+    .media img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.05)}
+    .veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.55) 80%)}
 
-    /* pointer-following band */
-    article::after{content:"";position:absolute;left:0;right:0;top:var(--y,50%);transform:translateY(-50%);height:112px;pointer-events:none;opacity:0;transition:opacity .25s ease;background:linear-gradient(180deg,rgba(124,255,212,0),rgba(124,255,212,.18),rgba(124,255,212,0));border-top:1px solid rgba(124,255,212,.35);border-bottom:1px solid rgba(124,255,212,.35)}
-    li:hover article::after{opacity:1}
+    /* ===== hover band that spreads sideways ===== */
+    .reveal{position:absolute;left:50%;top:var(--y,50%);transform:translate(-50%,-50%) scaleX(0);transform-origin:center;opacity:0;transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .2s ease;
+      width:100%;height:112px;pointer-events:none;
+      background:linear-gradient(180deg, rgba(124,255,212,0), rgba(124,255,212,.22), rgba(124,255,212,0));
+      border-top:1px solid rgba(124,255,212,.35);border-bottom:1px solid rgba(124,255,212,.35)
+    }
+    .stack > li:hover .reveal{opacity:1;transform:translate(-50%,-50%) scaleX(1)}
 
-    /* floating content (follows the band) */
-    article h3, article p, article a{position:absolute;left:18px;z-index:2}
-    article h3{top:calc(var(--y,50%) - 42px);margin:0;font:800 22px/1.1 "Noto Sans KR",sans-serif;text-shadow:0 1px 0 rgba(0,0,0,.35)}
-    article p{top:calc(var(--y,50%) - 8px);margin:0;color:#d7f5ee;max-width:62ch}
-    article a{top:calc(var(--y,50%) + 58px);display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--acc1),var(--acc2));color:#0b0d10;border-radius:999px;padding:8px 12px;font-weight:800;width:max-content}
-    article a svg{width:18px;height:18px}
+    /* content pinned near the band */
+    .meta{position:absolute;left:18px;top:var(--y,50%);transform:translateY(calc(-50% - 6px));display:flex;flex-direction:column;gap:6px;z-index:2;transition:opacity .25s ease, transform .25s ease}
+    .meta h3{margin:0;font:800 22px/1.1 "Noto Sans KR",sans-serif;text-shadow:0 1px 0 rgba(0,0,0,.35)}
+    .meta p{margin:0;color:#d7f5ee;max-width:60ch}
+    .cta{display:inline-flex;align-items:center;gap:8px;color:#0b0d10;background:linear-gradient(180deg,var(--acc1),var(--acc2));border-radius:999px;padding:8px 12px;font-weight:800;width:max-content;margin-top:6px}
+    .cta svg{width:18px;height:18px}
 
-    article svg{position:absolute;right:16px;top:16px;width:48px;height:48px;opacity:.9}
+    /* subtle lift on hover */
+    .stack > li{transition:transform .25s ease}
+    .stack > li:hover{transform:translateY(-2px)}
 
-    @media (max-width:720px){ article{min-height:220px} article h3{font-size:18px} article p{font-size:14px;max-width:46ch} article::after{height:92px} }
+    @media (max-width:720px){ .meta h3{font-size:18px} .meta p{font-size:14px} .reveal{height:92px} .stack > li article{min-height:220px} }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1 class="fluid">the craft of ui</h1>
-    <p class="lede">Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation — it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.</p>
+    <h1>세로 스택 — 커서 올리면 옆으로 퍼짐</h1>
+    <p class="lede">각 항목에 마우스를 올리면, 커서 높이에서 좌우로 퍼지는 하이라이트가 펼쳐지고 텍스트가 그 위치에 맞춰 고정됩니다.</p>
 
-    <ul>
-      <li data-active="true">
+    <ul class="stack" id="stack">
+      <li>
         <article>
-          <h3>The Craft</h3>
-          <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z" /><path d="M11 3 8 9l4 13 4-13-3-6" /><path d="M2 9h20" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=12" alt="" />
+          <div class="meta"><h3>시나리오 & 단서</h3><p>플롯 요약, 단서 이미지, HTML 핸드아웃</p><a class="cta" href="./index.html">열기</a></div>
+          <span class="reveal"></span>
+          <div class="veil"></div>
+          <div class="media"><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1400&auto=format&fit=crop" alt="book" /></div>
         </article>
       </li>
       <li>
         <article>
-          <h3>CSS Animation</h3>
-          <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 3v18" /><path d="M3 7.5h4" /><path d="M3 12h18" /><path d="M3 16.5h4" /><path d="M17 3v18" /><path d="M17 7.5h4" /><path d="M17 16.5h4" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=17" alt="" />
+          <div class="meta"><h3>NPC 도감</h3><p>초상화와 메모, 관계도</p><a class="cta" href="./index.html#gallery">보기</a></div>
+          <span class="reveal"></span>
+          <div class="veil"></div>
+          <div class="media"><img src="https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=1400&auto=format&fit=crop" alt="portrait" /></div>
         </article>
       </li>
       <li>
         <article>
-          <h3>SVG Filters</h3>
-          <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=19" alt="" />
+          <div class="meta"><h3>지도 & 프로프</h3><p>현장 사진, 지도, 스크랩</p><a class="cta" href="./index.html#gallery">보기</a></div>
+          <span class="reveal"></span>
+          <div class="veil"></div>
+          <div class="media"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop" alt="map" /></div>
         </article>
       </li>
       <li>
         <article>
-          <h3>Scroll Animation</h3>
-          <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4" /><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=42" alt="" />
-        </article>
-      </li>
-      <li>
-        <article>
-          <h3>Taming Canvas</h3>
-          <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=128" alt="" />
-        </article>
-      </li>
-      <li>
-        <article>
-          <h3>Layout Tricks</h3>
-          <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72" /><path d="m14 7 3 3" /><path d="M5 6v4" /><path d="M19 14v4" /><path d="M10 2v2" /><path d="M7 8H3" /><path d="M21 16h-4" /><path d="M11 3H9" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=56" alt="" />
-        </article>
-      </li>
-      <li>
-        <article>
-          <h3>Mastering Time</h3>
-          <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></svg>
-          <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=39" alt="" />
+          <div class="meta"><h3>룰 요약 & 체크리스트</h3><p>모듈, 판정표, GM 메모</p><a class="cta" href="./index.html#viewer">열기</a></div>
+          <span class="reveal"></span>
+          <div class="veil"></div>
+          <div class="media"><img src="https://images.unsplash.com/photo-1512295767273-ac109ac3acfa?q=80&w=1400&auto=format&fit=crop" alt="notes" /></div>
         </article>
       </li>
     </ul>
   </div>
 
   <script>
-    // track pointer Y within each <li> and set --y
-    document.querySelectorAll('ul > li').forEach(li=>{
+    // 각 항목 안에서 포인터 Y를 추적해 CSS 변수 --y에 반영
+    document.querySelectorAll('.stack > li').forEach(li=>{
       const set = (e)=>{
         const r = li.getBoundingClientRect();
         const y = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
         li.style.setProperty('--y', y + 'px');
       };
       li.addEventListener('mousemove', set);
+      li.addEventListener('mouseenter', set);
       li.addEventListener('touchstart', set, {passive:true});
       li.addEventListener('touchmove', set, {passive:true});
     });
+
+    // 퍼지는 방향을 한쪽으로만 하고 싶다면 아래를 참고:
+    // .reveal { transform-origin:left center; } // 왼쪽에서 오른쪽으로
+    // .reveal { transform-origin:right center; } // 오른쪽에서 왼쪽으로
   </script>
 </body>
 </html>
