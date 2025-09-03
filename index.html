@@ -3,217 +3,250 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — vertical hover spread (book open)</title>
+  <title>the craft of ui — book open cards</title>
+  <meta name="description" content="TRPG / 핸드아웃용 카드 보관함. 서재 느낌의 세리프 헤드라인 + 가독성 좋은 본문 폰트, 심해 드리프트 배경, 호버 시 책 표지가 열리는 카드." />
+
+  <!-- Normalize -->
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/normalize.css@8.0.1/normalize.css">
+
+  <!-- Fonts: Headline Serif + Body Sans (KR/EN) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+
   <style>
-    @import url('https://unpkg.com/normalize.css') layer(normalize);
-    @layer normalize, base, demo;
+    /* ---------------------- Font Theme ---------------------- */
+    :root{
+      --font-heading: "Noto Serif KR","Noto Serif",serif;
+      --font-body: "Pretendard Variable","Pretendard","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
 
-    /* ===================== BASE: 타이핑 제목 + 심해 드리프트 배경 ===================== */
-    @layer base {
-      :root{
-        --font-size-min:16; --font-size-max:20;
-        --font-ratio-min:1.2; --font-ratio-max:1.33;
-        --font-width-min:375; --font-width-max:1500;
-        --glow-rgb: 79,255,212;
-      }
-      html{ color-scheme: light dark; }
-      *,*::before,*::after{ box-sizing: border-box; }
-      body{
-        display:grid; place-items:center; min-height:100vh;
-        font-family:'SF Pro Text','Helvetica Neue',Arial,system-ui;
-      }
-
-      /* Animated Abyss Drift (안개 + 부유물) */
-      body { position: relative; }
-      .bg-abyss-anim{
-        background:
-          radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
-          radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
-          linear-gradient(180deg, #08131a 0%, #060d13 60%, #020609 100%);
-        overflow-x: clip;
-      }
-      .bg-abyss-anim::before{
-        content:""; position: fixed; inset: -12% -8%;
-        pointer-events:none; z-index:0;
-        background:
-          radial-gradient(60% 40% at 55% 10%, rgba(210,255,255,.06), transparent 60%),
-          radial-gradient(65% 45% at 45% 95%, rgba(120,200,220,.05), transparent 60%);
-        filter: blur(10px) contrast(1.02);
-        mix-blend-mode: screen; opacity:.65;
-        animation: abyssFog 46s ease-in-out infinite alternate;
-      }
-      .bg-abyss-anim::after{
-        content:""; position: fixed; inset:0; pointer-events:none; z-index:0; opacity:.22;
-        mix-blend-mode: screen;
-        background-image:
-          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='white' opacity='0.38'><circle cx='12' cy='20' r='1.1'/><circle cx='48' cy='36' r='0.9'/><circle cx='88' cy='18' r='1.2'/><circle cx='22' cy='72' r='1.0'/><circle cx='66' cy='82' r='0.8'/><circle cx='98' cy='60' r='0.9'/><circle cx='40' cy='102' r='0.9'/><circle cx='8' cy='96' r='0.7'/></g></svg>"),
-          url("data:image/svg+xml;utf8/<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='white' opacity='0.28'><circle cx='22' cy='26' r='1.4'/><circle cx='94' cy='40' r='1.6'/><circle cx='132' cy='22' r='1.3'/><circle cx='56' cy='116' r='1.5'/><circle cx='144' cy='96' r='1.2'/><circle cx='26' cy='144' r='1.3'/></g></svg>");
-        background-repeat: repeat, repeat;
-        background-size: 220px 220px, 300px 300px;
-        background-position: 0 0, 120px 90px;
-        animation: abyssMotes 90s linear infinite;
-      }
-      @media (prefers-reduced-motion: reduce){
-        .bg-abyss-anim::before, .bg-abyss-anim::after{ animation:none; }
-      }
-      @keyframes abyssFog{
-        0%{ transform: translate3d(0,-1.5%,0) scale(1.02) rotate(.2deg); }
-        50%{ transform: translate3d(0, 1.5%,0) scale(1.04) rotate(0deg); }
-        100%{ transform: translate3d(0,-1.2%,0) scale(1.01) rotate(-.2deg); }
-      }
-      @keyframes abyssMotes{
-        0%{ background-position: 0 0, 120px 90px; }
-        100%{ background-position: 0 -900px, 120px -1200px; }
-      }
-
-      /* 타이핑 제목 */
-      #title.typing::after{
-        content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
-        background:currentColor; animation: caret 1s steps(1) infinite; vertical-align:-.1em;
-      }
-      @keyframes caret{ 50%{opacity:0} }
-      .typing-char{
-        display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
-        filter:blur(var(--b,1.2px));
-        animation: typeIn .42s cubic-bezier(.2,.8,.2,1) forwards, glow 1.8s ease-out forwards;
-      }
-      @keyframes typeIn{ to{opacity:1; transform:translateY(0) rotate(0) scale(1); filter:blur(0)} }
-      @keyframes glow{
-        0%{ text-shadow: 0 0 .60em rgba(var(--glow-rgb), .40), 0 0 .18em rgba(var(--glow-rgb), .25); }
-        65%{ text-shadow: 0 0 .40em rgba(var(--glow-rgb), .28); }
-        100%{ text-shadow: 0 0 .25em rgba(var(--glow-rgb), .18); }
-      }
+      --glow-rgb: 79,255,212; /* 타이핑 글자 은은한 글로우 색 */
+      --gap: 8px;
+      --base: clamp(2rem, 8cqi, 80px);
+      --easing: cubic-bezier(.2,.8,.2,1);
+      --speed: .6s;
     }
 
-    /* ===================== DEMO: 그리드 + ‘책 열림’ 카드 ===================== */
-    @layer demo {
-      body { gap:1rem; padding-block:2rem; }
-      h1, p { margin:0; }
-      h1.fluid{ --font-size-min:22; --font-level:4.25; }
-      h3{ white-space:nowrap; margin:0; }
+    html{ color-scheme: light dark; text-rendering: optimizeLegibility; }
+    *,*::before,*::after{ box-sizing: border-box; }
 
-      body > p{
-        width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; font-family:monospace;
-        margin-bottom:4rem; line-height:1.5; opacity:.8;
-        @media (max-width:768px){ text-align:center; }
-      }
+    body{
+      font-family: var(--font-body);
+      letter-spacing: .01em;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
 
-      :root{
-        --gap:8px; --base: clamp(2rem, 8cqi, 80px);
-        --easing: cubic-bezier(.2,.8,.2,1); --speed:.6s;
-      }
+      min-height: 100vh;
+      display: grid;
+      place-items: start center;
+      gap: 1rem;
+      padding-block: 2.5rem 4rem;
 
-      ul{
-        display:grid; container-type:inline-size;
-        grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
-        gap:var(--gap); list-style:none; padding:0; margin:0;
-        height: clamp(300px, 40dvh, 474px);
-        width: 820px; max-width: calc(100% - 4rem);
-        transition: grid-template-columns var(--speed) var(--easing);
-      }
-      li{
-        position:relative; overflow:visible; min-width:var(--base);
-        border-radius:10px; border:1px solid rgba(255,255,255,.14);
-        background: #0a0f14; /* fallback */
-        perspective: 1200px;               /* 3D 공간 */
-        transform-style: preserve-3d;
-        box-shadow: 0 10px 26px rgba(0,0,0,.35);
-      }
+      position: relative;
+      overflow-x: clip;
 
-      /* 책(3D) */
-      article.book{
-        --cover:#0d141c;
-        --cover-edge:#0f1a23;
-        --paper:#0e151c;   /* 어두운 종이 톤 */
-        --shine: rgba(255,255,255,.18);
-        position:absolute; inset:0; border-radius:10px; overflow:hidden;
-        transform-style: preserve-3d;
-      }
-      /* 내용층(페이지 위 컨텐트) */
-      .book .content{
-        position:absolute; inset:0; padding:12px 14px 14px 14px; z-index:1;
-        display:flex; flex-direction:column; justify-content:flex-end; gap:.7rem;
-        color:#eaf4ff;
-        background:
-          linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)),
-          radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%),
-          var(--paper);
-      }
-      .book .content img{
-        position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.35; filter:grayscale(.2) contrast(1.05);
-        mix-blend-mode: luminosity; z-index:-1;
-      }
-      .book .content h3{
-        position:absolute; top:10px; left:14px; transform-origin:0 50%; rotate:90deg; font-size:.95rem; font-weight:400; letter-spacing:.08em; opacity:.9;
-      }
-      .book .content p{ font: 13px/1.35 monospace; opacity:.9; margin-top:auto; }
-      .book .content a{ color:inherit; font-weight:600; width:fit-content; }
-
-      /* 표지(앞표지) */
-      .book .cover{
-        position:absolute; inset:0; border-radius:10px;
-        background:
-          linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25)),
-          radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,.10), transparent 60%),
-          var(--cover);
-        border:1px solid rgba(255,255,255,.15);
-        transform-origin: left center;
-        transform: translateZ(24px) rotateY(0deg);
-        transition: transform .7s var(--easing), box-shadow .7s var(--easing), filter .7s var(--easing);
-        box-shadow: 2px 0 0 var(--cover-edge), 0 6px 20px rgba(0,0,0,.35);
-      }
-      /* 표지 광택 라인 */
-      .book .cover::after{
-        content:""; position:absolute; inset:-12% 40% -12% -40%;
-        background: linear-gradient(90deg, transparent 0 30%, var(--shine) 50%, transparent 70%);
-        transform: skewX(-12deg); filter: blur(8px); opacity:.0; pointer-events:none;
-        transition: opacity .6s var(--easing);
-      }
-
-      /* 페이지 두께(스택) */
-      .book .pages{
-        position:absolute; inset:6px 6px 6px 10px; border-radius:8px; overflow:hidden;
-        background:
-          repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px),
-          linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)),
-          var(--paper);
-        box-shadow: inset -10px 0 16px rgba(0,0,0,.25);
-        transform: translateZ(12px);
-      }
-      /* 책 등(spine) */
-      .book::before{
-        content:""; position:absolute; left:0; top:0; bottom:0; width:10px; border-radius:10px 0 0 10px;
-        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2)), #0b131a;
-        box-shadow: inset -1px 0 0 rgba(255,255,255,.15), inset 1px 0 0 rgba(0,0,0,.5);
-        transform: translateZ(25px);
-      }
-
-      /* Hover: 표지가 열린다 */
-      li:hover .book .cover,
-      li:focus-within .book .cover{
-        transform: translateZ(24px) rotateY(-72deg);
-        box-shadow: 18px 6px 28px rgba(0,0,0,.45);
-        filter: brightness(1.02);
-      }
-      li:hover .book .cover::after{ opacity:.9; }
-
-      /* 그리드 인터랙션과 텍스트 페이드(기존 패턴 유지) */
-      li :is(h3, p){ opacity:0; transition: opacity calc(var(--speed) * 1.2) var(--easing); }
-      [data-active='true'] :is(h3, p){ opacity:1; transition-delay:.2s; }
-      a{ text-decoration:none; }
-      a:is(:hover,:focus-visible){ text-decoration:underline; text-underline-offset:4px; }
+      /* Abyss base gradient */
+      background:
+        radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
+        radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
+        linear-gradient(180deg, #08131a 0%, #060d13 60%, #020609 100%);
     }
+
+    /* Animated mist (before) */
+    body::before{
+      content:""; position: fixed; inset: -12% -8%;
+      pointer-events:none; z-index:0;
+      background:
+        radial-gradient(60% 40% at 55% 10%, rgba(210,255,255,.06), transparent 60%),
+        radial-gradient(65% 45% at 45% 95%, rgba(120,200,220,.05), transparent 60%);
+      filter: blur(10px) contrast(1.02);
+      mix-blend-mode: screen; opacity:.65;
+      animation: abyssFog 46s ease-in-out infinite alternate;
+    }
+
+    /* Floating fine particles (after) */
+    body::after{
+      content:""; position: fixed; inset:0; pointer-events:none; z-index:0; opacity:.22;
+      mix-blend-mode: screen;
+      background-image:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='white' opacity='0.38'><circle cx='12' cy='20' r='1.1'/><circle cx='48' cy='36' r='0.9'/><circle cx='88' cy='18' r='1.2'/><circle cx='22' cy='72' r='1.0'/><circle cx='66' cy='82' r='0.8'/><circle cx='98' cy='60' r='0.9'/><circle cx='40' cy='102' r='0.9'/><circle cx='8' cy='96' r='0.7'/></g></svg>"),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='white' opacity='0.28'><circle cx='22' cy='26' r='1.4'/><circle cx='94' cy='40' r='1.6'/><circle cx='132' cy='22' r='1.3'/><circle cx='56' cy='116' r='1.5'/><circle cx='144' cy='96' r='1.2'/><circle cx='26' cy='144' r='1.3'/></g></svg>");
+      background-repeat: repeat, repeat;
+      background-size: 220px 220px, 300px 300px;
+      background-position: 0 0, 120px 90px;
+      animation: abyssMotes 90s linear infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      body::before, body::after{ animation:none; }
+    }
+
+    @keyframes abyssFog{
+      0%{ transform: translate3d(0,-1.5%,0) scale(1.02) rotate(.2deg); }
+      50%{ transform: translate3d(0, 1.5%,0) scale(1.04) rotate(0deg); }
+      100%{ transform: translate3d(0,-1.2%,0) scale(1.01) rotate(-.2deg); }
+    }
+    @keyframes abyssMotes{
+      0%{ background-position: 0 0, 120px 90px; }
+      100%{ background-position: 0 -900px, 120px -1200px; }
+    }
+
+    /* ---------------------- Typing Headline ---------------------- */
+    #title{
+      margin: 0;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      letter-spacing: .02em;
+      font-size: clamp(24px, 6vw, 48px);
+      color: #eaf2f9;
+      z-index: 1;
+    }
+    #title.typing::after{
+      content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
+      background:currentColor; animation: caret 1s steps(1) infinite; vertical-align:-.1em;
+    }
+    @keyframes caret{ 50%{opacity:0} }
+    .typing-char{
+      display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
+      filter:blur(var(--b,1.2px));
+      animation: typeIn .42s cubic-bezier(.2,.8,.2,1) forwards, glow 1.8s ease-out forwards;
+    }
+    @keyframes typeIn{ to{opacity:1; transform:translateY(0) rotate(0) scale(1); filter:blur(0)} }
+    @keyframes glow{
+      0%{ text-shadow: 0 0 .60em rgba(var(--glow-rgb), .40), 0 0 .18em rgba(var(--glow-rgb), .25); }
+      65%{ text-shadow: 0 0 .40em rgba(var(--glow-rgb), .28); }
+      100%{ text-shadow: 0 0 .25em rgba(var(--glow-rgb), .18); }
+    }
+
+    /* ---------------------- Intro paragraph ---------------------- */
+    .intro{
+      margin: 0;
+      width: 74ch; max-width: calc(100% - 4rem);
+      text-wrap: balance;
+      color: #cfe0ee;
+      z-index: 1;
+    }
+
+    /* ---------------------- Grid + Book Cards ---------------------- */
+    ul{
+      list-style: none; padding: 0; margin: 2rem 0 0;
+      width: 820px; max-width: calc(100% - 4rem);
+      height: clamp(300px, 40dvh, 474px);
+      display: grid; container-type: inline-size;
+      grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
+      gap: var(--gap);
+      transition: grid-template-columns var(--speed) var(--easing);
+      z-index: 1;
+    }
+
+    li{
+      position: relative; overflow: visible; min-width: var(--base);
+      border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
+      background: #0a0f14; /* fallback */
+      perspective: 1200px; transform-style: preserve-3d;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+    }
+
+    article.book{
+      --cover:#0d141c;
+      --cover-edge:#0f1a23;
+      --paper:#0e151c;
+
+      position:absolute; inset:0; border-radius:10px; overflow:hidden;
+      transform-style: preserve-3d;
+      color:#eaf4ff;
+    }
+
+    /* 내용 */
+    .book .content{
+      position:absolute; inset:0; padding:12px 14px 14px; z-index:1;
+      display:flex; flex-direction:column; justify-content:flex-end; gap:.7rem;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)),
+        radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%),
+        var(--paper);
+    }
+    .book .content img{
+      position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.35;
+      filter:grayscale(.2) contrast(1.05); mix-blend-mode: luminosity; z-index:-1;
+    }
+    .book .content h3{
+      position:absolute; top:10px; left:14px;
+      transform-origin:0 50%; rotate:90deg;
+      font-family: var(--font-heading);
+      font-weight: 600; letter-spacing: .12em; font-size:.95rem; opacity:.9;
+      margin:0;
+    }
+    .book .content p{
+      font-family: var(--font-body); font-weight: 400; font-size: 14.5px; line-height:1.45; opacity:.9; margin:0;
+    }
+    .book .content a{ color:inherit; font-weight:600; width:fit-content; text-decoration:none; }
+    .book .content a:is(:hover,:focus-visible){ text-decoration:underline; text-underline-offset:4px; }
+
+    /* 페이지 스택 */
+    .book .pages{
+      position:absolute; inset:6px 6px 6px 10px; border-radius:8px; overflow:hidden;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)),
+        var(--paper);
+      box-shadow: inset -10px 0 16px rgba(0,0,0,.25);
+      transform: translateZ(12px);
+    }
+
+    /* 책 등 */
+    .book::before{
+      content:""; position:absolute; left:0; top:0; bottom:0; width:10px; border-radius:10px 0 0 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2)), #0b131a;
+      box-shadow: inset -1px 0 0 rgba(255,255,255,.15), inset 1px 0 0 rgba(0,0,0,.5);
+      transform: translateZ(25px);
+    }
+
+    /* 앞표지 */
+    .book .cover{
+      position:absolute; inset:0; border-radius:10px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25)),
+        radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,.10), transparent 60%),
+        var(--cover);
+      border:1px solid rgba(255,255,255,.15);
+      transform-origin: left center;
+      transform: translateZ(24px) rotateY(0deg);
+      transition: transform .7s var(--easing), box-shadow .7s var(--easing), filter .7s var(--easing);
+      box-shadow: 2px 0 0 var(--cover-edge), 0 6px 20px rgba(0,0,0,.35);
+    }
+    /* 표지 광택 */
+    .book .cover::after{
+      content:""; position:absolute; inset:-12% 40% -12% -40%;
+      background: linear-gradient(90deg, transparent 0 30%, rgba(255,255,255,.18) 50%, transparent 70%);
+      transform: skewX(-12deg); filter: blur(8px); opacity:.0; pointer-events:none;
+      transition: opacity .6s var(--easing);
+    }
+
+    /* Hover: 책 열림 */
+    li:hover .book .cover,
+    li:focus-within .book .cover{
+      transform: translateZ(24px) rotateY(-72deg);
+      box-shadow: 18px 6px 28px rgba(0,0,0,.45);
+      filter: brightness(1.02);
+    }
+    li:hover .book .cover::after{ opacity:.9; }
+
+    /* 활성 카드의 텍스트 페이드 */
+    li :is(h3, p){ opacity:0; transition: opacity calc(var(--speed) * 1.2) var(--easing); }
+    [data-active='true'] :is(h3, p){ opacity:1; transition-delay:.2s; }
   </style>
 </head>
-
-<body class="bg-abyss-anim">
+<body>
   <!-- 제목: 문구 바꾸려면 data-text 수정 -->
-  <h1 id="title" class="fluid" data-text="the craft of ui" aria-label="the craft of ui"></h1>
+  <h1 id="title" data-text="the craft of ui" aria-label="the craft of ui"></h1>
 
-  <p>
-    Unlock the art and science of interface development. This isn’t just about
-    pushing pixels or following documentation — it’s about mastering the
-    tools, understanding the nuances, and shaping experiences with intention.
+  <p class="intro">
+    Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation —
+    it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.
   </p>
 
   <ul>
@@ -237,7 +270,6 @@
           <h3>CSS Animation</h3>
           <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
           <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=17" alt="">
         </div>
         <div class="cover" aria-hidden="true"></div>
       </article>
@@ -250,7 +282,6 @@
           <h3>SVG Filters</h3>
           <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
           <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=19" alt="">
         </div>
         <div class="cover" aria-hidden="true"></div>
       </article>
@@ -263,7 +294,6 @@
           <h3>Scroll Animation</h3>
           <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
           <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=42" alt="">
         </div>
         <div class="cover" aria-hidden="true"></div>
       </article>
@@ -276,7 +306,6 @@
           <h3>Taming Canvas</h3>
           <p>Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.</p>
           <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=128" alt="">
         </div>
         <div class="cover" aria-hidden="true"></div>
       </article>
@@ -289,7 +318,6 @@
           <h3>Layout Tricks</h3>
           <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
           <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=56" alt="">
         </div>
         <div class="cover" aria-hidden="true"></div>
       </article>
@@ -302,7 +330,6 @@
           <h3>Mastering Time</h3>
           <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
           <a href="#"><span>Watch now</span></a>
-          <img src="https://picsum.photos/720/720?random=39" alt="">
         </div>
         <div class="cover" aria-hidden="true"></div>
       </article>
@@ -310,7 +337,7 @@
   </ul>
 
   <script>
-    /* ===== 제목 타이핑 ===== */
+    /* ===== Typing Title ===== */
     (function(){
       const el = document.getElementById('title');
       const full = (el.dataset.text || el.textContent || 'the craft of ui').trim();
@@ -329,9 +356,10 @@
       setTimeout(step,350);
     })();
 
-    /* ===== 카드 스프레드(그리드 확장) ===== */
+    /* ===== Grid spread on hover ===== */
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
+
     function setIndex(e){
       const li = e.target.closest('li'); if(!li) return;
       const idx = [...items].indexOf(li);
@@ -341,9 +369,11 @@
       }).join(' ');
       list.style.setProperty('grid-template-columns', cols);
     }
+
     list.addEventListener('pointermove', setIndex);
     list.addEventListener('click', setIndex);
     list.addEventListener('focus', setIndex, true);
+
     function resync(){
       const w = Math.max(...[...items].map(i=>i.offsetWidth));
       list.style.setProperty('--article-width', w);
