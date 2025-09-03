@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>the craft of ui — book cards + random glitch</title>
+<title>the craft of ui — book cards + random glitch (fixed)</title>
 
 <!-- 기본 리셋 -->
 <link rel="stylesheet" href="https://unpkg.com/normalize.css@8.0.1/normalize.css">
@@ -15,9 +15,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 
 <style>
-/* =========================
-   전역 변수/기본값
-   ========================= */
+/* ============ 전역 변수/기본값 ============ */
 :root{
   --font-heading:"Noto Serif KR","Noto Serif",serif;       /* 제목용 */
   --font-body:"Pretendard Variable","Pretendard","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif; /* 본문용 */
@@ -30,9 +28,7 @@
 *,*:before,*:after{box-sizing:border-box}
 html{color-scheme:light dark}
 
-/* =========================
-   배경(심해 안개 + 수면 광택 + 부유하는 입자)
-   ========================= */
+/* ============ 배경(심해 안개 + 수면 광택 + 부유하는 입자) ============ */
 body{
   font-family:var(--font-body);
   line-height:1.6; letter-spacing:.01em;
@@ -40,13 +36,11 @@ body{
   display:grid; place-items:start center; gap:1rem;
   padding-block:2.5rem 4rem; overflow-x:clip; position:relative;
 
-  /* 안개/수면 광택 베이스 그라디언트 */
   background:
     radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
     radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
     linear-gradient(180deg,#08131a 0%,#060d13 60%,#020609 100%);
 }
-/* 상부/하부 안개 레이어 */
 body::before{
   content:""; position:fixed; inset:-12% -8%; z-index:0; pointer-events:none;
   background:
@@ -55,7 +49,6 @@ body::before{
   filter:blur(10px); mix-blend-mode:screen; opacity:.65;
   animation:abyssFog 46s ease-in-out infinite alternate;
 }
-/* 은은한 부유 입자(점) */
 body::after{
   content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.22; mix-blend-mode:screen;
   background-image:
@@ -69,20 +62,16 @@ body::after{
 @keyframes abyssFog{0%{transform:translate3d(0,-1.5%,0) scale(1.02)}50%{transform:translate3d(0,1.5%,0) scale(1.04)}100%{transform:translate3d(0,-1.2%,0) scale(1.01)}}
 @keyframes abyssMotes{0%{background-position:0 0, 120px 90px}100%{background-position:0 -900px, 120px -1200px}}
 
-/* =========================
-   타이핑 헤더
-   ========================= */
+/* ============ 타이핑 헤더 ============ */
 #title{
   margin:0; text-align:center; z-index:1;
   font-family:var(--font-heading); font-weight:700; letter-spacing:.02em;
   font-size:clamp(24px,6vw,48px); color:#eaf2f9;
 }
-/* 깜빡이는 캐럿 */
 #title.typing::after{
   content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
   background:currentColor; animation:caret 1s steps(1) infinite; vertical-align:-.1em;
 }
-/* 개별 글자 등장 */
 .typing-char{
   display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
   filter:blur(var(--b,1.2px));
@@ -97,15 +86,14 @@ body::after{
   text-wrap:balance; color:#cfe0ee; z-index:1; text-align:center
 }
 
-/* =========================
-   카드 그리드(세로 → 가로 확장)
-   ========================= */
+/* ============ 카드 그리드(세로 → 가로 확장) ============ */
 ul{
   list-style:none; padding:0; margin:2rem 0 0;
   width:820px; max-width:calc(100% - 4rem);
   height:clamp(300px,40dvh,474px);
   display:grid; container-type:inline-size;
-  grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr;   /* 첫 카드 확장 기본 */
+  /* 초기엔 JS가 '1fr 1fr …'로 채움. (여기 값은 fallback) */
+  grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   gap:var(--gap);
   transition:grid-template-columns var(--speed) var(--easing);
   z-index:1;
@@ -116,9 +104,7 @@ li{
   box-shadow:0 10px 26px rgba(0,0,0,.35);
 }
 
-/* =========================
-   책(표지/내지) 레이아웃
-   ========================= */
+/* ============ 책(표지/내지) 레이아웃 ============ */
 article.book{--cover:#0d141c; --cover-edge:#0f1a23; --paper:#0e151c;
   position:absolute; inset:0; border-radius:10px; overflow:hidden; transform-style:preserve-3d; color:#eaf4ff;
 }
@@ -130,6 +116,14 @@ article.book{--cover:#0d141c; --cover-edge:#0f1a23; --paper:#0e151c;
     linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)),
     radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%),
     var(--paper);
+}
+/* ⛳️ 기본: 활성 아니면 내용 숨김(호버/포커스되면 나타남) */
+li:not([data-active="true"]) .book .content{
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity .3s var(--easing), visibility 0s linear .3s;
+}
+li[data-active="true"] .book .content{
+  opacity:1; visibility:visible; transition-delay:0s;
 }
 /* 배경 이미지(있다면) */
 .book .content img{
@@ -171,21 +165,22 @@ article.book{--cover:#0d141c; --cover-edge:#0f1a23; --paper:#0e151c;
   background:linear-gradient(90deg, transparent 0 30%, rgba(255,255,255,.18) 50%, transparent 70%);
   transform:skewX(-12deg); filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .6s var(--easing)
 }
-/* 표지 세로제목(세리프 세로쓰기) */
+/* ✅ 표지 세로제목(세리프, 세로쓰기) — 활성되면 사라짐 */
 .book .cover::before{
   content:attr(data-title); position:absolute; left:12px; top:10px;
   writing-mode:vertical-rl; text-orientation:mixed;
   font-family:var(--font-heading); font-weight:700; font-size:.95rem; letter-spacing:.08em;
-  color:rgba(255,255,255,.78); opacity:.85; pointer-events:none; transition:opacity .35s var(--easing), transform .35s var(--easing);
+  color:rgba(255,255,255,.78); opacity:.9; pointer-events:none; transition:opacity .35s var(--easing), transform .35s var(--easing);
 }
+li[data-active="true"] .book .cover::before{opacity:0; transform:translateX(-6px)}
+
 /* 펼칠 때 표지 회전 + 스윕 강조 */
 li:hover .book .cover, li:focus-within .book .cover{
   transform:translateZ(24px) rotateY(-72deg); box-shadow:18px 6px 28px rgba(0,0,0,.45); filter:brightness(1.02)
 }
 li:hover .book .cover::after{opacity:.9}
 
-/* 표지 열리면 세로제목 숨기고, 안쪽 제목/링크는 나타남 */
-li[data-active="true"] .book .cover::before{opacity:0; transform:translateX(-6px)}
+/* 안쪽 제목/링크의 등장 타이밍 */
 .book .content h3{
   position:absolute; top:12px; left:16px; right:16px; margin:0;
   font-family:var(--font-heading); font-weight:800; letter-spacing:.02em; font-size:1rem;
@@ -196,10 +191,7 @@ li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
 .book .content a.show{opacity:1; transform:translateY(0)}
 .book .content a:is(:hover,:focus-visible){text-decoration:underline; text-underline-offset:4px}
 
-/* =========================
-   신비한 글자 등장 + 글리치 보정
-   ========================= */
-/* 문단 전체에 은은한 안개/광택 오버레이 (글리치 중) */
+/* ============ 신비한 글자 등장 + 긴 글리치 ============ */
 .desc{position:relative}
 .desc.playing::after{
   content:""; position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen; opacity:.55;
@@ -211,14 +203,13 @@ li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
 }
 @keyframes wisp{0%{transform:translate(-6%,2%)}100%{transform:translate(6%,-2%)}}
 
-/* 자모 단위 등장(흐림→선명) */
 .reveal-char{
   display:inline-block; opacity:0; filter:blur(2px); transform:translateY(6px) scale(.985);
   animation:mysticIn .6s var(--easing) forwards
 }
 @keyframes mysticIn{to{opacity:1; filter:blur(0); transform:translateY(0) scale(1)}}
 
-/* 글리치 중에는 RGB 분리(의도적으로) */
+/* 글리치 중 RGB 분리 */
 .reveal-char.gl{ position:relative; }
 .reveal-char.gl::before,
 .reveal-char.gl::after{
@@ -239,9 +230,9 @@ li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
   tools, understanding the nuances, and shaping experiences with intention.
 </p>
 
-<!-- 카드 목록: 세로 탭 → 호버 시 해당 카드만 가로로 확장 -->
+<!-- 카드 목록(초기엔 전부 '세로 표지'만 보임; 호버 시 해당 카드 펼쳐짐) -->
 <ul>
-  <li data-active="true">
+  <li>
     <article class="book">
       <div class="pages"></div>
       <div class="content">
@@ -328,10 +319,7 @@ li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
 </ul>
 
 <script>
-/* =========================================================
-   타이핑 헤더: data-text 의 문구를 한 글자씩 등장
-   (접근성 고려: motion reduce 환경에서는 한 번에 출력)
-   ========================================================= */
+/* ========== 타이핑 헤더 ========== */
 (function(){
   const el=document.getElementById('title');
   const full=(el.dataset.text||el.textContent||'the craft of ui').trim();
@@ -349,21 +337,22 @@ li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
   })();
 })();
 
-/* =========================================================
-   카드 확장 로직 + 랜덤 글리치(확률/쿨다운) + 신비한 등장
-   ========================================================= */
-
-/* 그리드/아이템 참조 */
+/* ========== 카드 확장 + 랜덤 글리치(확률/쿨다운) ========== */
 const list=document.querySelector('ul');
 const items=list.querySelectorAll('li');
 let prev=-1;  // 이전 활성 인덱스
 
-/* ---- 튜닝 포인트 ---- */
+/* 초기: 모든 열을 균등(1fr)으로 설정 → 전부 '세로 표지'만 보이도록 */
+(function initColumns(){
+  const cols = new Array(items.length).fill('1fr').join(' ');
+  list.style.setProperty('grid-template-columns', cols);
+})();
+
+/* 튜닝 포인트: 글리치 확률 & 쿨다운 */
 const EFFECT_PROB = 0.45;    // 글리치 발동 확률(0~1)
 const COOLDOWN_MS = 1600;    // 같은 카드 재발동 금지 시간(ms)
-/* -------------------- */
 
-/* 카드별 마지막 실행 시점 기억(쿨다운용) */
+/* 카드별 마지막 실행 시점(쿨다운) */
 const lastRun = new WeakMap();
 function canRun(li) {
   const now = performance.now();
@@ -373,45 +362,34 @@ function canRun(li) {
   return true;
 }
 
-/* 마우스 이동/클릭/포커스 시 해당 카드만 가로로 확장 */
+/* 마우스 이동/클릭/포커스 시 해당 카드만 가로로 확장 + 내용 표시 */
 function setIndex(e){
   const li = e.target.closest('li'); 
   if(!li) return;
   const idx = [...items].indexOf(li);
 
   const cols = new Array(items.length).fill().map((_, i) => {
-    items[i].dataset.active = (i === idx).toString();
-    return i === idx ? '10fr' : '1fr';
+    items[i].dataset.active = (i === idx).toString();   // 활성 카드 표시
+    return i === idx ? '10fr' : '1fr';                   // 그 카드만 확장
   }).join(' ');
   list.style.setProperty('grid-template-columns', cols);
 
-  /* 인덱스가 바뀐 순간에만 효과를 평가 */
   if (idx !== prev) {
     prev = idx;
-    // 확률 & 쿨다운을 통과하면 글리치 → 이후 깨끗한 리빌
     if (Math.random() < EFFECT_PROB && canRun(li)) {
-      glitchOnce(li, () => playReveal(li));
+      glitchOnce(li, () => playReveal(li));             // 가끔 글리치
     } else {
-      // 평소엔 글리치 없이 부드러운 리빌만
-      playReveal(li);
+      playReveal(li);                                    // 평소엔 깨끗한 리빌
     }
   }
 }
-
-/* 이벤트 바인딩 */
 list.addEventListener('pointermove', setIndex);
 list.addEventListener('click', setIndex);
 list.addEventListener('focus', setIndex, true);
 
-/* 최초 진입: 과한 연출 없이 내용만 드러나도록 */
-const first = document.querySelector('li[data-active="true"]');
-if (first) playReveal(first);
-
-/* ---------------------------------------------------------
-   유틸: 텍스트를 글자(span) 단위로 감싸 애니메이션 가능하게 함
-   --------------------------------------------------------- */
+/* ========== 유틸: 글자 래핑/리빌/글리치 ========== */
 function wrapForReveal(p){
-  if(p.dataset.raw) return;       // 이미 처리됨
+  if(p.dataset.raw) return;
   const raw=p.textContent;
   p.dataset.raw=raw;
   p.textContent='';
@@ -420,39 +398,29 @@ function wrapForReveal(p){
     const s=document.createElement('span');
     s.className='reveal-char';
     s.textContent=ch;
-    s.dataset.ch=ch; // RGB 분리용
+    s.dataset.ch=ch;
     s.style.animationDelay=(0.02*i+Math.random()*0.06).toFixed(2)+'s';
     frag.appendChild(s);
   });
   p.appendChild(frag);
 }
 
-/* ---------------------------------------------------------
-   신비한 등장(미스트 인): 부드러운 페이드/블러 해제
-   --------------------------------------------------------- */
 function playReveal(li){
   const p=li.querySelector('.desc'); if(!p) return;
   wrapForReveal(p);
 
   p.querySelectorAll('.reveal-char').forEach((s,i)=>{
-    s.style.animation='none'; void s.offsetWidth; // 재실행
+    s.style.animation='none'; void s.offsetWidth;
     s.style.animation='mysticIn .6s var(--easing) forwards';
     s.style.animationDelay=(0.02*i+Math.random()*0.06)+'s';
   });
 
-  // 문단에 광택/안개를 살짝 얹음(3초)
   p.classList.add('playing'); setTimeout(()=>p.classList.remove('playing'),3000);
 
-  // 'Watch now' 링크는 약간 늦게 등장
   const link=li.querySelector('.content a');
   if(link){ link.classList.remove('show'); setTimeout(()=>link.classList.add('show'),450); }
 }
 
-/* ---------------------------------------------------------
-   글리치(길게): 스크램블 + RGB 분리 + 지터
-   - dur: 1.8~2.8s
-   - scanline(줄무늬)는 사용 안 함 (요청사항 반영)
-   --------------------------------------------------------- */
 function glitchOnce(li, done){
   const p=li.querySelector('.desc'); if(!p){done&&done(); return;}
   wrapForReveal(p);
@@ -462,7 +430,6 @@ function glitchOnce(li, done){
   const start=performance.now();
   const pool='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*?';
 
-  // 초기: 모두 글리치 모드
   spans.forEach(s=>{
     s.classList.add('gl');
     s.dataset.orig = s.dataset.ch || s.textContent;
@@ -471,10 +438,9 @@ function glitchOnce(li, done){
   let raf;
   function tick(now){
     const t=now-start;
-    const progress=Math.min(t/dur,1);                 // 0 → 1
-    const keep=Math.ceil((1-progress)*spans.length);  // 진행될수록 스크램블 양 감소
+    const progress=Math.min(t/dur,1);
+    const keep=Math.ceil((1-progress)*spans.length);
 
-    // 무작위로 일부 문자를 스크램블 + RGB 오프셋
     for(let i=0;i<keep;i++){
       const s=spans[Math.floor(Math.random()*spans.length)];
       s.textContent = pool[Math.floor(Math.random()*pool.length)];
@@ -485,7 +451,6 @@ function glitchOnce(li, done){
     if(progress<1){
       raf=requestAnimationFrame(tick);
     }else{
-      // 원래 텍스트 복구 + 글리치 해제
       spans.forEach(s=>{
         s.textContent=s.dataset.orig;
         s.classList.remove('gl');
@@ -496,10 +461,7 @@ function glitchOnce(li, done){
   raf=requestAnimationFrame(tick);
 }
 
-/* ---------------------------------------------------------
-   레이아웃 보정: 가장 넓은 카드 기준으로 --article-width 설정
-   (현재 UI에선 필요 최소화지만 호환용 유지)
-   --------------------------------------------------------- */
+/* (옵션) 레이아웃 넓이 기준 보정 */
 function resync(){
   const w=Math.max(...[...items].map(i=>i.offsetWidth));
   list.style.setProperty('--article-width', w);
