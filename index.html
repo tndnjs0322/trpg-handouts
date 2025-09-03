@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Craft of UI — Vertical Hover Spread</title>
 
-  <!-- 한글/영문 겸용: 세련된 세리프 + 산세리프 -->
+  <!-- 한글/영문 겸용 폰트 -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
 
   <!-- 메인 스타일 -->
-<link rel="stylesheet" href="./css/style.css">
-
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
   <!-- 상단 타이핑 타이틀 -->
@@ -24,18 +23,14 @@
   <!-- 카드 그리드 -->
   <main>
     <ul id="cardList" class="cards" aria-label="Sections">
-      <!-- data-active="true" : 첫 카드 기본 활성화 -->
-      <li>
+      <!-- 기본: 모두 접힘(아무 카드도 활성화 아님) -->
+      <li aria-expanded="false">
         <article class="card">
-          <!-- 접힐 때: 세로 제목(세리프) -->
           <div class="vtitle">THE CRAFT</div>
-          <!-- 펼칠 때: 가로 제목(세리프) -->
           <h3 class="htitle">The Craft</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop" alt="The Craft image">
           </div>
-
           <p class="desc">
             Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.
           </p>
@@ -43,15 +38,13 @@
         </article>
       </li>
 
-      <li>
+      <li aria-expanded="false">
         <article class="card">
           <div class="vtitle">CSS ANIMATION</div>
           <h3 class="htitle">CSS Animation</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1600&auto=format&fit=crop" alt="CSS Animation image">
           </div>
-
           <p class="desc">
             Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.
           </p>
@@ -59,15 +52,13 @@
         </article>
       </li>
 
-      <li>
+      <li aria-expanded="false">
         <article class="card">
           <div class="vtitle">SVG FILTERS</div>
           <h3 class="htitle">SVG Filters</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1445251836269-d158eaa028a6?q=80&w=1600&auto=format&fit=crop" alt="SVG Filters image">
           </div>
-
           <p class="desc">
             Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.
           </p>
@@ -75,15 +66,13 @@
         </article>
       </li>
 
-      <li>
+      <li aria-expanded="false">
         <article class="card">
           <div class="vtitle">SCROLL ANIMATION</div>
           <h3 class="htitle">Scroll Animation</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop" alt="Scroll Animation image">
           </div>
-
           <p class="desc">
             Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.
           </p>
@@ -91,15 +80,13 @@
         </article>
       </li>
 
-      <li>
+      <li aria-expanded="false">
         <article class="card">
           <div class="vtitle">TAMING CANVAS</div>
           <h3 class="htitle">Taming Canvas</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?q=80&w=1600&auto=format&fit=crop" alt="Taming Canvas image">
           </div>
-
           <p class="desc">
             Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.
           </p>
@@ -107,15 +94,13 @@
         </article>
       </li>
 
-      <li>
+      <li aria-expanded="false">
         <article class="card">
           <div class="vtitle">LAYOUT TRICKS</div>
           <h3 class="htitle">Layout Tricks</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1600&auto=format&fit=crop" alt="Layout Tricks image">
           </div>
-
           <p class="desc">
             Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.
           </p>
@@ -123,15 +108,13 @@
         </article>
       </li>
 
-      <li>
+      <li aria-expanded="false">
         <article class="card">
           <div class="vtitle">MASTERING TIME</div>
           <h3 class="htitle">Mastering Time</h3>
-
           <div class="media">
             <img src="https://images.unsplash.com/photo-1520976029652-8dfc47d7d29b?q=80&w=1600&auto=format&fit=crop" alt="Mastering Time image">
           </div>
-
           <p class="desc">
             It’s not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.
           </p>
@@ -141,8 +124,7 @@
     </ul>
   </main>
 
-  <!-- 메인 스크립트 -->
-<script src="./js/app.js" defer></script> 
-  
+  <!-- 메인 스크립트 (경로 확인!) -->
+  <script src="./js/app.js" defer></script>
 </body>
 </html>
