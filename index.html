@@ -13,247 +13,169 @@
     @layer demo {
       body {
         background: light-dark(#fff, #000);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 1rem;
-        padding-block: 2rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-direction: column; gap: 1rem; padding-block: 2rem;
       }
 
       h1, p { margin: 0; }
-
-      /* fluid 크기 유지 */
       h1.fluid { --font-size-min: 22; --font-level: 4.25; }
-
       h3 { white-space: nowrap; margin: 0; }
 
       body > p {
-        width: 74ch;
-        max-width: calc(100% - 4rem);
-        text-wrap: balance;
-        font-family: monospace;
-        margin-bottom: 4rem;
-        line-height: 1.5;
-        opacity: 0.8;
-        font-weight: 400;
+        width: 74ch; max-width: calc(100% - 4rem);
+        text-wrap: balance; font-family: monospace;
+        margin-bottom: 4rem; line-height: 1.5; opacity: .8;
       }
       @media (max-width: 768px) { body > p { text-align: center; } }
 
-      li :is(svg, h3) {
-        opacity: 0.6;
-        transition: opacity calc(var(--speed) * 1.2) var(--easing);
+      li :is(svg.icon, h3){ opacity:.6; transition: opacity calc(var(--speed)*1.2) var(--easing); }
+      li :is(a, p){ opacity:0; transition: opacity calc(var(--speed)*1.2) var(--easing); width:fit-content; }
+      li img{
+        filter:grayscale(1) brightness(1.5); scale:1.1;
+        transition: filter calc(var(--speed)*1.2) var(--easing), scale calc(var(--speed)*1.2) var(--easing);
       }
-      li :is(a, p) {
-        opacity: 0;
-        transition: opacity calc(var(--speed) * 1.2) var(--easing);
-        width: fit-content;
-      }
-      li img {
-        filter: grayscale(1) brightness(1.5);
-        scale: 1.1;
-        transition-property: filter, scale;
-        transition-duration: calc(var(--speed) * 1.2);
-        transition-timing-function: var(--easing);
-      }
-      [data-active='true'] :is(a, p, h3, svg) { opacity: var(--opacity, 1); }
-      [data-active='true'] :is(a, p) { transition-delay: calc(var(--speed) * 0.25); }
-      [data-active='true'] img { filter: grayscale(0) brightness(1); scale: 1; transition-delay: calc(var(--speed) * 0.25); }
+      [data-active='true'] :is(a,p,h3,svg.icon){ opacity: var(--opacity,1); }
+      [data-active='true'] :is(a,p){ transition-delay: calc(var(--speed)*.25); }
+      [data-active='true'] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay: calc(var(--speed)*.25); }
 
-      /* 카드 내부 */
-      article {
-        width: calc(var(--article-width) * 1px);
-        height: 100%;
-        position: absolute;
+      article{
+        width: calc(var(--article-width)*1px); height:100%;
+        position:absolute; inset:0 0 auto 0;
+        display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
+        padding-inline: calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
         font-family: monospace;
-        top: 0; left: 0;
-        display: flex; flex-direction: column; justify-content: flex-end;
-        gap: 1rem;
-        padding-inline: calc(var(--base) * 0.5 - 9px);
-        padding-bottom: 1rem;
-        overflow: hidden;
       }
-      article h3 {
-        position: absolute;
-        top: 1rem; left: calc(var(--base) * 0.5);
-        transform-origin: 0 50%;
-        rotate: 90deg;
-        font-size: 1rem; font-weight: 300;
-        text-transform: uppercase; font-family: monospace;
+      article h3{
+        position:absolute; top:1rem; left:calc(var(--base)*.5);
+        transform-origin:0 50%; rotate:90deg;
+        font-size:1rem; font-weight:300; text-transform:uppercase;
       }
-      article svg.icon { width: 18px; fill: none; }
-      article p { font-size: 13px; text-wrap: balance; line-height: 1.25; --opacity: 0.8; }
-      article a {
-        position: absolute; bottom: 1rem;
-        height: 18px; line-height: 1; color: inherit;
-      }
-      article a:is(:focus-visible, :hover) { outline: none; }
-      article a:is(:focus-visible, :hover) span { text-decoration: underline; text-underline-offset: 4px; }
-      article a span { display: inline-block; line-height: 18px; translate: calc(var(--base) * 0.5); font-weight: 500; }
+      article svg.icon{ width:18px; fill:none; }
+      article p{ font-size:13px; text-wrap: balance; line-height:1.25; --opacity:.8; }
+      article a{ position:absolute; bottom:1rem; height:18px; line-height:1; color:inherit; }
+      article a:is(:hover,:focus-visible) span{ text-decoration:underline; text-underline-offset:4px; }
+      article a span{ display:inline-block; line-height:18px; translate: calc(var(--base)*.5); font-weight:500; }
 
-      /* 레이어 순서: 이미지(0) < 촉수(1) < 텍스트/아이콘(2) */
-      article img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; mask: radial-gradient(100% 100% at 100% 0, #fff, #0000); z-index:0; }
+      /* 레이어: 이미지(0) < 촉수(1) < 텍스트(2) */
+      article img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
       article :is(h3,p,a,svg.icon){ position:relative; z-index:2; }
 
       /* 컨테이너 수학 */
-      :root {
+      :root{
         --gap: 8px;
         --base: clamp(2rem, 8cqi, 80px);
-        --easing: linear(
-          0 0%, 0.1538 4.09%, 0.2926 8.29%, 0.4173 12.63%, 0.5282 17.12%,
-          0.6255 21.77%, 0.7099 26.61%, 0.782 31.67%, 0.8425 37%, 0.8887 42.23%,
-          0.9257 47.79%, 0.9543 53.78%, 0.9752 60.32%, 0.9883 67.11%, 0.9961 75%, 1 100%
-        );
-        --speed: 0.6s;
+        --easing: cubic-bezier(.2,.8,.2,1);
+        --speed: .6s;
       }
-      ul {
-        display: grid; container-type: inline-size;
+      ul{
+        display:grid; container-type:inline-size;
         grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
-        gap: var(--gap); list-style: none; justify-content: center; padding: 0;
-        height: clamp(300px, 40dvh, 474px); margin: 0;
-        width: calc(((var(--items) - 1) * var(--base)) + ((var(--items) - 1) * var(--gap)) + var(--ideal));
+        gap:var(--gap); list-style:none; padding:0; margin:0;
+        height: clamp(300px, 40dvh, 474px);
         width: 820px; max-width: calc(100% - 4rem);
         transition: grid-template-columns var(--speed) var(--easing);
       }
-      li {
+      li{
         background: light-dark(#fff, #000);
-        position: relative; overflow: hidden; min-width: var(--base);
-        border-radius: 8px;
-        border: 1px solid color-mix(in hsl, canvas, canvasText 50%);
+        position:relative; overflow:hidden; min-width:var(--base);
+        border-radius:8px; border:1px solid color-mix(in hsl, canvas, canvasText 50%);
       }
 
-      /* ===== 카드 호버 시 나타나는 촉수 오버레이 ===== */
-      .tentacles {
-        position:absolute; inset:0;
-        pointer-events:none;
-        z-index:1;
-        opacity:0;
-        transition: opacity .45s ease;
-        mix-blend-mode: screen;              /* 다크에서 은은하게 */
-        mask: radial-gradient(140% 120% at 90% 10%, #000 40%, #0000 75%);
-        filter: url(#wiggleTentacle);
+      /* ===== 촉수 오버레이 (손그림 라인 + 빨판) ===== */
+      .inktent{
+        position:absolute; inset:0; pointer-events:none; z-index:1;
+        opacity:0; transition: opacity .45s ease;
+        mix-blend-mode: screen;                       /* 다크에서 은은하게 */
+        filter: url(#inkWiggle);
       }
-      li:hover .tentacles,
-      li:focus-within .tentacles { opacity:.26; }
+      li:hover .inktent,
+      li:focus-within .inktent{ opacity:.28; }
 
-      /* 라이트 모드에선 과하지 않게 */
+      /* 라이트 모드 조정 */
       @media (prefers-color-scheme: light){
-        .tentacles { mix-blend-mode: multiply; }
-        li:hover .tentacles { opacity:.16; }
+        .inktent{ mix-blend-mode:multiply; }
+        li:hover .inktent{ opacity:.16; }
       }
     }
 
     /* ===================== BASE (타이핑 + 심해 광택) ===================== */
     @layer base {
-      :root {
-        --font-size-min: 16; --font-size-max: 20;
-        --font-ratio-min: 1.2; --font-ratio-max: 1.33;
-        --font-width-min: 375; --font-width-max: 1500;
-        --glow-rgb: 79, 255, 212; /* 타이핑 글로우 색상 (청록) */
+      :root{
+        --font-size-min:16; --font-size-max:20;
+        --font-ratio-min:1.2; --font-ratio-max:1.33;
+        --font-width-min:375; --font-width-max:1500;
+        --glow-rgb: 79,255,212;   /* 타이핑 글로우 색 */
+      }
+      html{ color-scheme: light dark; }
+      *,*::before,*::after{ box-sizing:border-box; }
+      body{
+        display:grid; place-items:center; min-height:100vh;
+        font-family:'SF Pro Text','Helvetica Neue',Arial,system-ui;
       }
 
-      html { color-scheme: light dark; }
-      [data-theme='light'] { color-scheme: light only; }
-      [data-theme='dark']  { color-scheme: dark only; }
-
-      :where(.fluid) {
-        --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
-        --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
-        --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
-        --fluid-type: clamp(
-          (var(--fluid-min) / 16) * 1rem,
-          ((var(--fluid-min) / 16) * 1rem) -
-            (((var(--fluid-preferred) * var(--font-width-min)) / 16) * 1rem) +
-            (var(--fluid-preferred) * var(--variable-unit, 100vi)),
-          (var(--fluid-max) / 16) * 1rem
-        );
-        font-size: var(--fluid-type);
-      }
-
-      *, *::after, *::before { box-sizing: border-box; }
-
-      body {
-        display: grid; place-items: center; min-height: 100vh;
-        font-family: 'SF Pro Text', 'SF Pro Icons', 'AOS Icons', 'Helvetica Neue',
-          Helvetica, Arial, sans-serif, system-ui;
-      }
-
-      /* ===== 배경 눈금 제거됨 ===== */
-
-      /* ===== 심해 광택 오버레이 ===== */
-      body.body-caustics::before {
-        content: "";
-        position: fixed; inset: 0;
-        pointer-events: none; z-index: 0;
+      /* 심해 광택 */
+      body.body-caustics::before{
+        content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
         background:
           radial-gradient(1200px 800px at 10% 20%, rgba(0,255,204,.14), transparent 60%),
           radial-gradient(900px 600px  at 85% 30%, rgba(0,200,160,.12), transparent 60%),
           repeating-conic-gradient(from 0deg, rgba(0,255,220,.08) 0 6deg, transparent 6deg 12deg);
-        mix-blend-mode: screen;
-        filter: blur(8px) contrast(1.05);
-        animation: causticsMove 18s linear infinite;
+        mix-blend-mode:screen; filter: blur(8px) contrast(1.05);
+        animation: caustics 18s linear infinite;
       }
-      @keyframes causticsMove {
-        0%   { transform: translate3d(0,0,0) rotate(0deg); }
-        50%  { transform: translate3d(1.2%, -0.8%, 0) rotate(2deg); }
-        100% { transform: translate3d(0,0,0) rotate(0deg); }
+      @keyframes caustics{
+        0%{transform:translate3d(0,0,0) rotate(0deg)}
+        50%{transform:translate3d(1.2%,-.8%,0) rotate(2deg)}
+        100%{transform:translate3d(0,0,0) rotate(0deg)}
       }
 
-      /* ===== 제목 타이핑 (per-char) ===== */
-      #title.typing::after {
-        content: "";
-        position: relative;
-        display: inline-block;
-        width: 2px; height: 0.9em; margin-left: 2px;
-        background: currentColor;
-        animation: caret-blink 1s steps(1) infinite;
-        vertical-align: -0.1em;
+      /* 타이핑 */
+      #title.typing::after{
+        content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
+        background:currentColor; animation: caret 1s steps(1) infinite; vertical-align:-.1em;
       }
-      @keyframes caret-blink { 50% { opacity: 0; } }
-
-      .typing-char {
-        display: inline-block;
-        opacity: 0;
-        transform: translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
-        filter: blur(var(--blur,1.2px));
-        animation:
-          typeIn .42s cubic-bezier(.2,.8,.2,1) forwards,
-          glow 1.8s ease-out forwards;
+      @keyframes caret{ 50%{opacity:0} }
+      .typing-char{
+        display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
+        filter:blur(var(--b,1.2px));
+        animation: typeIn .42s cubic-bezier(.2,.8,.2,1) forwards, glow 1.8s ease-out forwards;
       }
-      @keyframes typeIn {
-        to { opacity: 1; transform: translateY(0) rotate(0) scale(1); filter: blur(0); }
-      }
-      @keyframes glow {
-        0%   { text-shadow: 0 0 .60em rgba(var(--glow-rgb), .40), 0 0 .18em rgba(var(--glow-rgb), .25); }
-        65%  { text-shadow: 0 0 .40em rgba(var(--glow-rgb), .28); }
-        100% { text-shadow: 0 0 .25em rgba(var(--glow-rgb), .18); }
+      @keyframes typeIn{ to{opacity:1; transform:translateY(0) rotate(0) scale(1); filter:blur(0)} }
+      @keyframes glow{
+        0%{ text-shadow: 0 0 .60em rgba(var(--glow-rgb), .40), 0 0 .18em rgba(var(--glow-rgb), .25); }
+        65%{ text-shadow: 0 0 .40em rgba(var(--glow-rgb), .28); }
+        100%{ text-shadow: 0 0 .25em rgba(var(--glow-rgb), .18); }
       }
     }
   </style>
 </head>
 
-<!-- 심해 광택 활성화를 위해 body에 클래스 추가 -->
 <body class="body-caustics">
-  <!-- (defs) 촉수 공용 필터/그라디언트 정의: 문서에 1번만 -->
+  <!-- SVG 공용 defs: 물결 왜곡 + 잉크 색상 -->
   <svg width="0" height="0" style="position:absolute">
     <defs>
-      <filter id="wiggleTentacle">
-        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.02" numOctaves="2" seed="11">
-          <animate attributeName="baseFrequency" dur="12s"
-                   values="0.008 0.02; 0.011 0.03; 0.008 0.02" repeatCount="indefinite"/>
+      <!-- 물결 왜곡 -->
+      <filter id="inkWiggle">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.018" numOctaves="2" seed="9">
+          <animate attributeName="baseFrequency" dur="12s" values="0.008 0.018; 0.012 0.03; 0.008 0.018" repeatCount="indefinite"/>
         </feTurbulence>
-        <feDisplacementMap in="SourceGraphic" scale="12"/>
+        <feDisplacementMap in="SourceGraphic" scale="10"/>
       </filter>
-      <linearGradient id="abyssLine" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%"  stop-color="#003a38" stop-opacity=".0"/>
-        <stop offset="55%" stop-color="#00e6c3" stop-opacity=".28"/>
-        <stop offset="100%" stop-color="#00ffc8" stop-opacity=".38"/>
+      <!-- 외곽선 색(청록 잉크) -->
+      <linearGradient id="inkStroke" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0%" stop-color="#7fffe9" />
+        <stop offset="100%" stop-color="#00d9c0" />
+      </linearGradient>
+      <!-- 내부 디테일 라인(연한 잉크) -->
+      <linearGradient id="inkDetail" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0%" stop-color="#bffff8"/>
+        <stop offset="100%" stop-color="#7fffe9"/>
       </linearGradient>
     </defs>
   </svg>
 
-  <!-- 타이핑될 제목: data-text 문구를 바꾸면 내용 변경 -->
-  <h1 id="title" class="fluid" data-text="네버엔딩 크툴루 1호점" aria-label="네버엔딩 크툴루 1호점"></h1>
+  <!-- 타이핑 제목: 문구 바꾸려면 data-text를 변경 -->
+  <h1 id="title" class="fluid" data-text="the craft of ui" aria-label="the craft of ui"></h1>
 
   <p>
     Unlock the art and science of interface development. This isn’t just about
@@ -262,74 +184,87 @@
   </p>
 
   <ul>
+    <!-- ===== 카드 1 ===== -->
     <li data-active="true">
       <article>
         <h3>The Craft</h3>
-        <p>
-          Gain the confidence to build anything you envision, transforming
-          motion, interaction, and design principles into second nature.
-        </p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 3h12l4 6-10 13L2 9Z" />
-          <path d="M11 3 8 9l4 13 4-13-3-6" />
-          <path d="M2 9h20" />
+        <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <!-- 촉수 오버레이 (카드 위에서만 희미하게) -->
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
+
+        <!-- 손그림 잉크 촉수 -->
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <!-- 메인 촉수(굵은 외곽) -->
+          <g fill="none" stroke="url(#inkStroke)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".85">
+            <!-- 왼쪽에서 휘어들어오는 촉수 -->
+            <path d="M-60 420 C 20 360, 95 330, 130 295
+                     S 200 230, 255 250
+                     S 300 305, 270 340
+                     S 190 390, 120 420" />
+            <!-- 중앙 촉수 (크게 휘어오다 끝에서 말림) -->
+            <path d="M  40 440 C 120 400, 180 360, 200 310
+                     S 260 250, 315 265
+                     S 360 320, 340 350
+                     S 280 385, 215 410" />
+            <!-- 아래에서 위로 치고 올라오는 가느다란 촉수 -->
+            <path d="M 140 470 C 200 445, 245 410, 258 365
+                     S 300 300, 350 305
+                     S 385 335, 368 360
+                     S 325 395, 265 425" />
+          </g>
+
+          <!-- 내부 결(얇은 잉크 라인) -->
+          <g fill="none" stroke="url(#inkDetail)" stroke-width="2.2" stroke-linecap="round" opacity=".6">
+            <path d="M-40 424 C 40 372, 102 340, 132 304 S 204 244, 255 264 S 298 308, 270 338 S 196 382, 132 410" />
+            <path d="M  52 435 C 128 396, 182 358, 202 314 S 258 260, 312 270 S 350 318, 334 344 S 280 380, 222 404" />
+            <path d="M 148 463 C 208 438, 246 406, 258 366 S 298 308, 344 312 S 376 338, 362 356 S 320 388, 264 416" />
+          </g>
+
+          <!-- 빨판(타원) - 손그림 느낌으로 크기/각도 약간씩 다르게 -->
+          <g fill="none" stroke="url(#inkDetail)" stroke-width="2" opacity=".9">
+            <!-- 첫 촉수 빨판 -->
+            <ellipse cx="18"  cy="400" rx="9" ry="6" transform="rotate(-12 18 400)"/>
+            <ellipse cx="42"  cy="388" rx="8" ry="5.5" transform="rotate(-10 42 388)"/>
+            <ellipse cx="66"  cy="376" rx="8" ry="5.2" transform="rotate(-9 66 376)"/>
+            <ellipse cx="92"  cy="362" rx="7.5" ry="5" transform="rotate(-7 92 362)"/>
+            <ellipse cx="116" cy="350" rx="7" ry="4.8" transform="rotate(-6 116 350)"/>
+            <ellipse cx="140" cy="336" rx="6.6" ry="4.6" transform="rotate(-5 140 336)"/>
+            <ellipse cx="166" cy="320" rx="6.2" ry="4.4" transform="rotate(-4 166 320)"/>
+            <ellipse cx="192" cy="306" rx="6" ry="4.2" transform="rotate(-2 192 306)"/>
+            <!-- 두 번째 촉수 빨판 -->
+            <ellipse cx="120" cy="410" rx="7.8" ry="5.3" transform="rotate(-14 120 410)"/>
+            <ellipse cx="144" cy="398" rx="7.5" ry="5.2" transform="rotate(-12 144 398)"/>
+            <ellipse cx="170" cy="382" rx="7" ry="5" transform="rotate(-10 170 382)"/>
+            <ellipse cx="196" cy="366" rx="6.6" ry="4.8" transform="rotate(-8 196 366)"/>
+            <ellipse cx="220" cy="348" rx="6.2" ry="4.6" transform="rotate(-6 220 348)"/>
+            <ellipse cx="244" cy="330" rx="6" ry="4.4" transform="rotate(-4 244 330)"/>
+            <!-- 세 번째 촉수 빨판 -->
+            <ellipse cx="220" cy="430" rx="7.2" ry="4.8" transform="rotate(-18 220 430)"/>
+            <ellipse cx="238" cy="418" rx="6.8" ry="4.6" transform="rotate(-16 238 418)"/>
+            <ellipse cx="256" cy="404" rx="6.4" ry="4.4" transform="rotate(-14 256 404)"/>
+            <ellipse cx="274" cy="388" rx="6" ry="4.2" transform="rotate(-12 274 388)"/>
           </g>
         </svg>
-        <img src="https://picsum.photos/720/720?random=12" alt="" />
+
+        <img src="https://picsum.photos/720/720?random=12" alt="">
       </article>
     </li>
 
+    <!-- ===== 나머지 카드들 (원하는 이미지/텍스트로 수정 가능) ===== -->
     <li>
       <article>
         <h3>CSS Animation</h3>
         <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="18" height="18" x="3" y="3" rx="2" />
-          <path d="M7 3v18" />
-          <path d="M3 7.5h4" />
-          <path d="M3 12h18" />
-          <path d="M3 16.5h4" />
-          <path d="M17 3v18" />
-          <path d="M17 7.5h4" />
-          <path d="M17 16.5h4" />
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
-          </g>
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <use href="#t1"/>
         </svg>
-        <img src="https://picsum.photos/720/720?random=17" alt="" />
+        <img src="https://picsum.photos/720/720?random=17" alt="">
       </article>
     </li>
 
@@ -337,28 +272,14 @@
       <article>
         <h3>SVG Filters</h3>
         <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
-          </g>
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <use href="#t1"/>
         </svg>
-        <img src="https://picsum.photos/720/720?random=19" alt="" />
+        <img src="https://picsum.photos/720/720?random=19" alt="">
       </article>
     </li>
 
@@ -366,29 +287,14 @@
       <article>
         <h3>Scroll Animation</h3>
         <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 17V5a2 2 0 0 0-2-2H4" />
-          <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
-          </g>
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <use href="#t1"/>
         </svg>
-        <img src="https://picsum.photos/720/720?random=42" alt="" />
+        <img src="https://picsum.photos/720/720?random=42" alt="">
       </article>
     </li>
 
@@ -396,32 +302,14 @@
       <article>
         <h3>Taming Canvas</h3>
         <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-          <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-          <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-          <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
-          </g>
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <use href="#t1"/>
         </svg>
-        <img src="https://picsum.photos/720/720?random=128" alt="" />
+        <img src="https://picsum.photos/720/720?random=128" alt="">
       </article>
     </li>
 
@@ -429,35 +317,15 @@
       <article>
         <h3>Layout Tricks</h3>
         <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72" />
-          <path d="m14 7 3 3" />
-          <path d="M5 6v4" />
-          <path d="M19 14v4" />
-          <path d="M10 2v2" />
-          <path d="M7 8H3" />
-          <path d="M21 16h-4" />
-          <path d="M11 3H9" />
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/>
+          <path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
-          </g>
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <use href="#t1"/>
         </svg>
-        <img src="https://picsum.photos/720/720?random=56" alt="" />
+        <img src="https://picsum.photos/720/720?random=56" alt="">
       </article>
     </li>
 
@@ -465,100 +333,60 @@
       <article>
         <h3>Mastering Time</h3>
         <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 22h14" />
-          <path d="M5 2h14" />
-          <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
-          <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
-        <svg class="tentacles" viewBox="0 0 480 480" aria-hidden="true" preserveAspectRatio="none">
-          <g stroke="url(#abyssLine)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9">
-            <path d="M -40 470 C 80 430, 120 360, 110 300
-                     C 98 240, 150 210, 220 230
-                     C 280 250, 290 310, 255 350
-                     C 220 390, 160 420, 90 450" />
-            <path d="M  40 470 C 140 440, 190 380, 188 320
-                     C 186 270, 220 240, 270 255
-                     C 320 270, 330 320, 300 355
-                     C 270 390, 220 410, 150 440" />
-            <path d="M 140 470 C 220 445, 260 400, 262 350
-                     C 264 310, 290 290, 325 295
-                     C 360 300, 372 330, 352 360
-                     C 332 390, 300 410, 240 435" />
-          </g>
+        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
+          <use href="#t1"/>
         </svg>
-        <img src="https://picsum.photos/720/720?random=39" alt="" />
+        <img src="https://picsum.photos/720/720?random=39" alt="">
       </article>
     </li>
   </ul>
 
   <script>
-    /* ===== 제목 타이핑 (per-character) ===== */
-    (function typeTitle(){
-      const el   = document.getElementById('title');
+    /* ===== 제목 타이핑 ===== */
+    (function(){
+      const el = document.getElementById('title');
       const full = (el.dataset.text || el.textContent || 'the craft of ui').trim();
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent = full; return; }
+      el.textContent = ''; el.classList.add('typing');
 
-      // 모션 최소화 사용자는 즉시 표시
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        el.textContent = full;
-        return;
+      let i=0; const base=55, jitter=70;
+      function step(){
+        const ch = full[i++]; const s = document.createElement('span');
+        s.className='typing-char'; s.textContent=ch;
+        s.style.setProperty('--r',(Math.random()*8-4).toFixed(2)+'deg');
+        s.style.setProperty('--b',(Math.random()*1.2+.3).toFixed(2)+'px');
+        el.appendChild(s);
+        if(i<full.length) setTimeout(step, base + Math.random()*jitter);
+        else el.classList.remove('typing');
       }
-
-      el.textContent = '';
-      el.classList.add('typing');
-
-      let i = 0;
-      const base = 55;      // 기본 속도(ms)
-      const jitter = 70;    // 랜덤 가감(ms)
-
-      function step() {
-        const ch = full[i++];
-        const span = document.createElement('span');
-        span.className = 'typing-char';
-        span.textContent = ch;
-        // 글자마다 미세하게 다른 시작 각/블러
-        span.style.setProperty('--r',    (Math.random()*8 - 4).toFixed(2) + 'deg');
-        span.style.setProperty('--blur', (Math.random()*1.2 + .3).toFixed(2) + 'px');
-        el.appendChild(span);
-
-        if (i < full.length) {
-          setTimeout(step, base + Math.random()*jitter);
-        } else {
-          el.classList.remove('typing'); // 완료 후 커서 제거
-        }
-      }
-      setTimeout(step, 350); // 살짝 딜레이 후 시작
+      setTimeout(step,350);
     })();
 
-    /* ===== 카드 스프레드(hover/click/focus) ===== */
+    /* ===== 카드 스프레드 ===== */
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
-
-    function setIndex(event) {
-      const closest = event.target.closest('li');
-      if (!closest) return;
-      const index = [...items].indexOf(closest);
-      const cols = new Array(list.children.length)
-        .fill()
-        .map((_, i) => {
-          items[i].dataset.active = (index === i).toString();
-          return index === i ? '10fr' : '1fr';
-        })
-        .join(' ');
+    function setIndex(e){
+      const li = e.target.closest('li'); if(!li) return;
+      const idx = [...items].indexOf(li);
+      const cols = new Array(items.length).fill().map((_,i)=>{
+        items[i].dataset.active = (i===idx).toString();
+        return i===idx ? '10fr' : '1fr';
+      }).join(' ');
       list.style.setProperty('grid-template-columns', cols);
     }
-    list.addEventListener('focus', setIndex, true);
-    list.addEventListener('click', setIndex);
     list.addEventListener('pointermove', setIndex);
+    list.addEventListener('click', setIndex);
+    list.addEventListener('focus', setIndex, true);
 
-    function resync() {
-      const w = Math.max(...[...items].map((i) => i.offsetWidth));
+    function resync(){
+      const w = Math.max(...[...items].map(i=>i.offsetWidth));
       list.style.setProperty('--article-width', w);
     }
-    window.addEventListener('resize', resync);
-    resync();
+    addEventListener('resize', resync); resync();
   </script>
 </body>
 </html>
