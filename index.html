@@ -3,133 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — vertical hover spread</title>
+  <title>the craft of ui — vertical hover spread (book open)</title>
   <style>
     @import url('https://unpkg.com/normalize.css') layer(normalize);
-
     @layer normalize, base, demo;
 
-    /* ===================== DEMO (카드 UI) ===================== */
-    @layer demo {
-      body {
-        background: light-dark(#fff, #000);
-        display: flex; align-items: center; justify-content: center;
-        flex-direction: column; gap: 1rem; padding-block: 2rem;
-      }
-
-      h1, p { margin: 0; }
-      h1.fluid { --font-size-min: 22; --font-level: 4.25; }
-      h3 { white-space: nowrap; margin: 0; }
-
-      body > p {
-        width: 74ch; max-width: calc(100% - 4rem);
-        text-wrap: balance; font-family: monospace;
-        margin-bottom: 4rem; line-height: 1.5; opacity: .8;
-      }
-      @media (max-width: 768px) { body > p { text-align: center; } }
-
-      li :is(svg.icon, h3){ opacity:.6; transition: opacity calc(var(--speed)*1.2) var(--easing); }
-      li :is(a, p){ opacity:0; transition: opacity calc(var(--speed)*1.2) var(--easing); width:fit-content; }
-      li img{
-        filter:grayscale(1) brightness(1.5); scale:1.1;
-        transition: filter calc(var(--speed)*1.2) var(--easing), scale calc(var(--speed)*1.2) var(--easing);
-      }
-      [data-active='true'] :is(a,p,h3,svg.icon){ opacity: var(--opacity,1); }
-      [data-active='true'] :is(a,p){ transition-delay: calc(var(--speed)*.25); }
-      [data-active='true'] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay: calc(var(--speed)*.25); }
-
-      article{
-        width: calc(var(--article-width)*1px); height:100%;
-        position:absolute; inset:0 0 auto 0;
-        display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
-        padding-inline: calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
-        font-family: monospace;
-      }
-      article h3{
-        position:absolute; top:1rem; left:calc(var(--base)*.5);
-        transform-origin:0 50%; rotate:90deg;
-        font-size:1rem; font-weight:300; text-transform:uppercase;
-      }
-      article svg.icon{ width:18px; fill:none; }
-      article p{ font-size:13px; text-wrap: balance; line-height:1.25; --opacity:.8; }
-      article a{ position:absolute; bottom:1rem; height:18px; line-height:1; color:inherit; }
-      article a:is(:hover,:focus-visible) span{ text-decoration:underline; text-underline-offset:4px; }
-      article a span{ display:inline-block; line-height:18px; translate: calc(var(--base)*.5); font-weight:500; }
-
-      /* 레이어: 이미지(0) < 촉수(1) < 텍스트(2) */
-      article img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
-      article :is(h3,p,a,svg.icon){ position:relative; z-index:2; }
-
-      /* 컨테이너 수학 */
-      :root{
-        --gap: 8px;
-        --base: clamp(2rem, 8cqi, 80px);
-        --easing: cubic-bezier(.2,.8,.2,1);
-        --speed: .6s;
-      }
-      ul{
-        display:grid; container-type:inline-size;
-        grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
-        gap:var(--gap); list-style:none; padding:0; margin:0;
-        height: clamp(300px, 40dvh, 474px);
-        width: 820px; max-width: calc(100% - 4rem);
-        transition: grid-template-columns var(--speed) var(--easing);
-      }
-      li{
-        background: light-dark(#fff, #000);
-        position:relative; overflow:hidden; min-width:var(--base);
-        border-radius:8px; border:1px solid color-mix(in hsl, canvas, canvasText 50%);
-      }
-
-      /* ===== 촉수 오버레이 (손그림 라인 + 빨판) ===== */
-      .inktent{
-        position:absolute; inset:0; pointer-events:none; z-index:1;
-        opacity:0; transition: opacity .45s ease;
-        mix-blend-mode: screen;                       /* 다크에서 은은하게 */
-        filter: url(#inkWiggle);
-      }
-      li:hover .inktent,
-      li:focus-within .inktent{ opacity:.28; }
-
-      /* 라이트 모드 조정 */
-      @media (prefers-color-scheme: light){
-        .inktent{ mix-blend-mode:multiply; }
-        li:hover .inktent{ opacity:.16; }
-      }
-    }
-
-    /* ===================== BASE (타이핑 + 심해 광택) ===================== */
+    /* ===================== BASE: 타이핑 제목 + 심해 드리프트 배경 ===================== */
     @layer base {
       :root{
         --font-size-min:16; --font-size-max:20;
         --font-ratio-min:1.2; --font-ratio-max:1.33;
         --font-width-min:375; --font-width-max:1500;
-        --glow-rgb: 79,255,212;   /* 타이핑 글로우 색 */
+        --glow-rgb: 79,255,212;
       }
       html{ color-scheme: light dark; }
-      *,*::before,*::after{ box-sizing:border-box; }
+      *,*::before,*::after{ box-sizing: border-box; }
       body{
         display:grid; place-items:center; min-height:100vh;
         font-family:'SF Pro Text','Helvetica Neue',Arial,system-ui;
       }
 
-      /* 심해 광택 */
-      body.body-caustics::before{
-        content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+      /* Animated Abyss Drift (안개 + 부유물) */
+      body { position: relative; }
+      .bg-abyss-anim{
         background:
-          radial-gradient(1200px 800px at 10% 20%, rgba(0,255,204,.14), transparent 60%),
-          radial-gradient(900px 600px  at 85% 30%, rgba(0,200,160,.12), transparent 60%),
-          repeating-conic-gradient(from 0deg, rgba(0,255,220,.08) 0 6deg, transparent 6deg 12deg);
-        mix-blend-mode:screen; filter: blur(8px) contrast(1.05);
-        animation: caustics 18s linear infinite;
+          radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
+          radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
+          linear-gradient(180deg, #08131a 0%, #060d13 60%, #020609 100%);
+        overflow-x: clip;
       }
-      @keyframes caustics{
-        0%{transform:translate3d(0,0,0) rotate(0deg)}
-        50%{transform:translate3d(1.2%,-.8%,0) rotate(2deg)}
-        100%{transform:translate3d(0,0,0) rotate(0deg)}
+      .bg-abyss-anim::before{
+        content:""; position: fixed; inset: -12% -8%;
+        pointer-events:none; z-index:0;
+        background:
+          radial-gradient(60% 40% at 55% 10%, rgba(210,255,255,.06), transparent 60%),
+          radial-gradient(65% 45% at 45% 95%, rgba(120,200,220,.05), transparent 60%);
+        filter: blur(10px) contrast(1.02);
+        mix-blend-mode: screen; opacity:.65;
+        animation: abyssFog 46s ease-in-out infinite alternate;
+      }
+      .bg-abyss-anim::after{
+        content:""; position: fixed; inset:0; pointer-events:none; z-index:0; opacity:.22;
+        mix-blend-mode: screen;
+        background-image:
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='white' opacity='0.38'><circle cx='12' cy='20' r='1.1'/><circle cx='48' cy='36' r='0.9'/><circle cx='88' cy='18' r='1.2'/><circle cx='22' cy='72' r='1.0'/><circle cx='66' cy='82' r='0.8'/><circle cx='98' cy='60' r='0.9'/><circle cx='40' cy='102' r='0.9'/><circle cx='8' cy='96' r='0.7'/></g></svg>"),
+          url("data:image/svg+xml;utf8/<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='white' opacity='0.28'><circle cx='22' cy='26' r='1.4'/><circle cx='94' cy='40' r='1.6'/><circle cx='132' cy='22' r='1.3'/><circle cx='56' cy='116' r='1.5'/><circle cx='144' cy='96' r='1.2'/><circle cx='26' cy='144' r='1.3'/></g></svg>");
+        background-repeat: repeat, repeat;
+        background-size: 220px 220px, 300px 300px;
+        background-position: 0 0, 120px 90px;
+        animation: abyssMotes 90s linear infinite;
+      }
+      @media (prefers-reduced-motion: reduce){
+        .bg-abyss-anim::before, .bg-abyss-anim::after{ animation:none; }
+      }
+      @keyframes abyssFog{
+        0%{ transform: translate3d(0,-1.5%,0) scale(1.02) rotate(.2deg); }
+        50%{ transform: translate3d(0, 1.5%,0) scale(1.04) rotate(0deg); }
+        100%{ transform: translate3d(0,-1.2%,0) scale(1.01) rotate(-.2deg); }
+      }
+      @keyframes abyssMotes{
+        0%{ background-position: 0 0, 120px 90px; }
+        100%{ background-position: 0 -900px, 120px -1200px; }
       }
 
-      /* 타이핑 */
+      /* 타이핑 제목 */
       #title.typing::after{
         content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
         background:currentColor; animation: caret 1s steps(1) infinite; vertical-align:-.1em;
@@ -147,34 +84,130 @@
         100%{ text-shadow: 0 0 .25em rgba(var(--glow-rgb), .18); }
       }
     }
+
+    /* ===================== DEMO: 그리드 + ‘책 열림’ 카드 ===================== */
+    @layer demo {
+      body { gap:1rem; padding-block:2rem; }
+      h1, p { margin:0; }
+      h1.fluid{ --font-size-min:22; --font-level:4.25; }
+      h3{ white-space:nowrap; margin:0; }
+
+      body > p{
+        width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; font-family:monospace;
+        margin-bottom:4rem; line-height:1.5; opacity:.8;
+        @media (max-width:768px){ text-align:center; }
+      }
+
+      :root{
+        --gap:8px; --base: clamp(2rem, 8cqi, 80px);
+        --easing: cubic-bezier(.2,.8,.2,1); --speed:.6s;
+      }
+
+      ul{
+        display:grid; container-type:inline-size;
+        grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr;
+        gap:var(--gap); list-style:none; padding:0; margin:0;
+        height: clamp(300px, 40dvh, 474px);
+        width: 820px; max-width: calc(100% - 4rem);
+        transition: grid-template-columns var(--speed) var(--easing);
+      }
+      li{
+        position:relative; overflow:visible; min-width:var(--base);
+        border-radius:10px; border:1px solid rgba(255,255,255,.14);
+        background: #0a0f14; /* fallback */
+        perspective: 1200px;               /* 3D 공간 */
+        transform-style: preserve-3d;
+        box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      }
+
+      /* 책(3D) */
+      article.book{
+        --cover:#0d141c;
+        --cover-edge:#0f1a23;
+        --paper:#0e151c;   /* 어두운 종이 톤 */
+        --shine: rgba(255,255,255,.18);
+        position:absolute; inset:0; border-radius:10px; overflow:hidden;
+        transform-style: preserve-3d;
+      }
+      /* 내용층(페이지 위 컨텐트) */
+      .book .content{
+        position:absolute; inset:0; padding:12px 14px 14px 14px; z-index:1;
+        display:flex; flex-direction:column; justify-content:flex-end; gap:.7rem;
+        color:#eaf4ff;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)),
+          radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%),
+          var(--paper);
+      }
+      .book .content img{
+        position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.35; filter:grayscale(.2) contrast(1.05);
+        mix-blend-mode: luminosity; z-index:-1;
+      }
+      .book .content h3{
+        position:absolute; top:10px; left:14px; transform-origin:0 50%; rotate:90deg; font-size:.95rem; font-weight:400; letter-spacing:.08em; opacity:.9;
+      }
+      .book .content p{ font: 13px/1.35 monospace; opacity:.9; margin-top:auto; }
+      .book .content a{ color:inherit; font-weight:600; width:fit-content; }
+
+      /* 표지(앞표지) */
+      .book .cover{
+        position:absolute; inset:0; border-radius:10px;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25)),
+          radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,.10), transparent 60%),
+          var(--cover);
+        border:1px solid rgba(255,255,255,.15);
+        transform-origin: left center;
+        transform: translateZ(24px) rotateY(0deg);
+        transition: transform .7s var(--easing), box-shadow .7s var(--easing), filter .7s var(--easing);
+        box-shadow: 2px 0 0 var(--cover-edge), 0 6px 20px rgba(0,0,0,.35);
+      }
+      /* 표지 광택 라인 */
+      .book .cover::after{
+        content:""; position:absolute; inset:-12% 40% -12% -40%;
+        background: linear-gradient(90deg, transparent 0 30%, var(--shine) 50%, transparent 70%);
+        transform: skewX(-12deg); filter: blur(8px); opacity:.0; pointer-events:none;
+        transition: opacity .6s var(--easing);
+      }
+
+      /* 페이지 두께(스택) */
+      .book .pages{
+        position:absolute; inset:6px 6px 6px 10px; border-radius:8px; overflow:hidden;
+        background:
+          repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px),
+          linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)),
+          var(--paper);
+        box-shadow: inset -10px 0 16px rgba(0,0,0,.25);
+        transform: translateZ(12px);
+      }
+      /* 책 등(spine) */
+      .book::before{
+        content:""; position:absolute; left:0; top:0; bottom:0; width:10px; border-radius:10px 0 0 10px;
+        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2)), #0b131a;
+        box-shadow: inset -1px 0 0 rgba(255,255,255,.15), inset 1px 0 0 rgba(0,0,0,.5);
+        transform: translateZ(25px);
+      }
+
+      /* Hover: 표지가 열린다 */
+      li:hover .book .cover,
+      li:focus-within .book .cover{
+        transform: translateZ(24px) rotateY(-72deg);
+        box-shadow: 18px 6px 28px rgba(0,0,0,.45);
+        filter: brightness(1.02);
+      }
+      li:hover .book .cover::after{ opacity:.9; }
+
+      /* 그리드 인터랙션과 텍스트 페이드(기존 패턴 유지) */
+      li :is(h3, p){ opacity:0; transition: opacity calc(var(--speed) * 1.2) var(--easing); }
+      [data-active='true'] :is(h3, p){ opacity:1; transition-delay:.2s; }
+      a{ text-decoration:none; }
+      a:is(:hover,:focus-visible){ text-decoration:underline; text-underline-offset:4px; }
+    }
   </style>
 </head>
 
-<body class="body-caustics">
-  <!-- SVG 공용 defs: 물결 왜곡 + 잉크 색상 -->
-  <svg width="0" height="0" style="position:absolute">
-    <defs>
-      <!-- 물결 왜곡 -->
-      <filter id="inkWiggle">
-        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.018" numOctaves="2" seed="9">
-          <animate attributeName="baseFrequency" dur="12s" values="0.008 0.018; 0.012 0.03; 0.008 0.018" repeatCount="indefinite"/>
-        </feTurbulence>
-        <feDisplacementMap in="SourceGraphic" scale="10"/>
-      </filter>
-      <!-- 외곽선 색(청록 잉크) -->
-      <linearGradient id="inkStroke" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%" stop-color="#7fffe9" />
-        <stop offset="100%" stop-color="#00d9c0" />
-      </linearGradient>
-      <!-- 내부 디테일 라인(연한 잉크) -->
-      <linearGradient id="inkDetail" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%" stop-color="#bffff8"/>
-        <stop offset="100%" stop-color="#7fffe9"/>
-      </linearGradient>
-    </defs>
-  </svg>
-
-  <!-- 타이핑 제목: 문구 바꾸려면 data-text를 변경 -->
+<body class="bg-abyss-anim">
+  <!-- 제목: 문구 바꾸려면 data-text 수정 -->
   <h1 id="title" class="fluid" data-text="the craft of ui" aria-label="the craft of ui"></h1>
 
   <p>
@@ -184,163 +217,94 @@
   </p>
 
   <ul>
-    <!-- ===== 카드 1 ===== -->
     <li data-active="true">
-      <article>
-        <h3>The Craft</h3>
-        <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-
-        <!-- 손그림 잉크 촉수 -->
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <!-- 메인 촉수(굵은 외곽) -->
-          <g fill="none" stroke="url(#inkStroke)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".85">
-            <!-- 왼쪽에서 휘어들어오는 촉수 -->
-            <path d="M-60 420 C 20 360, 95 330, 130 295
-                     S 200 230, 255 250
-                     S 300 305, 270 340
-                     S 190 390, 120 420" />
-            <!-- 중앙 촉수 (크게 휘어오다 끝에서 말림) -->
-            <path d="M  40 440 C 120 400, 180 360, 200 310
-                     S 260 250, 315 265
-                     S 360 320, 340 350
-                     S 280 385, 215 410" />
-            <!-- 아래에서 위로 치고 올라오는 가느다란 촉수 -->
-            <path d="M 140 470 C 200 445, 245 410, 258 365
-                     S 300 300, 350 305
-                     S 385 335, 368 360
-                     S 325 395, 265 425" />
-          </g>
-
-          <!-- 내부 결(얇은 잉크 라인) -->
-          <g fill="none" stroke="url(#inkDetail)" stroke-width="2.2" stroke-linecap="round" opacity=".6">
-            <path d="M-40 424 C 40 372, 102 340, 132 304 S 204 244, 255 264 S 298 308, 270 338 S 196 382, 132 410" />
-            <path d="M  52 435 C 128 396, 182 358, 202 314 S 258 260, 312 270 S 350 318, 334 344 S 280 380, 222 404" />
-            <path d="M 148 463 C 208 438, 246 406, 258 366 S 298 308, 344 312 S 376 338, 362 356 S 320 388, 264 416" />
-          </g>
-
-          <!-- 빨판(타원) - 손그림 느낌으로 크기/각도 약간씩 다르게 -->
-          <g fill="none" stroke="url(#inkDetail)" stroke-width="2" opacity=".9">
-            <!-- 첫 촉수 빨판 -->
-            <ellipse cx="18"  cy="400" rx="9" ry="6" transform="rotate(-12 18 400)"/>
-            <ellipse cx="42"  cy="388" rx="8" ry="5.5" transform="rotate(-10 42 388)"/>
-            <ellipse cx="66"  cy="376" rx="8" ry="5.2" transform="rotate(-9 66 376)"/>
-            <ellipse cx="92"  cy="362" rx="7.5" ry="5" transform="rotate(-7 92 362)"/>
-            <ellipse cx="116" cy="350" rx="7" ry="4.8" transform="rotate(-6 116 350)"/>
-            <ellipse cx="140" cy="336" rx="6.6" ry="4.6" transform="rotate(-5 140 336)"/>
-            <ellipse cx="166" cy="320" rx="6.2" ry="4.4" transform="rotate(-4 166 320)"/>
-            <ellipse cx="192" cy="306" rx="6" ry="4.2" transform="rotate(-2 192 306)"/>
-            <!-- 두 번째 촉수 빨판 -->
-            <ellipse cx="120" cy="410" rx="7.8" ry="5.3" transform="rotate(-14 120 410)"/>
-            <ellipse cx="144" cy="398" rx="7.5" ry="5.2" transform="rotate(-12 144 398)"/>
-            <ellipse cx="170" cy="382" rx="7" ry="5" transform="rotate(-10 170 382)"/>
-            <ellipse cx="196" cy="366" rx="6.6" ry="4.8" transform="rotate(-8 196 366)"/>
-            <ellipse cx="220" cy="348" rx="6.2" ry="4.6" transform="rotate(-6 220 348)"/>
-            <ellipse cx="244" cy="330" rx="6" ry="4.4" transform="rotate(-4 244 330)"/>
-            <!-- 세 번째 촉수 빨판 -->
-            <ellipse cx="220" cy="430" rx="7.2" ry="4.8" transform="rotate(-18 220 430)"/>
-            <ellipse cx="238" cy="418" rx="6.8" ry="4.6" transform="rotate(-16 238 418)"/>
-            <ellipse cx="256" cy="404" rx="6.4" ry="4.4" transform="rotate(-14 256 404)"/>
-            <ellipse cx="274" cy="388" rx="6" ry="4.2" transform="rotate(-12 274 388)"/>
-          </g>
-        </svg>
-
-        <img src="https://picsum.photos/720/720?random=12" alt="">
-      </article>
-    </li>
-
-    <!-- ===== 나머지 카드들 (원하는 이미지/텍스트로 수정 가능) ===== -->
-    <li>
-      <article>
-        <h3>CSS Animation</h3>
-        <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <use href="#t1"/>
-        </svg>
-        <img src="https://picsum.photos/720/720?random=17" alt="">
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>The Craft</h3>
+          <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=12" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
       </article>
     </li>
 
     <li>
-      <article>
-        <h3>SVG Filters</h3>
-        <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <use href="#t1"/>
-        </svg>
-        <img src="https://picsum.photos/720/720?random=19" alt="">
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>CSS Animation</h3>
+          <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=17" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
       </article>
     </li>
 
     <li>
-      <article>
-        <h3>Scroll Animation</h3>
-        <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <use href="#t1"/>
-        </svg>
-        <img src="https://picsum.photos/720/720?random=42" alt="">
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>SVG Filters</h3>
+          <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=19" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
       </article>
     </li>
 
     <li>
-      <article>
-        <h3>Taming Canvas</h3>
-        <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <use href="#t1"/>
-        </svg>
-        <img src="https://picsum.photos/720/720?random=128" alt="">
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>Scroll Animation</h3>
+          <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=42" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
       </article>
     </li>
 
     <li>
-      <article>
-        <h3>Layout Tricks</h3>
-        <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/>
-          <path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <use href="#t1"/>
-        </svg>
-        <img src="https://picsum.photos/720/720?random=56" alt="">
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>Taming Canvas</h3>
+          <p>Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=128" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
       </article>
     </li>
 
     <li>
-      <article>
-        <h3>Mastering Time</h3>
-        <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
-        </svg>
-        <a href="#"><span>Watch now</span></a>
-        <svg class="inktent" viewBox="0 0 480 480" preserveAspectRatio="none" aria-hidden="true">
-          <use href="#t1"/>
-        </svg>
-        <img src="https://picsum.photos/720/720?random=39" alt="">
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>Layout Tricks</h3>
+          <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=56" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
+      </article>
+    </li>
+
+    <li>
+      <article class="book">
+        <div class="pages"></div>
+        <div class="content">
+          <h3>Mastering Time</h3>
+          <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
+          <a href="#"><span>Watch now</span></a>
+          <img src="https://picsum.photos/720/720?random=39" alt="">
+        </div>
+        <div class="cover" aria-hidden="true"></div>
       </article>
     </li>
   </ul>
@@ -352,10 +316,9 @@
       const full = (el.dataset.text || el.textContent || 'the craft of ui').trim();
       if (matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent = full; return; }
       el.textContent = ''; el.classList.add('typing');
-
       let i=0; const base=55, jitter=70;
       function step(){
-        const ch = full[i++]; const s = document.createElement('span');
+        const ch = full[i++]; const s=document.createElement('span');
         s.className='typing-char'; s.textContent=ch;
         s.style.setProperty('--r',(Math.random()*8-4).toFixed(2)+'deg');
         s.style.setProperty('--b',(Math.random()*1.2+.3).toFixed(2)+'px');
@@ -366,7 +329,7 @@
       setTimeout(step,350);
     })();
 
-    /* ===== 카드 스프레드 ===== */
+    /* ===== 카드 스프레드(그리드 확장) ===== */
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
     function setIndex(e){
@@ -381,7 +344,6 @@
     list.addEventListener('pointermove', setIndex);
     list.addEventListener('click', setIndex);
     list.addEventListener('focus', setIndex, true);
-
     function resync(){
       const w = Math.max(...[...items].map(i=>i.offsetWidth));
       list.style.setProperty('--article-width', w);
