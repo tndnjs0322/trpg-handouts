@@ -3,33 +3,50 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>the craft of ui — book cards + long glitch</title>
+<title>the craft of ui — book cards + random glitch</title>
 
+<!-- 기본 리셋 -->
 <link rel="stylesheet" href="https://unpkg.com/normalize.css@8.0.1/normalize.css">
+
+<!-- 폰트: 한글 세리프(제목) + 산세리프(본문) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 
 <style>
+/* =========================
+   전역 변수/기본값
+   ========================= */
 :root{
-  --font-heading:"Noto Serif KR","Noto Serif",serif;
-  --font-body:"Pretendard Variable","Pretendard","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  --glow-rgb:79,255,212;
-  --gap:8px; --base:clamp(2rem,8cqi,80px);
-  --easing:cubic-bezier(.2,.8,.2,1); --speed:.6s;
+  --font-heading:"Noto Serif KR","Noto Serif",serif;       /* 제목용 */
+  --font-body:"Pretendard Variable","Pretendard","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif; /* 본문용 */
+  --glow-rgb:79,255,212;                                   /* 타이핑 글자 글로우 색상(청록빛) */
+  --gap:8px;
+  --base:clamp(2rem,8cqi,80px);
+  --easing:cubic-bezier(.2,.8,.2,1);
+  --speed:.6s;
 }
 *,*:before,*:after{box-sizing:border-box}
 html{color-scheme:light dark}
+
+/* =========================
+   배경(심해 안개 + 수면 광택 + 부유하는 입자)
+   ========================= */
 body{
-  font-family:var(--font-body); line-height:1.6; letter-spacing:.01em;
-  min-height:100vh; display:grid; place-items:start center; gap:1rem;
+  font-family:var(--font-body);
+  line-height:1.6; letter-spacing:.01em;
+  min-height:100vh;
+  display:grid; place-items:start center; gap:1rem;
   padding-block:2.5rem 4rem; overflow-x:clip; position:relative;
+
+  /* 안개/수면 광택 베이스 그라디언트 */
   background:
     radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
     radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
     linear-gradient(180deg,#08131a 0%,#060d13 60%,#020609 100%);
 }
+/* 상부/하부 안개 레이어 */
 body::before{
   content:""; position:fixed; inset:-12% -8%; z-index:0; pointer-events:none;
   background:
@@ -38,6 +55,7 @@ body::before{
   filter:blur(10px); mix-blend-mode:screen; opacity:.65;
   animation:abyssFog 46s ease-in-out infinite alternate;
 }
+/* 은은한 부유 입자(점) */
 body::after{
   content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.22; mix-blend-mode:screen;
   background-image:
@@ -51,14 +69,20 @@ body::after{
 @keyframes abyssFog{0%{transform:translate3d(0,-1.5%,0) scale(1.02)}50%{transform:translate3d(0,1.5%,0) scale(1.04)}100%{transform:translate3d(0,-1.2%,0) scale(1.01)}}
 @keyframes abyssMotes{0%{background-position:0 0, 120px 90px}100%{background-position:0 -900px, 120px -1200px}}
 
+/* =========================
+   타이핑 헤더
+   ========================= */
 #title{
-  margin:0; font-family:var(--font-heading); font-weight:700; letter-spacing:.02em;
-  font-size:clamp(24px,6vw,48px); color:#eaf2f9; z-index:1; text-align:center;
+  margin:0; text-align:center; z-index:1;
+  font-family:var(--font-heading); font-weight:700; letter-spacing:.02em;
+  font-size:clamp(24px,6vw,48px); color:#eaf2f9;
 }
+/* 깜빡이는 캐럿 */
 #title.typing::after{
   content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
   background:currentColor; animation:caret 1s steps(1) infinite; vertical-align:-.1em;
 }
+/* 개별 글자 등장 */
 .typing-char{
   display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
   filter:blur(var(--b,1.2px));
@@ -68,14 +92,20 @@ body::after{
 @keyframes typeIn{to{opacity:1; transform:translateY(0) rotate(0) scale(1); filter:blur(0)}}
 @keyframes glow{0%{text-shadow:0 0 .60em rgba(var(--glow-rgb),.40)}100%{text-shadow:0 0 .25em rgba(var(--glow-rgb),.18)}}
 
-.intro{margin:0; width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; color:#cfe0ee; z-index:1; text-align:center}
+.intro{
+  margin:0; width:74ch; max-width:calc(100% - 4rem);
+  text-wrap:balance; color:#cfe0ee; z-index:1; text-align:center
+}
 
-/* grid */
+/* =========================
+   카드 그리드(세로 → 가로 확장)
+   ========================= */
 ul{
-  list-style:none; padding:0; margin:2rem 0 0; width:820px; max-width:calc(100% - 4rem);
+  list-style:none; padding:0; margin:2rem 0 0;
+  width:820px; max-width:calc(100% - 4rem);
   height:clamp(300px,40dvh,474px);
   display:grid; container-type:inline-size;
-  grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr;   /* 첫 카드 확장 기본 */
   gap:var(--gap);
   transition:grid-template-columns var(--speed) var(--easing);
   z-index:1;
@@ -86,21 +116,75 @@ li{
   box-shadow:0 10px 26px rgba(0,0,0,.35);
 }
 
-/* book */
+/* =========================
+   책(표지/내지) 레이아웃
+   ========================= */
 article.book{--cover:#0d141c; --cover-edge:#0f1a23; --paper:#0e151c;
   position:absolute; inset:0; border-radius:10px; overflow:hidden; transform-style:preserve-3d; color:#eaf4ff;
 }
+/* 내지(내용) */
 .book .content{
-  position:absolute; inset:0; padding:12px 14px 14px; z-index:1; display:flex; flex-direction:column; justify-content:flex-end; gap:.7rem;
-  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)), radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%), var(--paper);
+  position:absolute; inset:0; padding:12px 14px 14px; z-index:1;
+  display:flex; flex-direction:column; justify-content:flex-end; gap:.7rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)),
+    radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%),
+    var(--paper);
 }
-.book .content img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.35; filter:grayscale(.2) contrast(1.05); mix-blend-mode:luminosity; z-index:-1}
+/* 배경 이미지(있다면) */
+.book .content img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  opacity:.35; filter:grayscale(.2) contrast(1.05); mix-blend-mode:luminosity; z-index:-1
+}
+/* 표지 측면(책 등) */
+.book::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:10px; border-radius:10px 0 0 10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2)), #0b131a;
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.15), inset 1px 0 0 rgba(0,0,0,.5);
+  transform:translateZ(25px)
+}
+/* 페이지 덩어리 */
+.book .pages{
+  position:absolute; inset:6px 6px 6px 10px; border-radius:8px; overflow:hidden;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)),
+    var(--paper);
+  box-shadow:inset -10px 0 16px rgba(0,0,0,.25);
+  transform:translateZ(12px)
+}
+/* 표지판 */
+.book .cover{
+  position:absolute; inset:0; border-radius:10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25)),
+    radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,.10), transparent 60%),
+    var(--cover);
+  border:1px solid rgba(255,255,255,.15);
+  transform-origin:left center; transform:translateZ(24px) rotateY(0deg);
+  transition:transform .7s var(--easing), box-shadow .7s var(--easing), filter .7s var(--easing);
+  box-shadow:2px 0 0 var(--cover-edge), 0 6px 20px rgba(0,0,0,.35);
+}
+/* 표지 빛 스윕 */
+.book .cover::after{
+  content:""; position:absolute; inset:-12% 40% -12% -40%;
+  background:linear-gradient(90deg, transparent 0 30%, rgba(255,255,255,.18) 50%, transparent 70%);
+  transform:skewX(-12deg); filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .6s var(--easing)
+}
+/* 표지 세로제목(세리프 세로쓰기) */
 .book .cover::before{
   content:attr(data-title); position:absolute; left:12px; top:10px;
   writing-mode:vertical-rl; text-orientation:mixed;
   font-family:var(--font-heading); font-weight:700; font-size:.95rem; letter-spacing:.08em;
   color:rgba(255,255,255,.78); opacity:.85; pointer-events:none; transition:opacity .35s var(--easing), transform .35s var(--easing);
 }
+/* 펼칠 때 표지 회전 + 스윕 강조 */
+li:hover .book .cover, li:focus-within .book .cover{
+  transform:translateZ(24px) rotateY(-72deg); box-shadow:18px 6px 28px rgba(0,0,0,.45); filter:brightness(1.02)
+}
+li:hover .book .cover::after{opacity:.9}
+
+/* 표지 열리면 세로제목 숨기고, 안쪽 제목/링크는 나타남 */
 li[data-active="true"] .book .cover::before{opacity:0; transform:translateX(-6px)}
 .book .content h3{
   position:absolute; top:12px; left:16px; right:16px; margin:0;
@@ -111,34 +195,30 @@ li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
 .book .content a{color:inherit; font-weight:700; width:fit-content; text-decoration:none; opacity:0; transform:translateY(4px); transition:opacity .5s var(--easing), transform .5s var(--easing)}
 .book .content a.show{opacity:1; transform:translateY(0)}
 .book .content a:is(:hover,:focus-visible){text-decoration:underline; text-underline-offset:4px}
-.book .pages{position:absolute; inset:6px 6px 6px 10px; border-radius:8px; overflow:hidden; background:repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px), linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)), var(--paper); box-shadow:inset -10px 0 16px rgba(0,0,0,.25); transform:translateZ(12px)}
-.book::before{content:""; position:absolute; left:0; top:0; bottom:0; width:10px; border-radius:10px 0 0 10px; background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2)), #0b131a; box-shadow:inset -1px 0 0 rgba(255,255,255,.15), inset 1px 0 0 rgba(0,0,0,.5); transform:translateZ(25px)}
-.book .cover{
-  position:absolute; inset:0; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25)), radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,.10), transparent 60%), var(--cover);
-  border:1px solid rgba(255,255,255,.15); transform-origin:left center; transform:translateZ(24px) rotateY(0deg);
-  transition:transform .7s var(--easing), box-shadow .7s var(--easing), filter .7s var(--easing);
-  box-shadow:2px 0 0 var(--cover-edge), 0 6px 20px rgba(0,0,0,.35);
-}
-.book .cover::after{content:""; position:absolute; inset:-12% 40% -12% -40%; background:linear-gradient(90deg, transparent 0 30%, rgba(255,255,255,.18) 50%, transparent 70%); transform:skewX(-12deg); filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .6s var(--easing)}
-li:hover .book .cover, li:focus-within .book .cover{transform:translateZ(24px) rotateY(-72deg); box-shadow:18px 6px 28px rgba(0,0,0,.45); filter:brightness(1.02)}
-li:hover .book .cover::after{opacity:.9}
-li:not([data-active="true"]) .book .content{opacity:0; visibility:hidden; pointer-events:none; transition:opacity .3s var(--easing), visibility 0s linear .3s}
-li[data-active="true"] .book .content{opacity:1; visibility:visible; transition-delay:0s}
 
-/* ===== Mystic + long Glitch (no scanlines) ===== */
+/* =========================
+   신비한 글자 등장 + 글리치 보정
+   ========================= */
+/* 문단 전체에 은은한 안개/광택 오버레이 (글리치 중) */
 .desc{position:relative}
 .desc.playing::after{
   content:""; position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen; opacity:.55;
-  background:radial-gradient(100% 100% at 20% -20%, rgba(160,255,230,.12), transparent 60%), radial-gradient(120% 120% at 110% 120%, rgba(120,190,255,.10), transparent 60%);
+  background:
+    radial-gradient(100% 100% at 20% -20%, rgba(160,255,230,.12), transparent 60%),
+    radial-gradient(120% 120% at 110% 120%, rgba(120,190,255,.10), transparent 60%);
   mask:linear-gradient(90deg, transparent 0 3%, #000 12% 88%, transparent 97% 100%);
   animation:wisp 2.8s ease-in-out infinite alternate;
 }
 @keyframes wisp{0%{transform:translate(-6%,2%)}100%{transform:translate(6%,-2%)}}
 
-.reveal-char{display:inline-block; opacity:0; filter:blur(2px); transform:translateY(6px) scale(.985); animation:mysticIn .6s var(--easing) forwards}
+/* 자모 단위 등장(흐림→선명) */
+.reveal-char{
+  display:inline-block; opacity:0; filter:blur(2px); transform:translateY(6px) scale(.985);
+  animation:mysticIn .6s var(--easing) forwards
+}
 @keyframes mysticIn{to{opacity:1; filter:blur(0); transform:translateY(0) scale(1)}}
 
-/* RGB split while glitching */
+/* 글리치 중에는 RGB 분리(의도적으로) */
 .reveal-char.gl{ position:relative; }
 .reveal-char.gl::before,
 .reveal-char.gl::after{
@@ -149,13 +229,17 @@ li[data-active="true"] .book .content{opacity:1; visibility:visible; transition-
 </style>
 </head>
 <body>
+
+<!-- 타이핑 헤더: data-text 로 문구 변경 -->
 <h1 id="title" data-text="the craft of ui" aria-label="the craft of ui"></h1>
+
 <p class="intro">
   Unlock the art and science of interface development. This isn’t just about
   pushing pixels or following documentation — it’s about mastering the
   tools, understanding the nuances, and shaping experiences with intention.
 </p>
 
+<!-- 카드 목록: 세로 탭 → 호버 시 해당 카드만 가로로 확장 -->
 <ul>
   <li data-active="true">
     <article class="book">
@@ -244,7 +328,10 @@ li[data-active="true"] .book .content{opacity:1; visibility:visible; transition-
 </ul>
 
 <script>
-/* Typing headline */
+/* =========================================================
+   타이핑 헤더: data-text 의 문구를 한 글자씩 등장
+   (접근성 고려: motion reduce 환경에서는 한 번에 출력)
+   ========================================================= */
 (function(){
   const el=document.getElementById('title');
   const full=(el.dataset.text||el.textContent||'the craft of ui').trim();
@@ -262,62 +349,116 @@ li[data-active="true"] .book .content{opacity:1; visibility:visible; transition-
   })();
 })();
 
-/* grid spread & active */
+/* =========================================================
+   카드 확장 로직 + 랜덤 글리치(확률/쿨다운) + 신비한 등장
+   ========================================================= */
+
+/* 그리드/아이템 참조 */
 const list=document.querySelector('ul');
 const items=list.querySelectorAll('li');
-let prev=-1;
+let prev=-1;  // 이전 활성 인덱스
 
+/* ---- 튜닝 포인트 ---- */
+const EFFECT_PROB = 0.45;    // 글리치 발동 확률(0~1)
+const COOLDOWN_MS = 1600;    // 같은 카드 재발동 금지 시간(ms)
+/* -------------------- */
+
+/* 카드별 마지막 실행 시점 기억(쿨다운용) */
+const lastRun = new WeakMap();
+function canRun(li) {
+  const now = performance.now();
+  const prev = lastRun.get(li) || 0;
+  if (now - prev < COOLDOWN_MS) return false;
+  lastRun.set(li, now);
+  return true;
+}
+
+/* 마우스 이동/클릭/포커스 시 해당 카드만 가로로 확장 */
+function setIndex(e){
+  const li = e.target.closest('li'); 
+  if(!li) return;
+  const idx = [...items].indexOf(li);
+
+  const cols = new Array(items.length).fill().map((_, i) => {
+    items[i].dataset.active = (i === idx).toString();
+    return i === idx ? '10fr' : '1fr';
+  }).join(' ');
+  list.style.setProperty('grid-template-columns', cols);
+
+  /* 인덱스가 바뀐 순간에만 효과를 평가 */
+  if (idx !== prev) {
+    prev = idx;
+    // 확률 & 쿨다운을 통과하면 글리치 → 이후 깨끗한 리빌
+    if (Math.random() < EFFECT_PROB && canRun(li)) {
+      glitchOnce(li, () => playReveal(li));
+    } else {
+      // 평소엔 글리치 없이 부드러운 리빌만
+      playReveal(li);
+    }
+  }
+}
+
+/* 이벤트 바인딩 */
 list.addEventListener('pointermove', setIndex);
 list.addEventListener('click', setIndex);
 list.addEventListener('focus', setIndex, true);
 
-function setIndex(e){
-  const li=e.target.closest('li'); if(!li) return;
-  const idx=[...items].indexOf(li);
-  const cols=new Array(items.length).fill().map((_,i)=>{
-    items[i].dataset.active=(i===idx).toString();
-    return i===idx?'10fr':'1fr';
-  }).join(' ');
-  list.style.setProperty('grid-template-columns', cols);
-  if(idx!==prev){ prev=idx; glitchOnce(li, ()=>playReveal(li)); }
-}
+/* 최초 진입: 과한 연출 없이 내용만 드러나도록 */
+const first = document.querySelector('li[data-active="true"]');
+if (first) playReveal(first);
 
-/* wrap each char for animations */
+/* ---------------------------------------------------------
+   유틸: 텍스트를 글자(span) 단위로 감싸 애니메이션 가능하게 함
+   --------------------------------------------------------- */
 function wrapForReveal(p){
-  if(p.dataset.raw) return;
-  const raw=p.textContent; p.dataset.raw=raw; p.textContent='';
+  if(p.dataset.raw) return;       // 이미 처리됨
+  const raw=p.textContent;
+  p.dataset.raw=raw;
+  p.textContent='';
   const frag=document.createDocumentFragment();
   [...raw].forEach((ch,i)=>{
     const s=document.createElement('span');
-    s.className='reveal-char'; s.textContent=ch;
-    s.dataset.ch=ch;  // for ::before/::after
+    s.className='reveal-char';
+    s.textContent=ch;
+    s.dataset.ch=ch; // RGB 분리용
     s.style.animationDelay=(0.02*i+Math.random()*0.06).toFixed(2)+'s';
     frag.appendChild(s);
   });
   p.appendChild(frag);
 }
 
-/* Mystic reveal (깨끗하게 정리) */
+/* ---------------------------------------------------------
+   신비한 등장(미스트 인): 부드러운 페이드/블러 해제
+   --------------------------------------------------------- */
 function playReveal(li){
   const p=li.querySelector('.desc'); if(!p) return;
   wrapForReveal(p);
+
   p.querySelectorAll('.reveal-char').forEach((s,i)=>{
-    s.style.animation='none'; void s.offsetWidth;
+    s.style.animation='none'; void s.offsetWidth; // 재실행
     s.style.animation='mysticIn .6s var(--easing) forwards';
     s.style.animationDelay=(0.02*i+Math.random()*0.06)+'s';
   });
+
+  // 문단에 광택/안개를 살짝 얹음(3초)
   p.classList.add('playing'); setTimeout(()=>p.classList.remove('playing'),3000);
+
+  // 'Watch now' 링크는 약간 늦게 등장
   const link=li.querySelector('.content a');
   if(link){ link.classList.remove('show'); setTimeout(()=>link.classList.add('show'),450); }
 }
 
-/* Long glitch: scramble + RGB offset + jitter (NO scanlines) */
+/* ---------------------------------------------------------
+   글리치(길게): 스크램블 + RGB 분리 + 지터
+   - dur: 1.8~2.8s
+   - scanline(줄무늬)는 사용 안 함 (요청사항 반영)
+   --------------------------------------------------------- */
 function glitchOnce(li, done){
   const p=li.querySelector('.desc'); if(!p){done&&done(); return;}
   wrapForReveal(p);
-  const spans=[...p.querySelectorAll('.reveal-char')];
 
-  const dur=1800+Math.random()*1000; // 1.8~2.8s
+  const spans=[...p.querySelectorAll('.reveal-char')];
+  const dur=1800+Math.random()*1000;           // 1.8~2.8초
   const start=performance.now();
   const pool='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*?';
 
@@ -330,10 +471,10 @@ function glitchOnce(li, done){
   let raf;
   function tick(now){
     const t=now-start;
-    const progress=Math.min(t/dur,1);           // 0 → 1
-    const keep=Math.ceil((1-progress)*spans.length); // 유지되는 스크램블 양
+    const progress=Math.min(t/dur,1);                 // 0 → 1
+    const keep=Math.ceil((1-progress)*spans.length);  // 진행될수록 스크램블 양 감소
 
-    // 무작위로 일부 문자를 스크램블
+    // 무작위로 일부 문자를 스크램블 + RGB 오프셋
     for(let i=0;i<keep;i++){
       const s=spans[Math.floor(Math.random()*spans.length)];
       s.textContent = pool[Math.floor(Math.random()*pool.length)];
@@ -355,13 +496,16 @@ function glitchOnce(li, done){
   raf=requestAnimationFrame(tick);
 }
 
-/* initial */
+/* ---------------------------------------------------------
+   레이아웃 보정: 가장 넓은 카드 기준으로 --article-width 설정
+   (현재 UI에선 필요 최소화지만 호환용 유지)
+   --------------------------------------------------------- */
 function resync(){
   const w=Math.max(...[...items].map(i=>i.offsetWidth));
   list.style.setProperty('--article-width', w);
 }
-addEventListener('resize', resync); resync();
-glitchOnce(document.querySelector('li[data-active="true"]'), ()=>playReveal(document.querySelector('li[data-active="true"]')));
+addEventListener('resize', resync);
+resync();
 </script>
 </body>
 </html>
