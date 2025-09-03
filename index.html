@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — book open cards</title>
-  <meta name="description" content="TRPG / 핸드아웃용 카드 보관함. 서재 느낌의 세리프 헤드라인 + 가독성 좋은 본문 폰트, 심해 드리프트 배경, 호버 시 책 표지가 열리는 카드." />
+  <title>the craft of ui — book cards (vertical ↔ horizontal title)</title>
+  <meta name="description" content="서재 느낌 카드 UI. 비활성: 세로쓰기 세리프 제목 / 활성: 가로쓰기 제목. 타이핑 헤드라인, 심해 안개 배경, 책이 펼쳐지는 효과, 겹침 방지 포함." />
 
   <!-- Normalize -->
   <link rel="preconnect" href="https://unpkg.com">
@@ -17,45 +17,39 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 
   <style>
-    /* ---------------------- Font Theme ---------------------- */
+    /* ===================== Theme / Tokens ===================== */
     :root{
       --font-heading: "Noto Serif KR","Noto Serif",serif;
       --font-body: "Pretendard Variable","Pretendard","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      --glow-rgb: 79,255,212;
 
-      --glow-rgb: 79,255,212; /* 타이핑 글자 은은한 글로우 색 */
       --gap: 8px;
       --base: clamp(2rem, 8cqi, 80px);
       --easing: cubic-bezier(.2,.8,.2,1);
       --speed: .6s;
     }
-
     html{ color-scheme: light dark; text-rendering: optimizeLegibility; }
     *,*::before,*::after{ box-sizing: border-box; }
 
+    /* ===================== Background: Mist Horizon ===================== */
     body{
       font-family: var(--font-body);
-      letter-spacing: .01em;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: .01em; line-height: 1.6;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 
       min-height: 100vh;
-      display: grid;
-      place-items: start center;
+      display: grid; place-items: start center;
       gap: 1rem;
       padding-block: 2.5rem 4rem;
 
-      position: relative;
-      overflow-x: clip;
+      position: relative; overflow-x: clip;
 
-      /* Abyss base gradient */
       background:
         radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
         radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
         linear-gradient(180deg, #08131a 0%, #060d13 60%, #020609 100%);
     }
-
-    /* Animated mist (before) */
+    /* drifting mist */
     body::before{
       content:""; position: fixed; inset: -12% -8%;
       pointer-events:none; z-index:0;
@@ -66,8 +60,7 @@
       mix-blend-mode: screen; opacity:.65;
       animation: abyssFog 46s ease-in-out infinite alternate;
     }
-
-    /* Floating fine particles (after) */
+    /* tiny motes */
     body::after{
       content:""; position: fixed; inset:0; pointer-events:none; z-index:0; opacity:.22;
       mix-blend-mode: screen;
@@ -79,11 +72,7 @@
       background-position: 0 0, 120px 90px;
       animation: abyssMotes 90s linear infinite;
     }
-
-    @media (prefers-reduced-motion: reduce){
-      body::before, body::after{ animation:none; }
-    }
-
+    @media (prefers-reduced-motion: reduce){ body::before, body::after{ animation:none; } }
     @keyframes abyssFog{
       0%{ transform: translate3d(0,-1.5%,0) scale(1.02) rotate(.2deg); }
       50%{ transform: translate3d(0, 1.5%,0) scale(1.04) rotate(0deg); }
@@ -94,7 +83,7 @@
       100%{ background-position: 0 -900px, 120px -1200px; }
     }
 
-    /* ---------------------- Typing Headline ---------------------- */
+    /* ===================== Typing Headline ===================== */
     #title{
       margin: 0;
       font-family: var(--font-heading);
@@ -108,12 +97,12 @@
       content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
       background:currentColor; animation: caret 1s steps(1) infinite; vertical-align:-.1em;
     }
-    @keyframes caret{ 50%{opacity:0} }
     .typing-char{
       display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
       filter:blur(var(--b,1.2px));
       animation: typeIn .42s cubic-bezier(.2,.8,.2,1) forwards, glow 1.8s ease-out forwards;
     }
+    @keyframes caret{ 50%{opacity:0} }
     @keyframes typeIn{ to{opacity:1; transform:translateY(0) rotate(0) scale(1); filter:blur(0)} }
     @keyframes glow{
       0%{ text-shadow: 0 0 .60em rgba(var(--glow-rgb), .40), 0 0 .18em rgba(var(--glow-rgb), .25); }
@@ -121,16 +110,17 @@
       100%{ text-shadow: 0 0 .25em rgba(var(--glow-rgb), .18); }
     }
 
-    /* ---------------------- Intro paragraph ---------------------- */
+    /* ===================== Intro paragraph ===================== */
     .intro{
       margin: 0;
       width: 74ch; max-width: calc(100% - 4rem);
       text-wrap: balance;
       color: #cfe0ee;
       z-index: 1;
+      text-align: center;
     }
 
-    /* ---------------------- Grid + Book Cards ---------------------- */
+    /* ===================== Grid + Book Cards ===================== */
     ul{
       list-style: none; padding: 0; margin: 2rem 0 0;
       width: 820px; max-width: calc(100% - 4rem);
@@ -141,11 +131,10 @@
       transition: grid-template-columns var(--speed) var(--easing);
       z-index: 1;
     }
-
     li{
       position: relative; overflow: visible; min-width: var(--base);
       border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
-      background: #0a0f14; /* fallback */
+      background: #0a0f14;
       perspective: 1200px; transform-style: preserve-3d;
       box-shadow: 0 10px 26px rgba(0,0,0,.35);
     }
@@ -173,13 +162,52 @@
       position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.35;
       filter:grayscale(.2) contrast(1.05); mix-blend-mode: luminosity; z-index:-1;
     }
-    .book .content h3{
-      position:absolute; top:10px; left:14px;
-      transform-origin:0 50%; rotate:90deg;
+
+    /* -------- 제목 전환 로직 --------
+       - 기본(비활성): 표지에 '세로쓰기' 제목 표시 (세리프)
+       - 활성(호버/포커스): 표지 세로 제목은 사라지고, 내부에 '가로쓰기' 제목 등장 */
+    /* 표지 세로 제목(비활성용) */
+    .book .cover::before{
+      content: attr(data-title);
+      position: absolute; left: 12px; top: 10px;
+      /* 진짜 세로쓰기 */
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      /* 폰트/룩 */
       font-family: var(--font-heading);
-      font-weight: 600; letter-spacing: .12em; font-size:.95rem; opacity:.9;
-      margin:0;
+      font-weight: 600;
+      font-size: .95rem;
+      letter-spacing: .08em;
+      color: rgba(255,255,255,.78);
+      pointer-events: none;
+      /* 애니메이션 */
+      opacity: .85;
+      transition: opacity .35s var(--easing), transform .35s var(--easing);
     }
+    /* 활성 시: 표지 세로 제목 페이드아웃 */
+    li[data-active="true"] .book .cover::before{
+      opacity: 0;
+      transform: translateX(-6px);
+    }
+
+    /* 내부 가로 제목(활성용) */
+    .book .content h3{
+      position: absolute; top: 12px; left: 16px; right: 16px;
+      margin: 0;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      letter-spacing: .02em;
+      font-size: 1rem;
+      /* 처음엔 살짝 숨겨두고 활성화 때 등장 */
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity .35s var(--easing), transform .45s var(--easing);
+    }
+    li[data-active="true"] .book .content h3{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .book .content p{
       font-family: var(--font-body); font-weight: 400; font-size: 14.5px; line-height:1.45; opacity:.9; margin:0;
     }
@@ -205,7 +233,7 @@
       transform: translateZ(25px);
     }
 
-    /* 앞표지 */
+    /* 앞표지(열리는 파트) */
     .book .cover{
       position:absolute; inset:0; border-radius:10px;
       background:
@@ -235,13 +263,18 @@
     }
     li:hover .book .cover::after{ opacity:.9; }
 
-    /* 활성 카드의 텍스트 페이드 */
-    li :is(h3, p){ opacity:0; transition: opacity calc(var(--speed) * 1.2) var(--easing); }
-    [data-active='true'] :is(h3, p){ opacity:1; transition-delay:.2s; }
+    /* -------- 겹침 방지: 활성 카드만 내용 보이기 -------- */
+    li:not([data-active="true"]) .book .content {
+      opacity: 0; visibility: hidden; pointer-events: none;
+      transition: opacity .3s var(--easing), visibility 0s linear .3s;
+    }
+    li[data-active="true"] .book .content {
+      opacity: 1; visibility: visible; transition-delay: 0s;
+    }
   </style>
 </head>
 <body>
-  <!-- 제목: 문구 바꾸려면 data-text 수정 -->
+  <!-- 제목: 문구는 data-text에서 변경 -->
   <h1 id="title" data-text="the craft of ui" aria-label="the craft of ui"></h1>
 
   <p class="intro">
@@ -259,7 +292,8 @@
           <a href="#"><span>Watch now</span></a>
           <img src="https://picsum.photos/720/720?random=12" alt="">
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <!-- 비활성 시 보일 세로 제목은 data-title에 -->
+        <div class="cover" data-title="THE CRAFT" aria-hidden="true"></div>
       </article>
     </li>
 
@@ -271,7 +305,7 @@
           <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
           <a href="#"><span>Watch now</span></a>
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <div class="cover" data-title="CSS ANIMATION" aria-hidden="true"></div>
       </article>
     </li>
 
@@ -283,7 +317,7 @@
           <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
           <a href="#"><span>Watch now</span></a>
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <div class="cover" data-title="SVG FILTERS" aria-hidden="true"></div>
       </article>
     </li>
 
@@ -295,7 +329,7 @@
           <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
           <a href="#"><span>Watch now</span></a>
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <div class="cover" data-title="SCROLL ANIMATION" aria-hidden="true"></div>
       </article>
     </li>
 
@@ -307,7 +341,7 @@
           <p>Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.</p>
           <a href="#"><span>Watch now</span></a>
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <div class="cover" data-title="TAMING CANVAS" aria-hidden="true"></div>
       </article>
     </li>
 
@@ -319,7 +353,7 @@
           <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
           <a href="#"><span>Watch now</span></a>
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <div class="cover" data-title="LAYOUT TRICKS" aria-hidden="true"></div>
       </article>
     </li>
 
@@ -331,7 +365,7 @@
           <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
           <a href="#"><span>Watch now</span></a>
         </div>
-        <div class="cover" aria-hidden="true"></div>
+        <div class="cover" data-title="MASTERING TIME" aria-hidden="true"></div>
       </article>
     </li>
   </ul>
@@ -356,7 +390,7 @@
       setTimeout(step,350);
     })();
 
-    /* ===== Grid spread on hover ===== */
+    /* ===== Grid spread on hover (activate one) ===== */
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
 
@@ -369,7 +403,6 @@
       }).join(' ');
       list.style.setProperty('grid-template-columns', cols);
     }
-
     list.addEventListener('pointermove', setIndex);
     list.addEventListener('click', setIndex);
     list.addEventListener('focus', setIndex, true);
