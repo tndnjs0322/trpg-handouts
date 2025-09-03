@@ -1,167 +1,33 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>the craft of ui — diagonal rune bands</title>
-<style>
-  @import url('https://unpkg.com/normalize.css') layer(n);
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&family=Cinzel:wght@800&display=swap') layer(b);
-
-  @layer b {
-    html{color-scheme:light dark}
-    *,*:before,*:after{box-sizing:border-box}
-    body{
-      min-height:100vh; display:flex; flex-direction:column; align-items:center; gap:1rem; padding-block:2rem;
-      font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-      /* Mist Horizon 배경 */
-      background:
-        radial-gradient(160% 80% at 50% -20%, #0e2c34 0, transparent 55%),
-        linear-gradient(180deg, #07141a 0%, #061018 55%, #02060a 100%);
-      color: canvasText;
-    }
-    h1{margin:0; font-family:'Cinzel',serif; letter-spacing:.6px; text-shadow:0 0 18px rgba(60,180,160,.18)}
-    p{margin:0}
-    .lead{
-      width:74ch; max-width:calc(100% - 4rem); text-align:center; text-wrap:balance;
-      font-family:monospace; line-height:1.5; opacity:.85; margin-bottom:3rem;
-    }
-  }
-
-  :root{
-    --gap:8px; --base:clamp(2rem, 8cqi, 80px);
-    --easing: cubic-bezier(.2,.6,.2,1);
-    --speed: .6s;
-  }
-
-  /* 그리드(세로 카드) */
-  ul{
-    display:grid; container-type:inline-size;
-    grid-template-columns:10fr 1fr 1fr 1fr 1fr 1fr 1fr;
-    gap:var(--gap); list-style:none; margin:0; padding:0;
-    height:clamp(300px, 40dvh, 474px);
-    width:820px; max-width:calc(100% - 4rem);
-    transition:grid-template-columns var(--speed) var(--easing);
-  }
-  li{
-    position:relative; overflow:hidden; min-width:var(--base);
-    border-radius:10px;
-    background: light-dark(#fff,#000);
-    border:1px solid color-mix(in hsl, #6dd3ff, transparent 72%);
-    box-shadow: inset 0 0 60px rgba(20,120,120,.06);
-    transition: transform .35s var(--easing), box-shadow .35s var(--easing);
-  }
-
-  /* 카드 본문 */
-  article{
-    position:absolute; inset:0; container-type:size; /* cqh 단위 사용 위해 */
-    display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
-    padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
-    font-family:monospace;
-  }
-  article h3{
-    position:absolute; top:1rem; left:calc(var(--base)*.5);
-    transform-origin:0 50%; rotate:90deg;
-    font-size:1rem; font-weight:300; text-transform:uppercase; margin:0; white-space:nowrap;
-  }
-  article p{font-size:13px; line-height:1.25; opacity:.95}
-  article a{position:absolute; bottom:1rem; color:inherit; text-decoration:none; font-weight:600}
-  article a span{display:inline-block; translate:calc(var(--base)*.5)}
-  article a:hover span{text-decoration:underline; text-underline-offset:4px}
-  article img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; mask:radial-gradient(100% 100% at 100% 0, #fff, #0000)}
-
-  li :is(svg,h3){opacity:.6; transition:opacity calc(var(--speed)*1.2) var(--easing)}
-  li :is(a,p){opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing)}
-  li img{filter:grayscale(1) brightness(1.5); scale:1.1; transition:filter calc(var(--speed)*1.2), scale calc(var(--speed)*1.2) var(--easing)}
-  [data-active="true"] :is(a,p,h3,svg){opacity:1}
-  [data-active="true"] :is(a,p){transition-delay:.15s}
-  [data-active="true"] img{filter:grayscale(0) brightness(1); scale:1; transition-delay:.15s}
-
-  /* ====== 룬 밴드 ====== */
-  /* 전체 컨테이너 */
-  .runes{
-    position:absolute; inset:6% 5% 12% 5%;
-    pointer-events:none; opacity:0; transition:opacity .35s ease;
-    mix-blend-mode:screen; filter:url(#fog) blur(.2px);
-  }
-  li[data-active="true"] .runes{opacity:.96}
-
-  /* 밴드: 일정한 두께로 비스듬히 흐르는 레이어 */
-  @keyframes bandDrift {
-    0%   { transform: translateX(-2%) rotate(var(--rot)); }
-    100% { transform: translateX( 2%) rotate(var(--rot)); }
-  }
-  @keyframes bandFade {
-    0%   { opacity:.9; }
-    100% { opacity:.45; }
-  }
-  .band{
-    position:absolute; left:-25%; width:150%;
-    top:var(--top,10%);
-    height:var(--band, 8cqh);           /* 카드 높이 기준 일정 두께 */
-    overflow:hidden;
-    transform: rotate(var(--rot,-18deg));
-    opacity:.8;
-    animation:
-      bandDrift var(--drift,18s) ease-in-out var(--delay,0s) infinite alternate,
-      bandFade  var(--wane, 80s) ease-in-out var(--delay,0s) infinite alternate;
-    will-change:transform,opacity;
-  }
-
-  /* 밴드 안에서 룬 문자열이 ‘아래로’ 흐름 */
-  @keyframes slideDown { to { transform: translateY(240%); } }
-  .line{
-    position:absolute; left:0; right:0; top:-120%;
-    display:flex; justify-content:space-around;
-    animation: slideDown var(--speedY,28s) linear var(--offset,0s) infinite;
-  }
-  .line em{
-    white-space:nowrap; letter-spacing:.6em;
-    color: rgba(140,240,230,.66);
-    text-shadow:
-      0 0 12px rgba(80,200,200,.25),
-      0 0 22px rgba(50,150,200,.18);
-    font-size: clamp(12px, 2.2cqi, 18px);
-    transform: rotate(var(--trot,0deg));
-  }
-
-  /* 활성 카드 강조/살짝 깊이감 */
-  ul{perspective:900px}
-  li[data-active="true"]{
-    box-shadow:
-      0 0 0 1px rgba(110,210,255,.28),
-      0 0 24px rgba(80,200,255,.14),
-      inset 0 0 80px rgba(40,160,200,.08);
-  }
-  li[data-active="true"]:hover{ transform: translateZ(12px) rotateY(-1.6deg) }
-
-  /* 모션 최소화 사용자 배려 */
-  @media (prefers-reduced-motion:reduce){
-    .band,.line{animation:none !important}
-    li[data-active="true"]:hover{transform:none}
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>the craft of ui — diagonal rune bands</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- 안개 왜곡 필터 -->
-  <svg width="0" height="0" style="position:absolute">
+  <!-- 안개(왜곡) 필터: CSS에서 filter:url(#fog)로 참조 -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
     <filter id="fog" x="-20%" y="-20%" width="140%" height="140%">
       <feTurbulence type="fractalNoise" baseFrequency="0.004 0.007" numOctaves="2" seed="11">
         <animate attributeName="baseFrequency" dur="60s"
-                 values="0.004 0.007; 0.006 0.009; 0.004 0.007" repeatCount="indefinite"/>
+                 values="0.004 0.007; 0.006 0.009; 0.004 0.007"
+                 repeatCount="indefinite"/>
       </feTurbulence>
       <feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G">
-        <animate attributeName="scale" dur="42s" values="7;12;8;7" repeatCount="indefinite"/>
+        <animate attributeName="scale" dur="42s" values="7;12;8;7"
+                 repeatCount="indefinite"/>
       </feDisplacementMap>
       <feGaussianBlur stdDeviation="0.35"/>
     </filter>
   </svg>
 
-  <h1 style="font-size:clamp(28px,6vw,56px);text-transform:uppercase">THE CRAFT OF UI</h1>
+  <h1>THE CRAFT OF UI</h1>
   <p class="lead">
-    Unlock the art and science of interface development. This isn’t just about pushing pixels or
-    following documentation — it’s about mastering the tools, understanding the nuances, and
-    shaping experiences with intention.
+    Unlock the art and science of interface development. This isn’t just about
+    pushing pixels or following documentation — it’s about mastering the tools,
+    understanding the nuances, and shaping experiences with intention.
   </p>
 
   <ul>
@@ -170,6 +36,7 @@
         <h3>THE CRAFT</h3>
         <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
         <a href="#"><span>Watch now</span></a>
+        <!-- 이미지 교체: /images/xxx.jpg 같은 로컬 경로로 바꿔도 됨 -->
         <img src="https://picsum.photos/720/720?random=12" alt="">
       </article>
     </li>
@@ -223,67 +90,6 @@
     </li>
   </ul>
 
-<script>
-  // 카드 확장/하이라이트
-  const list = document.querySelector('ul');
-  const items = list.querySelectorAll('li');
-  function setIndex(e){
-    const li = e.target.closest('li'); if(!li) return;
-    const idx = [...items].indexOf(li);
-    list.style.setProperty('grid-template-columns',
-      [...items].map((_,i)=> (items[i].dataset.active = (i===idx).toString(), i===idx?'10fr':'1fr')).join(' ')
-    );
-  }
-  list.addEventListener('pointermove', setIndex);
-  list.addEventListener('click', setIndex);
-  list.addEventListener('focus', setIndex, true);
-
-  // ===== 룬 밴드 자동 생성 =====
-  const RUNES = 'ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛋ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛟ';
-  const LINE = (RUNES + '   ').repeat(4);
-
-  const rand = (a,b)=> Math.random()*(b-a)+a;
-  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
-
-  document.querySelectorAll('article[data-runes="true"]').forEach(article=>{
-    const box = document.createElement('div');
-    box.className = 'runes';
-
-    // 밴드 개수와 공통 두께(카드 높이 기준) — 필요시 숫자만 조절
-    const bandCount = Math.floor(rand(3,6));
-    const bandThick = `${Math.round(rand(6,10))}cqh`; // 6~10cqh
-
-    for(let i=0;i<bandCount;i++){
-      const band = document.createElement('div');
-      band.className = 'band';
-
-      // 불규칙 위치/각도/속도
-      band.style.setProperty('--top', `${Math.round(rand(5,90))}%`);
-      band.style.setProperty('--rot', `${rand(-28,-14).toFixed(1)}deg`);
-      band.style.setProperty('--drift', `${rand(16,26).toFixed(1)}s`);
-      band.style.setProperty('--wane',  `${rand(70,110).toFixed(0)}s`);
-      band.style.setProperty('--delay', `${(-rand(0,10)).toFixed(1)}s`);
-      band.style.setProperty('--band', bandThick);
-
-      // 밴드 내부에 여러 줄을 넣어 밀도 확보 (2~3줄)
-      const rows = Math.floor(rand(2,4));
-      for(let r=0;r<rows;r++){
-        const line = document.createElement('div');
-        line.className = 'line';
-        line.style.setProperty('--speedY', `${rand(22,36).toFixed(1)}s`);
-        line.style.setProperty('--offset', `${(-rand(0,12)).toFixed(1)}s`);
-        const em = document.createElement('em');
-        em.style.setProperty('--trot', `${rand(-3,3).toFixed(1)}deg`);
-        em.textContent = LINE;
-        line.appendChild(em);
-        band.appendChild(line);
-      }
-
-      box.appendChild(band);
-    }
-
-    article.appendChild(box);
-  });
-</script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
