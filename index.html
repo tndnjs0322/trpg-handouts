@@ -1,473 +1,148 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>the craft of ui — book cards + random glitch (fixed)</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Craft of UI — Vertical Hover Spread</title>
 
-<!-- 기본 리셋 -->
-<link rel="stylesheet" href="https://unpkg.com/normalize.css@8.0.1/normalize.css">
+  <!-- 한글/영문 겸용: 세련된 세리프 + 산세리프 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
 
-<!-- 폰트: 한글 세리프(제목) + 산세리프(본문) -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <!-- 메인 스타일 -->
+<link rel="stylesheet" href="./trpg-handouts/css/abyss.css?v=4">
 
-<style>
-/* ============ 전역 변수/기본값 ============ */
-:root{
-  --font-heading:"Noto Serif KR","Noto Serif",serif;       /* 제목용 */
-  --font-body:"Pretendard Variable","Pretendard","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif; /* 본문용 */
-  --glow-rgb:79,255,212;                                   /* 타이핑 글자 글로우 색상(청록빛) */
-  --gap:8px;
-  --base:clamp(2rem,8cqi,80px);
-  --easing:cubic-bezier(.2,.8,.2,1);
-  --speed:.6s;
-}
-*,*:before,*:after{box-sizing:border-box}
-html{color-scheme:light dark}
-
-/* ============ 배경(심해 안개 + 수면 광택 + 부유하는 입자) ============ */
-body{
-  font-family:var(--font-body);
-  line-height:1.6; letter-spacing:.01em;
-  min-height:100vh;
-  display:grid; place-items:start center; gap:1rem;
-  padding-block:2.5rem 4rem; overflow-x:clip; position:relative;
-
-  background:
-    radial-gradient(80% 50% at 50% 0%, rgba(18,56,76,.12), transparent 65%),
-    radial-gradient(70% 55% at 50% 100%, rgba(6,30,46,.10), transparent 65%),
-    linear-gradient(180deg,#08131a 0%,#060d13 60%,#020609 100%);
-}
-body::before{
-  content:""; position:fixed; inset:-12% -8%; z-index:0; pointer-events:none;
-  background:
-    radial-gradient(60% 40% at 55% 10%, rgba(210,255,255,.06), transparent 60%),
-    radial-gradient(65% 45% at 45% 95%, rgba(120,200,220,.05), transparent 60%);
-  filter:blur(10px); mix-blend-mode:screen; opacity:.65;
-  animation:abyssFog 46s ease-in-out infinite alternate;
-}
-body::after{
-  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.22; mix-blend-mode:screen;
-  background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='white' opacity='0.38'><circle cx='12' cy='20' r='1.1'/><circle cx='48' cy='36' r='0.9'/><circle cx='88' cy='18' r='1.2'/><circle cx='22' cy='72' r='1.0'/><circle cx='66' cy='82' r='0.8'/><circle cx='98' cy='60' r='0.9'/><circle cx='40' cy='102' r='0.9'/><circle cx='8' cy='96' r='0.7'/></g></svg>"),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='white' opacity='0.28'><circle cx='22' cy='26' r='1.4'/><circle cx='94' cy='40' r='1.6'/><circle cx='132' cy='22' r='1.3'/><circle cx='56' cy='116' r='1.5'/><circle cx='144' cy='96' r='1.2'/><circle cx='26' cy='144' r='1.3'/></g></svg>");
-  background-repeat:repeat,repeat;
-  background-size:220px 220px, 300px 300px;
-  background-position:0 0, 120px 90px;
-  animation:abyssMotes 90s linear infinite;
-}
-@keyframes abyssFog{0%{transform:translate3d(0,-1.5%,0) scale(1.02)}50%{transform:translate3d(0,1.5%,0) scale(1.04)}100%{transform:translate3d(0,-1.2%,0) scale(1.01)}}
-@keyframes abyssMotes{0%{background-position:0 0, 120px 90px}100%{background-position:0 -900px, 120px -1200px}}
-
-/* ============ 타이핑 헤더 ============ */
-#title{
-  margin:0; text-align:center; z-index:1;
-  font-family:var(--font-heading); font-weight:700; letter-spacing:.02em;
-  font-size:clamp(24px,6vw,48px); color:#eaf2f9;
-}
-#title.typing::after{
-  content:""; display:inline-block; width:2px; height:.9em; margin-left:2px;
-  background:currentColor; animation:caret 1s steps(1) infinite; vertical-align:-.1em;
-}
-.typing-char{
-  display:inline-block; opacity:0; transform:translateY(.32em) rotate(var(--r,-3deg)) scale(.98);
-  filter:blur(var(--b,1.2px));
-  animation:typeIn .42s cubic-bezier(.2,.8,.2,1) forwards, glow 1.8s ease-out forwards;
-}
-@keyframes caret{50%{opacity:0}}
-@keyframes typeIn{to{opacity:1; transform:translateY(0) rotate(0) scale(1); filter:blur(0)}}
-@keyframes glow{0%{text-shadow:0 0 .60em rgba(var(--glow-rgb),.40)}100%{text-shadow:0 0 .25em rgba(var(--glow-rgb),.18)}}
-
-.intro{
-  margin:0; width:74ch; max-width:calc(100% - 4rem);
-  text-wrap:balance; color:#cfe0ee; z-index:1; text-align:center
-}
-
-/* ============ 카드 그리드(세로 → 가로 확장) ============ */
-ul{
-  list-style:none; padding:0; margin:2rem 0 0;
-  width:820px; max-width:calc(100% - 4rem);
-  height:clamp(300px,40dvh,474px);
-  display:grid; container-type:inline-size;
-  /* 초기엔 JS가 '1fr 1fr …'로 채움. (여기 값은 fallback) */
-  grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap:var(--gap);
-  transition:grid-template-columns var(--speed) var(--easing);
-  z-index:1;
-}
-li{
-  position:relative; min-width:var(--base); overflow:visible; border-radius:10px;
-  border:1px solid rgba(255,255,255,.14); background:#0a0f14; perspective:1200px; transform-style:preserve-3d;
-  box-shadow:0 10px 26px rgba(0,0,0,.35);
-}
-
-/* ============ 책(표지/내지) 레이아웃 ============ */
-article.book{--cover:#0d141c; --cover-edge:#0f1a23; --paper:#0e151c;
-  position:absolute; inset:0; border-radius:10px; overflow:hidden; transform-style:preserve-3d; color:#eaf4ff;
-}
-/* 내지(내용) */
-.book .content{
-  position:absolute; inset:0; padding:12px 14px 14px; z-index:1;
-  display:flex; flex-direction:column; justify-content:flex-end; gap:.7rem;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2)),
-    radial-gradient(120% 90% at 80% 10%, rgba(255,255,255,.08), transparent 60%),
-    var(--paper);
-}
-/* ⛳️ 기본: 활성 아니면 내용 숨김(호버/포커스되면 나타남) */
-li:not([data-active="true"]) .book .content{
-  opacity:0; visibility:hidden; pointer-events:none;
-  transition:opacity .3s var(--easing), visibility 0s linear .3s;
-}
-li[data-active="true"] .book .content{
-  opacity:1; visibility:visible; transition-delay:0s;
-}
-/* 배경 이미지(있다면) */
-.book .content img{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-  opacity:.35; filter:grayscale(.2) contrast(1.05); mix-blend-mode:luminosity; z-index:-1
-}
-/* 표지 측면(책 등) */
-.book::before{
-  content:""; position:absolute; left:0; top:0; bottom:0; width:10px; border-radius:10px 0 0 10px;
-  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2)), #0b131a;
-  box-shadow:inset -1px 0 0 rgba(255,255,255,.15), inset 1px 0 0 rgba(0,0,0,.5);
-  transform:translateZ(25px)
-}
-/* 페이지 덩어리 */
-.book .pages{
-  position:absolute; inset:6px 6px 6px 10px; border-radius:8px; overflow:hidden;
-  background:
-    repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.18)),
-    var(--paper);
-  box-shadow:inset -10px 0 16px rgba(0,0,0,.25);
-  transform:translateZ(12px)
-}
-/* 표지판 */
-.book .cover{
-  position:absolute; inset:0; border-radius:10px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25)),
-    radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,.10), transparent 60%),
-    var(--cover);
-  border:1px solid rgba(255,255,255,.15);
-  transform-origin:left center; transform:translateZ(24px) rotateY(0deg);
-  transition:transform .7s var(--easing), box-shadow .7s var(--easing), filter .7s var(--easing);
-  box-shadow:2px 0 0 var(--cover-edge), 0 6px 20px rgba(0,0,0,.35);
-}
-/* 표지 빛 스윕 */
-.book .cover::after{
-  content:""; position:absolute; inset:-12% 40% -12% -40%;
-  background:linear-gradient(90deg, transparent 0 30%, rgba(255,255,255,.18) 50%, transparent 70%);
-  transform:skewX(-12deg); filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .6s var(--easing)
-}
-/* ✅ 표지 세로제목(세리프, 세로쓰기) — 활성되면 사라짐 */
-.book .cover::before{
-  content:attr(data-title); position:absolute; left:12px; top:10px;
-  writing-mode:vertical-rl; text-orientation:mixed;
-  font-family:var(--font-heading); font-weight:700; font-size:.95rem; letter-spacing:.08em;
-  color:rgba(255,255,255,.78); opacity:.9; pointer-events:none; transition:opacity .35s var(--easing), transform .35s var(--easing);
-}
-li[data-active="true"] .book .cover::before{opacity:0; transform:translateX(-6px)}
-
-/* 펼칠 때 표지 회전 + 스윕 강조 */
-li:hover .book .cover, li:focus-within .book .cover{
-  transform:translateZ(24px) rotateY(-72deg); box-shadow:18px 6px 28px rgba(0,0,0,.45); filter:brightness(1.02)
-}
-li:hover .book .cover::after{opacity:.9}
-
-/* 안쪽 제목/링크의 등장 타이밍 */
-.book .content h3{
-  position:absolute; top:12px; left:16px; right:16px; margin:0;
-  font-family:var(--font-heading); font-weight:800; letter-spacing:.02em; font-size:1rem;
-  opacity:0; transform:translateY(-6px); transition:opacity .35s var(--easing), transform .45s var(--easing)
-}
-li[data-active="true"] .book .content h3{opacity:1; transform:translateY(0)}
-.book .content a{color:inherit; font-weight:700; width:fit-content; text-decoration:none; opacity:0; transform:translateY(4px); transition:opacity .5s var(--easing), transform .5s var(--easing)}
-.book .content a.show{opacity:1; transform:translateY(0)}
-.book .content a:is(:hover,:focus-visible){text-decoration:underline; text-underline-offset:4px}
-
-/* ============ 신비한 글자 등장 + 긴 글리치 ============ */
-.desc{position:relative}
-.desc.playing::after{
-  content:""; position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen; opacity:.55;
-  background:
-    radial-gradient(100% 100% at 20% -20%, rgba(160,255,230,.12), transparent 60%),
-    radial-gradient(120% 120% at 110% 120%, rgba(120,190,255,.10), transparent 60%);
-  mask:linear-gradient(90deg, transparent 0 3%, #000 12% 88%, transparent 97% 100%);
-  animation:wisp 2.8s ease-in-out infinite alternate;
-}
-@keyframes wisp{0%{transform:translate(-6%,2%)}100%{transform:translate(6%,-2%)}}
-
-.reveal-char{
-  display:inline-block; opacity:0; filter:blur(2px); transform:translateY(6px) scale(.985);
-  animation:mysticIn .6s var(--easing) forwards
-}
-@keyframes mysticIn{to{opacity:1; filter:blur(0); transform:translateY(0) scale(1)}}
-
-/* 글리치 중 RGB 분리 */
-.reveal-char.gl{ position:relative; }
-.reveal-char.gl::before,
-.reveal-char.gl::after{
-  content:attr(data-ch); position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen; opacity:.8
-}
-.reveal-char.gl::before{ color:#00d8ff; transform:translateX(var(--cx,1px)) }
-.reveal-char.gl::after{ color:#ff3b3b; transform:translateX(var(--rx,-1px)) }
-</style>
 </head>
 <body>
+  <!-- 상단 타이핑 타이틀 -->
+  <header class="site-header">
+    <h1 id="siteTitle" aria-label="the craft of ui"></h1>
+    <p class="lead">
+      Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation — it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.
+    </p>
+  </header>
 
-<!-- 타이핑 헤더: data-text 로 문구 변경 -->
-<h1 id="title" data-text="the craft of ui" aria-label="the craft of ui"></h1>
+  <!-- 카드 그리드 -->
+  <main>
+    <ul id="cardList" class="cards" aria-label="Sections">
+      <!-- data-active="true" : 첫 카드 기본 활성화 -->
+      <li data-active="true">
+        <article class="card">
+          <!-- 접힐 때: 세로 제목(세리프) -->
+          <div class="vtitle">THE CRAFT</div>
+          <!-- 펼칠 때: 가로 제목(세리프) -->
+          <h3 class="htitle">The Craft</h3>
 
-<p class="intro">
-  Unlock the art and science of interface development. This isn’t just about
-  pushing pixels or following documentation — it’s about mastering the
-  tools, understanding the nuances, and shaping experiences with intention.
-</p>
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop" alt="The Craft image">
+          </div>
 
-<!-- 카드 목록(초기엔 전부 '세로 표지'만 보임; 호버 시 해당 카드 펼쳐짐) -->
-<ul>
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>The Craft</h3>
-        <p class="desc">Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=12" alt="">
-      </div>
-      <div class="cover" data-title="THE CRAFT"></div>
-    </article>
-  </li>
+          <p class="desc">
+            Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.
+          </p>
+          <a class="cta" href="#" aria-label="Watch now">Watch now</a>
+        </article>
+      </li>
 
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>CSS Animation</h3>
-        <p class="desc">Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-        <a href="#"><span>Watch now</span></a>
-      </div>
-      <div class="cover" data-title="CSS ANIMATION"></div>
-    </article>
-  </li>
+      <li>
+        <article class="card">
+          <div class="vtitle">CSS ANIMATION</div>
+          <h3 class="htitle">CSS Animation</h3>
 
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>SVG Filters</h3>
-        <p class="desc">Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-        <a href="#"><span>Watch now</span></a>
-      </div>
-      <div class="cover" data-title="SVG FILTERS"></div>
-    </article>
-  </li>
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1600&auto=format&fit=crop" alt="CSS Animation image">
+          </div>
 
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>Scroll Animation</h3>
-        <p class="desc">Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-        <a href="#"><span>Watch now</span></a>
-      </div>
-      <div class="cover" data-title="SCROLL ANIMATION"></div>
-    </article>
-  </li>
+          <p class="desc">
+            Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.
+          </p>
+          <a class="cta" href="#">Watch now</a>
+        </article>
+      </li>
 
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>Taming Canvas</h3>
-        <p class="desc">Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.</p>
-        <a href="#"><span>Watch now</span></a>
-      </div>
-      <div class="cover" data-title="TAMING CANVAS"></div>
-    </article>
-  </li>
+      <li>
+        <article class="card">
+          <div class="vtitle">SVG FILTERS</div>
+          <h3 class="htitle">SVG Filters</h3>
 
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>Layout Tricks</h3>
-        <p class="desc">Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-        <a href="#"><span>Watch now</span></a>
-      </div>
-      <div class="cover" data-title="LAYOUT TRICKS"></div>
-    </article>
-  </li>
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1445251836269-d158eaa028a6?q=80&w=1600&auto=format&fit=crop" alt="SVG Filters image">
+          </div>
 
-  <li>
-    <article class="book">
-      <div class="pages"></div>
-      <div class="content">
-        <h3>Mastering Time</h3>
-        <p class="desc">It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-        <a href="#"><span>Watch now</span></a>
-      </div>
-      <div class="cover" data-title="MASTERING TIME"></div>
-    </article>
-  </li>
-</ul>
+          <p class="desc">
+            Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.
+          </p>
+          <a class="cta" href="#">Watch now</a>
+        </article>
+      </li>
 
-<script>
-/* ========== 타이핑 헤더 ========== */
-(function(){
-  const el=document.getElementById('title');
-  const full=(el.dataset.text||el.textContent||'the craft of ui').trim();
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent=full; return }
-  el.textContent=''; el.classList.add('typing');
-  let i=0; const base=55,jitter=70;
-  (function step(){
-    const ch=full[i++]; const s=document.createElement('span');
-    s.className='typing-char'; s.textContent=ch;
-    s.style.setProperty('--r',(Math.random()*8-4).toFixed(2)+'deg');
-    s.style.setProperty('--b',(Math.random()*1.2+.3).toFixed(2)+'px');
-    el.appendChild(s);
-    if(i<full.length) setTimeout(step, base+Math.random()*jitter);
-    else el.classList.remove('typing');
-  })();
-})();
+      <li>
+        <article class="card">
+          <div class="vtitle">SCROLL ANIMATION</div>
+          <h3 class="htitle">Scroll Animation</h3>
 
-/* ========== 카드 확장 + 랜덤 글리치(확률/쿨다운) ========== */
-const list=document.querySelector('ul');
-const items=list.querySelectorAll('li');
-let prev=-1;  // 이전 활성 인덱스
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop" alt="Scroll Animation image">
+          </div>
 
-/* 초기: 모든 열을 균등(1fr)으로 설정 → 전부 '세로 표지'만 보이도록 */
-(function initColumns(){
-  const cols = new Array(items.length).fill('1fr').join(' ');
-  list.style.setProperty('grid-template-columns', cols);
-})();
+          <p class="desc">
+            Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.
+          </p>
+          <a class="cta" href="#">Watch now</a>
+        </article>
+      </li>
 
-/* 튜닝 포인트: 글리치 확률 & 쿨다운 */
-const EFFECT_PROB = 0.45;    // 글리치 발동 확률(0~1)
-const COOLDOWN_MS = 1600;    // 같은 카드 재발동 금지 시간(ms)
+      <li>
+        <article class="card">
+          <div class="vtitle">TAMING CANVAS</div>
+          <h3 class="htitle">Taming Canvas</h3>
 
-/* 카드별 마지막 실행 시점(쿨다운) */
-const lastRun = new WeakMap();
-function canRun(li) {
-  const now = performance.now();
-  const prev = lastRun.get(li) || 0;
-  if (now - prev < COOLDOWN_MS) return false;
-  lastRun.set(li, now);
-  return true;
-}
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?q=80&w=1600&auto=format&fit=crop" alt="Taming Canvas image">
+          </div>
 
-/* 마우스 이동/클릭/포커스 시 해당 카드만 가로로 확장 + 내용 표시 */
-function setIndex(e){
-  const li = e.target.closest('li'); 
-  if(!li) return;
-  const idx = [...items].indexOf(li);
+          <p class="desc">
+            Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.
+          </p>
+          <a class="cta" href="#">Watch now</a>
+        </article>
+      </li>
 
-  const cols = new Array(items.length).fill().map((_, i) => {
-    items[i].dataset.active = (i === idx).toString();   // 활성 카드 표시
-    return i === idx ? '10fr' : '1fr';                   // 그 카드만 확장
-  }).join(' ');
-  list.style.setProperty('grid-template-columns', cols);
+      <li>
+        <article class="card">
+          <div class="vtitle">LAYOUT TRICKS</div>
+          <h3 class="htitle">Layout Tricks</h3>
 
-  if (idx !== prev) {
-    prev = idx;
-    if (Math.random() < EFFECT_PROB && canRun(li)) {
-      glitchOnce(li, () => playReveal(li));             // 가끔 글리치
-    } else {
-      playReveal(li);                                    // 평소엔 깨끗한 리빌
-    }
-  }
-}
-list.addEventListener('pointermove', setIndex);
-list.addEventListener('click', setIndex);
-list.addEventListener('focus', setIndex, true);
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1600&auto=format&fit=crop" alt="Layout Tricks image">
+          </div>
 
-/* ========== 유틸: 글자 래핑/리빌/글리치 ========== */
-function wrapForReveal(p){
-  if(p.dataset.raw) return;
-  const raw=p.textContent;
-  p.dataset.raw=raw;
-  p.textContent='';
-  const frag=document.createDocumentFragment();
-  [...raw].forEach((ch,i)=>{
-    const s=document.createElement('span');
-    s.className='reveal-char';
-    s.textContent=ch;
-    s.dataset.ch=ch;
-    s.style.animationDelay=(0.02*i+Math.random()*0.06).toFixed(2)+'s';
-    frag.appendChild(s);
-  });
-  p.appendChild(frag);
-}
+          <p class="desc">
+            Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.
+          </p>
+          <a class="cta" href="#">Watch now</a>
+        </article>
+      </li>
 
-function playReveal(li){
-  const p=li.querySelector('.desc'); if(!p) return;
-  wrapForReveal(p);
+      <li>
+        <article class="card">
+          <div class="vtitle">MASTERING TIME</div>
+          <h3 class="htitle">Mastering Time</h3>
 
-  p.querySelectorAll('.reveal-char').forEach((s,i)=>{
-    s.style.animation='none'; void s.offsetWidth;
-    s.style.animation='mysticIn .6s var(--easing) forwards';
-    s.style.animationDelay=(0.02*i+Math.random()*0.06)+'s';
-  });
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1520976029652-8dfc47d7d29b?q=80&w=1600&auto=format&fit=crop" alt="Mastering Time image">
+          </div>
 
-  p.classList.add('playing'); setTimeout(()=>p.classList.remove('playing'),3000);
+          <p class="desc">
+            It’s not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.
+          </p>
+          <a class="cta" href="#">Watch now</a>
+        </article>
+      </li>
+    </ul>
+  </main>
 
-  const link=li.querySelector('.content a');
-  if(link){ link.classList.remove('show'); setTimeout(()=>link.classList.add('show'),450); }
-}
+  <!-- 메인 스크립트 -->
+<script src="./trpg-handouts/css/app.js" defer></script>
 
-function glitchOnce(li, done){
-  const p=li.querySelector('.desc'); if(!p){done&&done(); return;}
-  wrapForReveal(p);
-
-  const spans=[...p.querySelectorAll('.reveal-char')];
-  const dur=1800+Math.random()*1000;           // 1.8~2.8초
-  const start=performance.now();
-  const pool='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*?';
-
-  spans.forEach(s=>{
-    s.classList.add('gl');
-    s.dataset.orig = s.dataset.ch || s.textContent;
-  });
-
-  let raf;
-  function tick(now){
-    const t=now-start;
-    const progress=Math.min(t/dur,1);
-    const keep=Math.ceil((1-progress)*spans.length);
-
-    for(let i=0;i<keep;i++){
-      const s=spans[Math.floor(Math.random()*spans.length)];
-      s.textContent = pool[Math.floor(Math.random()*pool.length)];
-      s.style.setProperty('--cx', (Math.random()>.5?1:-1)+'px');
-      s.style.setProperty('--rx', (Math.random()>.5?-1:1)+'px');
-    }
-
-    if(progress<1){
-      raf=requestAnimationFrame(tick);
-    }else{
-      spans.forEach(s=>{
-        s.textContent=s.dataset.orig;
-        s.classList.remove('gl');
-      });
-      done && done();
-    }
-  }
-  raf=requestAnimationFrame(tick);
-}
-
-/* (옵션) 레이아웃 넓이 기준 보정 */
-function resync(){
-  const w=Math.max(...[...items].map(i=>i.offsetWidth));
-  list.style.setProperty('--article-width', w);
-}
-addEventListener('resize', resync);
-resync();
-</script>
 </body>
 </html>
