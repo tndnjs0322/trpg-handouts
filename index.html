@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the craft of ui — vertical hover spread</title>
-
+  <title>네버엔딩 크툴루 1호점</title>
   <style>
     @import url('https://unpkg.com/normalize.css') layer(normalize);
 
     @layer normalize, base, demo;
 
-    /* ===== DEMO (원본 스타일) ===== */
+    /* ===================== DEMO ===================== */
     @layer demo {
       body {
         background: light-dark(#fff, #000);
@@ -24,7 +23,25 @@
 
       h1, p { margin: 0; }
 
+      /* fluid 크기 유지 */
       h1.fluid { --font-size-min: 22; --font-level: 4.25; }
+
+      /* 타이핑 커서 */
+      h1.fluid.typing {
+        position: relative;
+      }
+      h1.fluid.typing::after {
+        content: "";
+        position: absolute;
+        right: -0.06em;
+        top: 50%;
+        translate: 0 -48%;
+        width: 2px;
+        height: 0.9em;
+        background: currentColor;
+        animation: caret-blink 1s steps(1) infinite;
+      }
+      @keyframes caret-blink { 50% { opacity: 0; } }
 
       h3 { white-space: nowrap; margin: 0; }
 
@@ -156,7 +173,7 @@
       }
     }
 
-    /* ===== BASE (유틸 & 타이포) ===== */
+    /* ===================== BASE ===================== */
     @layer base {
       :root {
         --font-size-min: 16;
@@ -193,7 +210,7 @@
           Helvetica, Arial, sans-serif, system-ui;
       }
 
-      /* 배경 눈금(원본) */
+      /* (원본) 배경 그리드가 필요 없으면 이 블록을 지워도 됨 */
       body::before {
         --size: 45px;
         --line: color-mix(in hsl, canvasText, transparent 70%);
@@ -205,24 +222,13 @@
         mask: linear-gradient(-20deg, transparent 50%, white);
         top: 0; transform-style: flat; pointer-events: none; z-index: -1;
       }
-
-      .bear-link {
-        color: canvasText; position: fixed; top: 1rem; left: 1rem;
-        width: 48px; aspect-ratio: 1; display: grid; place-items: center; opacity: 0.8;
-      }
-
-      :where(.x-link, .bear-link):is(:hover, :focus-visible) { opacity: 1; }
-      .bear-link svg { width: 75%; }
-
-      .sr-only {
-        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
-      }
     }
   </style>
 </head>
 <body>
-  <h1 class="fluid">the craft of ui</h1>
+  <!-- 타이핑될 제목: data-text에 원문을 넣고, 화면엔 JS가 타이핑해 채움 -->
+  <h1 id="title" class="fluid" data-text="the craft of ui" aria-label="the craft of ui"></h1>
+
   <p>
     Unlock the art and science of interface development. This isn’t just about
     pushing pixels or following documentation — it’s about mastering the
@@ -367,50 +373,44 @@
     </li>
   </ul>
 
-  <a class="bear-link" href="https://twitter.com/intent/follow?screen_name=jh3yy"
-     target="_blank" rel="noreferrer noopener" aria-label="Follow jh3yy on X">
-    <svg class="w-9" viewBox="0 0 969 955" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="161.191" cy="320.191" r="133.191" stroke="currentColor" stroke-width="20"></circle>
-      <circle cx="806.809" cy="320.191" r="133.191" stroke="currentColor" stroke-width="20"></circle>
-      <circle cx="695.019" cy="587.733" r="31.4016" fill="currentColor"></circle>
-      <circle cx="272.981" cy="587.733" r="31.4016" fill="currentColor"></circle>
-      <path d="M564.388 712.083C564.388 743.994 526.035 779.911 483.372 779.911C440.709 779.911 402.356 743.994 402.356 712.083C402.356 680.173 440.709 664.353 483.372 664.353C526.035 664.353 564.388 680.173 564.388 712.083Z" fill="currentColor"></path>
-      <rect x="310.42" y="448.31" width="343.468" height="51.4986" fill="#FF1E1E"></rect>
-      <path fill-rule="evenodd" clip-rule="evenodd"
-            d="M745.643 288.24C815.368 344.185 854.539 432.623 854.539 511.741H614.938V454.652C614.938 433.113 597.477 415.652 575.938 415.652H388.37C366.831 415.652 349.37 433.113 349.37 454.652V511.741L110.949 511.741C110.949 432.623 150.12 344.185 219.845 288.24C289.57 232.295 384.138 200.865 482.744 200.865C581.35 200.865 675.918 232.295 745.643 288.24Z"
-            fill="currentColor"></path>
-    </svg>
-  </a>
+  <script>
+    /* ===== 타이핑 효과 ===== */
+    (function typeTitle(){
+      const el = document.getElementById('title');
+      const full = (el.dataset.text || el.textContent || 'the craft of ui').trim();
 
-  <script type="module">
-    // Tweakpane (Theme 토글)
-    import { Pane } from 'https://cdn.skypack.dev/tweakpane@4.0.4';
+      // 접근성: 모션 최소화 환경이면 즉시 표시
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.textContent = full;
+        return;
+      }
 
-    const config = { theme: 'system' };
-    const ctrl = new Pane({ title: 'Config', expanded: true });
+      el.textContent = '';
+      el.classList.add('typing');
 
-    const update = () => { document.documentElement.dataset.theme = config.theme; };
+      let i = 0;
+      const base = 55;          // 기본 타자 속도(ms)
+      const jitter = 70;        // 랜덤 지터(ms)
 
-    const sync = (event) => {
-      if (
-        !document.startViewTransition ||
-        event.target.controller.view.labelElement.innerText !== 'Theme'
-      ) return update();
-      document.startViewTransition(() => update());
-    };
+      const step = () => {
+        el.textContent += full[i++];
+        if (i < full.length) {
+          setTimeout(step, base + Math.random() * jitter);
+        } else {
+          // 타이핑 완료 후 커서 제거
+          el.classList.remove('typing');
+        }
+      };
 
-    ctrl.addBinding(config, 'theme', {
-      label: 'Theme',
-      options: { System: 'system', Light: 'light', Dark: 'dark' },
-    });
-    ctrl.on('change', sync);
-    update();
+      // 살짝 지연 후 시작
+      setTimeout(step, 350);
+    })();
 
-    // 카드 스프레드(hover/click/keyboard focus)
+    /* ===== 카드 스프레드(hover/click/focus) ===== */
     const list = document.querySelector('ul');
     const items = list.querySelectorAll('li');
 
-    const setIndex = (event) => {
+    function setIndex(event) {
       const closest = event.target.closest('li');
       if (!closest) return;
       const index = [...items].indexOf(closest);
@@ -422,17 +422,15 @@
         })
         .join(' ');
       list.style.setProperty('grid-template-columns', cols);
-    };
-
+    }
     list.addEventListener('focus', setIndex, true);
     list.addEventListener('click', setIndex);
     list.addEventListener('pointermove', setIndex);
 
-    // 카드 폭 기준 맞추기(원본 로직)
-    const resync = () => {
+    function resync() {
       const w = Math.max(...[...items].map((i) => i.offsetWidth));
       list.style.setProperty('--article-width', w);
-    };
+    }
     window.addEventListener('resize', resync);
     resync();
   </script>
