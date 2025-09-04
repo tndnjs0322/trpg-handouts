@@ -3,38 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hover Disclosures — glass + moving dots + one-time typing + gradient image</title>
+  <title>Hover Disclosures — static image feel + no grid</title>
   <link rel="stylesheet" href="https://unpkg.com/normalize.css" />
   <style>
     :root{
       --bg:#0d1a1f; --gap:10px; --base:clamp(2rem,6vw,80px);
       --speed:.6s; --easing:cubic-bezier(.2,.8,.2,1);
       --glass:rgba(255,255,255,.06); --glass-border:rgba(255,255,255,.14);
-      --panel-bg:rgba(8,12,14,.85); --ring:rgba(0,200,220,.22);
+      --panel-bg:rgba(8,12,14,.88); --ring:rgba(0,200,220,.22);
       --shadow:0 10px 30px rgba(0,0,0,.4); --caret:#e6eef2;
+      --card-bg:#0f1b20; /* 펼친 카드 배경 & 이미지 오른쪽 스크림 색 */
     }
     html{color-scheme:dark light}
     body{
-      margin:0; min-height:100svh; display:grid; place-items:start center; gap:1.5rem;
-      padding:2rem 1rem 3rem; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      margin:0; min-height:100svh;
+      display:grid; place-items:start center; gap:1.5rem;
+      padding:2rem 1rem 3rem;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
       background:var(--bg); color:#e6eef2; position:relative;
     }
 
-    /* 은은한 격자 배경 */
-    body::before{
-      --size:45px; --line:color-mix(in hsl, canvasText, transparent 78%);
-      content:""; position:fixed; inset:0; pointer-events:none; z-index:-2;
-      background:
-        linear-gradient(90deg,var(--line) 1px,transparent 1px var(--size)) 50% 50%/var(--size) var(--size),
-        linear-gradient(var(--line) 1px,transparent 1px var(--size)) 50% 50%/var(--size) var(--size);
-      mask:linear-gradient(-20deg,transparent 50%,white);
-    }
+    /* ← “눈금(그리드)” 완전 제거됨 (이전 body::before 블럭 삭제) */
 
-    /* 움직이는 점 레이어 */
+    /* 움직이는 점 레이어 (배경) */
     #bg-dots{position:fixed; inset:0; z-index:-1; pointer-events:none; display:block;}
     @media (prefers-reduced-motion:reduce){#bg-dots{display:none}}
 
-    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 상시 표시 */
+    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 상시표시 */
     h1{
       margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px);
       text-transform:lowercase; opacity:0; transition:opacity .4s ease;
@@ -42,7 +37,7 @@
     h1.show{opacity:1;}
     .desc{margin:0; opacity:.8; width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; line-height:1.5;}
 
-    /* ===== 카드 레이아웃 ===== */
+    /* ===== 카드 ===== */
     ul#cards{
       display:grid; grid-template-columns:repeat(7,1fr); gap:var(--gap);
       list-style:none; padding:0; margin:0; width:min(1100px,calc(100% - 2rem));
@@ -54,22 +49,29 @@
       box-shadow:var(--shadow); background:var(--glass); border:1px solid var(--glass-border);
       backdrop-filter:blur(8px) saturate(120%); -webkit-backdrop-filter:blur(8px) saturate(120%);
     }
-    ul#cards>li[data-active="true"]{ background:#0f1b20; border-color:rgba(255,255,255,.08); backdrop-filter:none; }
+    /* 펼친 상태: 유리효과 제거하고 고정 배경 */
+    ul#cards>li[data-active="true"]{ background:var(--card-bg); border-color:rgba(255,255,255,.08); backdrop-filter:none; }
 
     article{
-      width:calc(var(--article-width,320) * 1px); height:100%; position:absolute; inset:0;
-      display:flex; flex-direction:column; justify-content:flex-end; gap:1rem; padding:1rem; overflow:hidden;
+      width:calc(var(--article-width,320) * 1px); height:100%;
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
+      padding:1rem; overflow:hidden;
     }
 
-    /* 이미지: 카드에 꽉 채우고 오른쪽으로 은은한 투명 그라데이션 페이드 */
+    /* 이미지: 고정(비디오처럼 안 보이도록) + 오른쪽 “색상 스크림” 오버레이 */
     article img{
       position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;
       opacity:0; filter:grayscale(1) brightness(1.6);
-      transition:
-        opacity calc(var(--speed)*1.2) var(--easing),
-        filter  calc(var(--speed)*1.2) var(--easing);
-      -webkit-mask-image: linear-gradient(to right, #fff 55%, rgba(255,255,255,0) 88%);
-              mask-image: linear-gradient(to right, #fff 55%, rgba(255,255,255,0) 88%);
+      transition:opacity calc(var(--speed)*1.2) var(--easing),
+                 filter  calc(var(--speed)*1.2) var(--easing);
+    }
+    /* 스크림(오버레이) — 투명 아님, 카드 배경색으로 자연스러운 페이드 */
+    article::after{
+      content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+      background: linear-gradient(to right, rgba(0,0,0,0) 52%, var(--card-bg) 86%);
+      opacity: .95; /* 살짝 더 또렷하게 */
+      transition: opacity var(--speed) var(--easing);
     }
     li[data-active="true"] article img{ opacity:1; filter:grayscale(0) brightness(1); }
 
@@ -77,7 +79,8 @@
     .title-spine{
       position:absolute; top:.9rem; left:calc(var(--base)*.5); transform-origin:0 50%; rotate:90deg;
       margin:0; font-size:.95rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-      color:rgba(230,238,242,.92); text-shadow:0 1px 0 rgba(0,0,0,.4); opacity:.9; transition:opacity .25s var(--easing);
+      color:rgba(230,238,242,.92); text-shadow:0 1px 0 rgba(0,0,0,.4);
+      opacity:.9; transition:opacity .25s var(--easing);
       pointer-events:none;
     }
     li[data-active="true"] .title-spine{opacity:0;} /* 그냥 사라지기 */
@@ -86,30 +89,30 @@
     .title-main,.body-main{
       margin:0; opacity:0; visibility:hidden; position:relative; color:#eaf3f6;
       transition:opacity .25s var(--easing), visibility .25s var(--easing);
-      z-index:2; /* 이미지 위 */
+      z-index:2; /* 이미지+스크림 위 */
     }
     .title-main{ font-weight:800; font-size:1.05rem; letter-spacing:.02em; }
     .body-main{
       font-size:13.5px; line-height:1.45; text-wrap:balance; padding:.75rem .85rem;
-      background:var(--panel-bg); border:1px solid rgba(255,255,255,.06); border-radius:10px; backdrop-filter:blur(4px);
+      background:var(--panel-bg); border:1px solid rgba(255,255,255,.06); border-radius:10px;
+      /* ⛔ backdrop-filter 제거 → 배경 움직임 영향 없음 */
+      /* backdrop-filter: blur(4px);  삭제 */
     }
-    /* 활성 카드에서 카피는 오른쪽 컬럼으로 이동 */
-    li[data-active="true"] article{
-      --copy-left: clamp(48%, 520px, 62%); /* 오른쪽 영역 시작점 */
-    }
+
+    /* 활성 카드에서 카피는 오른쪽 컬럼으로 */
+    li[data-active="true"] article{ --copy-left: clamp(48%, 520px, 62%); }
     li[data-active="true"] .title-main,
     li[data-active="true"] .body-main,
     li[data-active="true"] .cta{
       margin-left: var(--copy-left);
       max-width: calc(100% - var(--copy-left) - 1rem);
     }
-    /* 본문 길 때 은은 스크롤 (스크롤바 숨김) */
+    /* 본문 길 때 은은 스크롤(스크롤바 숨김) */
     li[data-active="true"] .body-main{
       max-height: min(44dvh, calc(100% - 6.5rem));
-      overflow: auto;
-      scrollbar-width: none; -ms-overflow-style: none;
+      overflow:auto; scrollbar-width:none; -ms-overflow-style:none;
     }
-    li[data-active="true"] .body-main::-webkit-scrollbar{ display:none; }
+    li[data-active="true"] .body-main::-webkit-scrollbar{display:none}
 
     /* 타이핑 커서 */
     .typing::after{
@@ -118,12 +121,10 @@
     }
     @keyframes caret{50%{opacity:0}}
 
-    /* CTA */
     .cta{position:absolute; bottom:.9rem; left:1rem; color:inherit; text-decoration:none; height:18px; line-height:18px; opacity:0; transition:opacity .35s var(--easing) .2s; z-index:2;}
     .cta span{ text-underline-offset:4px; }
     .cta:is(:hover,:focus-visible) span{ text-decoration:underline; }
 
-    /* 포커스 링 */
     ul#cards>li:focus-visible{ outline:3px solid var(--ring); outline-offset:2px; }
 
     /* JS 미작동 fallback */
@@ -131,7 +132,7 @@
     ul#cards:not(.js-ready) li:hover .title-spine{opacity:0;}
     ul#cards:not(.js-ready) li:hover .title-main, ul#cards:not(.js-ready) li:hover .body-main{opacity:1; visibility:visible;}
 
-    /* 가끔 글리치 (제목) */
+    /* (가끔) 제목 글리치 */
     .glitch{ animation:glitch 380ms steps(2,end) 2; }
     @keyframes glitch{
       0%{ transform:translate(0); text-shadow:none; }
@@ -144,7 +145,7 @@
   </style>
 </head>
 <body>
-  <!-- 움직이는 점 배경 -->
+  <!-- 움직이는 점 배경 (살아있지만 카드 내부는 고정처럼 보임) -->
   <canvas id="bg-dots" aria-hidden="true"></canvas>
 
   <h1 data-title="the craft of ui">the craft of ui</h1>
@@ -219,7 +220,6 @@
       const text = h1.dataset.title || h1.textContent.trim();
       const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
       const seen = sessionStorage.getItem('__intro_title_typed__') === '1';
-
       function show(){ h1.classList.add('show'); }
       function typeOnce(speed=38){
         h1.textContent = ''; h1.classList.add('typing'); show();
@@ -234,9 +234,7 @@
           h1.append(chars[i++]);
         }, speed);
       }
-
-      if (reduce || seen){ h1.textContent = text; show(); }
-      else { typeOnce(); }
+      if (reduce || seen){ h1.textContent = text; show(); } else { typeOnce(); }
     })();
 
     /* ===== 카드 인터랙션 + "한 번만" 타이핑 ===== */
@@ -275,7 +273,6 @@
         const li=items[idx], t=li.querySelector('.title-main'), b=li.querySelector('.body-main'), c=li.querySelector('.cta');
         const tt=t.dataset.text||t.textContent||"", tb=b.dataset.text||b.textContent||"";
         if (t.dataset.typed!=='true' && Math.random()<0.01){ t.classList.add('glitch'); t.addEventListener('animationend',()=>t.classList.remove('glitch'),{once:true}); }
-
         if (t.dataset.typed==='true'){
           t.textContent=tt; show(t);
           if (b.dataset.typed==='true'){ b.textContent=tb; show(b); if(c) c.style.opacity=1; }
@@ -290,7 +287,6 @@
         const idx=items.indexOf(li); if(idx<0){collapse(); return;}
         activateIndex(idx);
       };
-
       ['pointermove','mouseover','click','focusin','touchstart'].forEach(evt=>list.addEventListener(evt,handler,{passive:true}));
       ['pointerleave','mouseleave'].forEach(evt=>list.addEventListener(evt,collapse));
       list.addEventListener('focusout',e=>{ if(!list.contains(e.relatedTarget)) collapse(); });
