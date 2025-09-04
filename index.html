@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>the craft of ui</title>
 
-<!-- 영문 Inter -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -23,10 +22,10 @@
   --title-dur:.52s;
   --title-delay-in:.06s;
 
-  /* 확장 폭(더 넓게) */
-  --active-fr: 18;           /* 펼쳐진 카드 가중치 */
-  --inactive-fr: .5;         /* 접힌 카드 가중치(더 얇게) */
-  --expanded-min: 420px;     /* 펼칠 때 최소 픽셀 폭 */
+  /* ▶ 적당한 확장 폭 */
+  --active-fr: 12;
+  --inactive-fr: .8;
+  --expanded-min: 360px;
 
   /* 스파인(책등) */
   --spine-w: clamp(28px, calc(var(--base)*0.58), 56px);
@@ -61,8 +60,8 @@ ul{
   grid-template-columns:repeat(7,1fr);
   gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
   height:clamp(300px,40dvh,474px);
-  /* 더 넓게 펼쳐질 수 있게 컨테이너 폭 업 */
-  width: clamp(820px, 92vw, 1280px);
+  /* ▶ 컨테이너 폭을 적당히 */
+  width: clamp(820px, 88vw, 1120px);
   max-width: 100%;
   transition:grid-template-columns var(--speed) var(--easing);
 }
@@ -275,7 +274,6 @@ li[data-active="true"] .title .t-h{
 </ul>
 
 <script>
-/* 더 넓게 펼쳐지도록: active/inactive 비율 + 최소폭 반영 */
 (() => {
   const list = document.querySelector('ul');
   if (!list) return;
@@ -283,9 +281,9 @@ li[data-active="true"] .title .t-h{
   let active = -1, raf = 0;
 
   const css = getComputedStyle(document.documentElement);
-  const ACTIVE_FR = parseFloat(css.getPropertyValue('--active-fr')) || 18;
-  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || .5;
-  const EXPANDED_MIN = (css.getPropertyValue('--expanded-min') || '420px').trim();
+  const ACTIVE_FR = parseFloat(css.getPropertyValue('--active-fr')) || 12;
+  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || .8;
+  const EXPANDED_MIN = (css.getPropertyValue('--expanded-min') || '360px').trim();
 
   const setCols = (idx) => {
     list.style.gridTemplateColumns = items.map((_, i) =>
@@ -326,7 +324,6 @@ li[data-active="true"] .title .t-h{
   collapse();
 })();
 
-/* 이미지 URL을 CSS 변수(--img)로 넣기 */
 (() => {
   const arts = document.querySelectorAll('article');
   arts.forEach((a) => {
@@ -337,7 +334,6 @@ li[data-active="true"] .title .t-h{
   });
 })();
 
-/* 상단 제목: 첫 방문 1회만 타이핑 */
 (() => {
   const h1 = document.querySelector('h1.fluid');
   if (!h1) return;
@@ -357,7 +353,6 @@ li[data-active="true"] .title .t-h{
   if (reduce || seen){ h1.textContent = text; show(); } else { typeOnce(); }
 })();
 
-/* 배경: 은은하게 움직이는 점 */
 (() => {
   const cvs = document.getElementById('bg-dots'); if (!cvs) return;
   const ctx = cvs.getContext('2d', { alpha: true });
