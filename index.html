@@ -2,148 +2,121 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TRPG Handouts</title>
+  <title>UI Craft</title>
   <style>
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin:0; }
     body {
-      font-family: ui-sans-serif, system-ui, "Noto Sans KR", sans-serif;
+      margin: 0;
       background: #0d1a1f;
-      color: #e6eef2;
-    }
-
-    .wrap {
-      max-width: 1200px;
-      margin: 4rem auto;
-      padding: 0 1rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.25rem;
-    }
-
-    .handout {
-      display: grid;
-      grid-template-rows: auto 0fr; /* 닫힌 상태 */
-      border-radius: 16px;
-      background: linear-gradient(180deg, #0f2229, #0a171c);
-      border: 1px solid rgba(255,255,255,0.06);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-      overflow: hidden;
-      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
-    }
-    .handout:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.45);
-      border-color: rgba(0,188,212,0.25);
-      grid-template-rows: auto 1fr; /* 열림 */
-    }
-
-    .handout__title {
-      padding: 16px 18px;
-      font-weight: 700;
-      background: rgba(255,255,255,0.05);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
       display: flex;
+      justify-content: center;
       align-items: center;
+      height: 100vh;
+      font-family: monospace;
+    }
+    ul {
+      display: flex;
       gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 90%;
+      height: 400px;
     }
-
-    .title-caret {
-      width: 1ch;
-      height: 1.2em;
-      background: currentColor;
-      animation: caret-blink 800ms steps(1) infinite;
-    }
-    @keyframes caret-blink { 50% { opacity: 0; } }
-    .caret-hide .title-caret { display:none; }
-
-    .handout__content {
-      padding: 0 18px 18px;
+    li {
+      flex: 1;
+      background: #111;
+      border-radius: 8px;
       overflow: hidden;
-      opacity: 0;
-      transition: opacity .22s ease;
+      position: relative;
+      transition: flex 0.6s ease;
+      cursor: pointer;
     }
-    .handout:hover .handout__content { opacity: 1; }
+    li:hover { flex: 3; }
 
-    /* 세로 제목 카드 */
-    .handout--vertical {
-      grid-template-columns: 56px 1fr;
-      grid-template-rows: 1fr;
+    article {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1rem;
+      color: #eee;
+      position: relative;
     }
-    .handout--vertical .handout__title--vertical {
-      grid-column: 2;
+
+    /* 제목: 기본은 세로 쓰기 */
+    h3 {
       writing-mode: vertical-rl;
-      border-left: 1px solid rgba(255,255,255,0.06);
-      padding: 12px 8px;
+      text-orientation: mixed;
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      font-size: 1rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      opacity: 0.8;
+      transition: opacity 0.3s;
     }
-    .handout--vertical .handout__content {
-      grid-column: 1;
-      padding: 18px;
-      border-right: 1px solid rgba(255,255,255,0.06);
+
+    /* 글리치 애니메이션 */
+    .glitch {
+      animation: glitch 0.4s steps(2, end) 2;
+    }
+    @keyframes glitch {
+      0% { transform: translate(0); color:#eee; }
+      20% { transform: translate(-2px, 2px) skew(2deg); color:#f0f; }
+      40% { transform: translate(2px, -2px) skew(-2deg); color:#0ff; }
+      60% { transform: translate(-1px, 1px); color:#fff; }
+      80% { transform: translate(1px, -1px); color:#f00; }
+      100% { transform: translate(0); color:#eee; }
+    }
+
+    /* 내용 */
+    p {
       opacity: 0;
-      transform: translateX(-12px);
-      transition: transform .22s ease, opacity .22s ease;
+      transition: opacity 0.5s;
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
     }
-    .handout--vertical:hover .handout__content {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    li:hover p { opacity: 1; }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <!-- 카드 1 -->
-    <article class="handout">
-      <header class="handout__title">
-        <span class="title-text">폐허의 기록</span>
-        <span class="title-caret" aria-hidden="true"></span>
-      </header>
-      <section class="handout__content">
-        <p>
-          오래된 문서 조각. 가장자리는 그을음과 습기에 젖어 있다. <br/>
-          ‘…그 문은 우리를 기억하지 않는다.’
-        </p>
-      </section>
-    </article>
-
-    <!-- 카드 2 -->
-    <article class="handout">
-      <header class="handout__title">
-        <span class="title-text">밤의 증언록</span>
-        <span class="title-caret" aria-hidden="true"></span>
-      </header>
-      <section class="handout__content">
-        <ul>
-          <li>목격 시각: 02:17</li>
-          <li>위치: 동쪽 제방 근처</li>
-          <li>비고: 기록자 서명 없음</li>
-        </ul>
-      </section>
-    </article>
-
-    <!-- 카드 3 (세로 제목) -->
-    <article class="handout handout--vertical">
-      <header class="handout__title handout__title--vertical">
-        <span class="title-text">침묵의 문</span>
-        <span class="title-caret" aria-hidden="true"></span>
-      </header>
-      <section class="handout__content">
-        <p>
-          문 너머에서 들려오는 건 발걸음이 아니라 바람의 이름이었다. <br/>
-          의식을 망치면 대가를 치른다.
-        </p>
-      </section>
-    </article>
-  </main>
+  <ul>
+    <li>
+      <article>
+        <h3>폐허의 기록</h3>
+        <p>오래된 문서 조각. 가장자리는 그을음과 습기에 젖어 있다.</p>
+      </article>
+    </li>
+    <li>
+      <article>
+        <h3>밤의 증언록</h3>
+        <p>목격 시각: 02:17<br/>위치: 동쪽 제방 근처</p>
+      </article>
+    </li>
+    <li>
+      <article>
+        <h3>침묵의 문</h3>
+        <p>문 너머에서 들려오는 건 발걸음이 아니라 바람의 이름이었다.</p>
+      </article>
+    </li>
+  </ul>
 
   <script>
-    // 2.5초 후 커서 깜박임 제거
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        document.querySelectorAll('.handout__title')
-          .forEach(h => h.classList.add('caret-hide'));
-      }, 2500);
+    document.querySelectorAll("li").forEach(li => {
+      const title = li.querySelector("h3");
+      li.addEventListener("mouseenter", () => {
+        // 1% 확률로 글리치 실행
+        if (Math.random() < 0.01) {
+          title.classList.add("glitch");
+          // 애니메이션 끝나면 제거 → 다음에 다시 발동할 수 있게
+          title.addEventListener("animationend", () => {
+            title.classList.remove("glitch");
+          }, { once: true });
+        }
+      });
     });
   </script>
 </body>
