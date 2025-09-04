@@ -11,13 +11,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 
 <style>
-/* 한글 Pretendard(눈누) */
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');font-weight:600;font-style:normal;font-display:swap}
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
 
 :root{
-  /* 레이아웃 & 모션 (모든 카드 공통) */
   --gap:8px;
   --base:clamp(2rem,8cqi,80px);
   --easing:cubic-bezier(.22,.8,.2,1);
@@ -25,14 +23,14 @@
   --title-dur:.52s;
   --title-delay-in:.06s;
 
-  /* 스파인(책등) 통일 값 */
+  /* 스파인(책등) */
   --spine-w: clamp(28px, calc(var(--base)*0.58), 56px);
   --spine-r: 12px;
   --spine-gloss: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 42%);
   --spine-shadow: linear-gradient(90deg, rgba(0,0,0,.26), rgba(0,0,0,0) 50%);
 
-  /* 이미지 톤 균일화용 얕은 틴트 */
-  --tint: hsla(198, 38%, 48%, .10); /* 남청색 10% */
+  /* 이미지 톤 살짝 통일 */
+  --tint: hsla(198, 38%, 48%, .10);
 }
 
 *{box-sizing:border-box}
@@ -52,7 +50,7 @@ body>p{
 }
 @media (max-width:768px){ body>p{ text-align:center } }
 
-/* 리스트 (초기 모두 접힘) */
+/* 리스트(초기 모두 접힘) */
 ul{
   display:grid; grid-template-columns:repeat(7,1fr);
   gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
@@ -64,7 +62,6 @@ li{
   border-radius:12px; background:#0f1b20; border:1px solid rgba(255,255,255,.12);
   contain:layout paint;
 }
-/* 카드 내부 공통 여백/타이포 일관 */
 article{
   position:absolute; inset:0; width:100%; height:100%;
   display:flex; flex-direction:column; justify-content:flex-end; gap:.8rem;
@@ -72,11 +69,8 @@ article{
   padding-bottom: clamp(10px, calc(var(--base)*.42), 18px);
   overflow:hidden;
 }
-article p{
-  margin:0; font-size:13px; line-height:1.28; text-wrap:balance;
-}
 
-/* 뒤 블러 배경 + 공통 틴트 (톤 일관) */
+/* 뒤 블러 배경 + 얕은 틴트 */
 article::before{
   content:""; position:absolute; inset:0; z-index:0;
   background:
@@ -88,7 +82,14 @@ article::before{
   opacity:.9;
 }
 
-/* 접힘 상태 전용 — 스파인(왼쪽 고정, 모든 카드 동일) */
+/* 스크림(이미지 위, 텍스트 아래) – 펼침 때 활성 */
+.scrim{
+  position:absolute; inset:0; z-index:1;
+  background: linear-gradient(to top, rgba(0,0,0,.40), rgba(0,0,0,0) 55%);
+  opacity:0; transition: opacity var(--speed) var(--easing);
+}
+
+/* 스파인(접힘 때만 표시, 이미지/스크림 위) */
 article::after{
   content:""; position:absolute; top:0; left:0; height:100%; width:var(--spine-w);
   border-top-left-radius: var(--spine-r); border-bottom-left-radius: var(--spine-r);
@@ -101,27 +102,30 @@ article::after{
     inset 0 0 0 1px rgba(255,255,255,.06),
     0 0 0 1px rgba(255,255,255,.08);
   filter: saturate(1.02) contrast(1.02) brightness(.98) grayscale(.04);
-  opacity:0; /* 활성 시 숨김 */
+  opacity:0;
   transition: opacity var(--speed) var(--easing), filter var(--speed) var(--easing);
-  z-index:1; pointer-events:none;
+  z-index:3; pointer-events:none;
 }
 
-/* 본문 이미지 (펼침에서만 보이게) — 크기 일관: contain */
+/* 본 이미지: 펼치면 꽉 차게 */
 article img{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
-  z-index:1; pointer-events:none; opacity:1; transition:opacity var(--speed) var(--easing);
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit: cover; /* <= 꽉 차게 */
+  z-index:0; pointer-events:none; opacity:1; transition:opacity var(--speed) var(--easing);
 }
 
-/* 접힘: 이미지/텍스트 숨김 + 스파인 표시 — 모든 카드 동일 */
-li:not([data-active="true"]) article img{ opacity:0 }
-li:not([data-active="true"]) article::after{ opacity:1 }
-li p{ opacity:0; transition:opacity calc(var(--speed)*1.05) var(--easing) }
-li[data-active="true"] p{ opacity:1; transition-delay:calc(var(--speed)*.12) }
-
-/* 아이콘 일관 크기 */
+/* 텍스트 레이어 */
+article p{ margin:0; font-size:13px; line-height:1.28; text-wrap:balance; position:relative; z-index:2; opacity:0; transition:opacity calc(var(--speed)*1.05) var(--easing) }
 article svg{ width:18px; height:18px; fill:none; position:relative; z-index:2 }
 
-/* ---------- 제목 세로↔가로 전환(모든 카드 같은 위치/타이밍) ---------- */
+/* 접힘: 이미지/텍스트/스크림 숨기고 스파인만 */
+li:not([data-active="true"]) article img{ opacity:0 }
+li:not([data-active="true"]) .scrim{ opacity:0 }
+li:not([data-active="true"]) article::after{ opacity:1 }
+li[data-active="true"] .scrim{ opacity:1 }
+li[data-active="true"] p{ opacity:1; transition-delay:calc(var(--speed)*.12) }
+
+/* 제목 세로↔가로 전환 */
 .title{
   position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
   font-weight:700; letter-spacing:.02em; z-index:2;
@@ -135,15 +139,11 @@ article svg{ width:18px; height:18px; fill:none; position:relative; z-index:2 }
     letter-spacing var(--title-dur) var(--easing),
     clip-path      var(--title-dur) var(--easing);
 }
-
-/* 접힘(공통): 세로 제목만 보임, 가로 제목은 준비 상태 */
 li:not([data-active="true"]) .title .t-v{ opacity:1; transform:translateY(0) scale(1) }
 li:not([data-active="true"]) .title .t-h{
   opacity:0; transform: translateX(-12px) skewX(-2deg);
   letter-spacing:.05em; clip-path: inset(0 35% 0 0 round 2px); filter: blur(.2px);
 }
-
-/* 펼침(공통): 가로 제목 등장, 세로는 위로 사라짐 */
 li[data-active="true"] .title .t-v{
   opacity:0; transform:translateY(-6px) scale(.985); filter: blur(.18px);
 }
@@ -152,15 +152,12 @@ li[data-active="true"] .title .t-h{
   letter-spacing:.01em; clip-path: inset(0 0 0 0 round 2px); filter:none;
   transition-delay: var(--title-delay-in);
 }
-
-/* 세로 제목: 스파인과 정렬(모든 카드 동일 좌표계) */
 .title .t-v{
   writing-mode:vertical-rl; text-orientation:mixed;
   left:calc(var(--spine-w) + 8px); top:12px;
   transform-origin:top left; font-weight:700; letter-spacing:.08em; font-size:.98rem;
   align-self:start; justify-self:start;
 }
-/* 가로 제목: 펼침 상단 좌측 공통 */
 .title .t-h{
   writing-mode:initial; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
   top:12px; left: clamp(12px, calc(var(--base)*.5), 28px);
@@ -184,85 +181,92 @@ li[data-active="true"] .title .t-h{
 <ul>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="The Craft">
         <span class="t t-h">The Craft</span>
         <span class="t t-v" aria-hidden="true">The Craft</span>
       </h3>
       <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
-      <img src="https://picsum.photos/720/720?random=12" alt="" />
+      <img src="https://picsum.photos/1200/800?random=12" alt="" />
     </article>
   </li>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="CSS Animation">
         <span class="t t-h">CSS Animation</span>
         <span class="t t-v" aria-hidden="true">CSS Animation</span>
       </h3>
       <p>Master CSS animations from your first @keyframes to the tricks nobody teaches.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
-      <img src="https://picsum.photos/720/720?random=17" alt="" />
+      <img src="https://picsum.photos/1200/800?random=17" alt="" />
     </article>
   </li>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="SVG Filters">
         <span class="t t-h">SVG Filters</span>
         <span class="t t-v" aria-hidden="true">SVG Filters</span>
       </h3>
       <p>Use noise and filters to craft flames, stickers, and more — shaders on a budget.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-      <img src="https://picsum.photos/720/720?random=19" alt="" />
+      <img src="https://picsum.photos/1200/800?random=19" alt="" />
     </article>
   </li>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="Scroll Animation">
         <span class="t t-h">Scroll Animation</span>
         <span class="t t-v" aria-hidden="true">Scroll Animation</span>
       </h3>
       <p>Guide users with tasteful, performance-first scroll effects.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>
-      <img src="https://picsum.photos/720/720?random=42" alt="" />
+      <img src="https://picsum.photos/1200/800?random=42" alt="" />
     </article>
   </li>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="Taming Canvas">
         <span class="t t-h">Taming Canvas</span>
         <span class="t t-v" aria-hidden="true">Taming Canvas</span>
       </h3>
       <p>Tame the pixel playground with performance-driven patterns.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-      <img src="https://picsum.photos/720/720?random=128" alt="" />
+      <img src="https://picsum.photos/1200/800?random=128" alt="" />
     </article>
   </li>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="Layout Tricks">
         <span class="t t-h">Layout Tricks</span>
         <span class="t t-v" aria-hidden="true">Layout Tricks</span>
       </h3>
       <p>Sometimes a rethink beats adding another library.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
-      <img src="https://picsum.photos/720/720?random=56" alt="" />
+      <img src="https://picsum.photos/1200/800?random=56" alt="" />
     </article>
   </li>
   <li>
     <article>
+      <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="Mastering Time">
         <span class="t t-h">Mastering Time</span>
         <span class="t t-v" aria-hidden="true">Mastering Time</span>
       </h3>
       <p>Time isn’t just easing — treat it as a core design material.</p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l-4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
-      <img src="https://picsum.photos/720/720?random=39" alt="" />
+      <img src="https://picsum.photos/1200/800?random=39" alt="" />
     </article>
   </li>
 </ul>
 
 <script>
-/* 빠른 hover/click 확장 + 영역 벗어나면 접힘 (일관 동작) */
+/* 빠른 hover/click 확장 + 영역 벗어나면 접힘 */
 (() => {
   const list = document.querySelector('ul');
   if (!list) return;
@@ -298,11 +302,11 @@ li[data-active="true"] .title .t-h{
   list.addEventListener('pointerleave', collapse);
   list.addEventListener('focusout', (e) => { if (!list.contains(e.relatedTarget)) collapse(); });
 
-  // 초기: 전부 접힘(완전 동일 상태)
+  // 초기: 전부 접힘
   collapse();
 })();
 
-/* 이미지 URL을 CSS 변수(--img)로 넣기 (모든 카드 동일 처리) */
+/* 이미지 URL을 CSS 변수(--img)로 넣기 (스파인/배경에 재사용) */
 (() => {
   const arts = document.querySelectorAll('article');
   arts.forEach((a) => {
