@@ -294,6 +294,36 @@ article.glitch-lang :where(h3, p, .title .t-h, .title .t-v, span){
     text-shadow: .5px 0 #f0f, -.5px 0 #0ff;
   }
 }
+/* 아이콘/여백 변수 (원하는 크기로 조절 가능) */
+:root{
+  --icon-size: 20px;   /* 펼친 상태 아이콘 크기 */
+  --icon-gap: 8px;     /* 아이콘과 텍스트 사이 간격 */
+}
+
+/* 기존 article 패딩을 변수화 (아래 규칙이 같은 선택자라 자연스럽게 덮어씀) */
+article{
+  --pad-x-base: clamp(10px, calc(var(--base)*.42), 22px);
+  --pad-b-base: clamp(10px, calc(var(--base)*.42), 18px);
+  padding-inline: var(--pad-x-base);
+  padding-bottom: var(--pad-b-base);
+}
+
+/* 펼친 상태일 때: 아이콘만큼 자동으로 안전 여백 확보 */
+li[data-active="true"] article{
+  --pad-left-safe: calc(var(--pad-x-base) + var(--icon-size) + var(--icon-gap));
+  --pad-bottom-safe: calc(var(--pad-b-base) + var(--icon-size) + var(--icon-gap));
+  padding-left: max(var(--pad-x-base), var(--pad-left-safe));
+  padding-bottom: max(var(--pad-b-base), var(--pad-bottom-safe));
+}
+
+/* 펼친 상태 아이콘을 좌측하단으로 고정 (텍스트는 위 패딩 덕에 안 겹침) */
+li[data-active="true"] article svg{
+  left: var(--pad-x-base);
+  bottom: var(--pad-b-base);
+  right: auto; top: auto;
+  width: var(--icon-size);
+  height: var(--icon-size);
+}  
 </style>
 </head>
 <body>
