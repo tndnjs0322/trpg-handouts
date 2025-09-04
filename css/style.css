@@ -1,155 +1,168 @@
-/* ========== 기본 세팅 ========== */
-:root{
-  --bg-top:#0d1a1f; --bg-mid:#071218; --bg-bottom:#02060a;
-  --ink:#e8f4ff; --muted:#a6bac8; --panel:#0b1216; --line:#1b2b35; --accent:#8ff0e8;
-  --radius:14px; --h:clamp(52px,7vw,86px); --gap:10px; --speed:.55s;
-  --shadow:0 10px 30px rgba(0,0,0,.35);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0; color:var(--ink);
-  font-family:"Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  background:
-    radial-gradient(110% 60% at 50% -10%, rgba(143,240,232,.08), transparent 60%),
-    linear-gradient(180deg, var(--bg-top), var(--bg-mid) 55%, var(--bg-bottom));
-  overflow-x:hidden;
-}
-/* 미스트 */
-body::before,body::after{
-  content:""; position:fixed; inset:-20% -20% auto -20%; height:70vh; pointer-events:none;
-  filter:blur(40px); opacity:.22;
-  background:
-    radial-gradient(50% 100% at 10% 30%, rgba(180,255,230,.15), transparent 60%),
-    radial-gradient(70% 80% at 80% 50%, rgba(120,180,255,.12), transparent 60%);
-  animation:mist 22s ease-in-out infinite alternate; z-index:-1;
-}
-body::after{ inset:auto -20% -25% -20%; height:55vh; opacity:.18; transform:scaleX(-1); animation-duration:28s; }
-@keyframes mist{ 0%{transform:translateY(-10%) translateX(-3%)} 100%{transform:translateY(6%) translateX(3%)} }
-
-/* ========== 헤더 ========== */
-.site-header{ max-width:900px; margin:38px auto 18px; padding:0 16px; text-align:center; }
-#siteTitle{
-  font-family:"Noto Serif KR",serif; font-size:clamp(28px,6vw,56px);
-  line-height:1.1; letter-spacing:.02em; margin:0 0 12px; position:relative; display:inline-block;
-}
-#siteTitle::after{
-  content:""; position:absolute; width:2px; height:1.1em; background:var(--ink); right:-4px; top:10%;
-  animation:caret .8s steps(1) infinite;
-}
-@keyframes caret{ 50%{opacity:0} }
-#siteTitle.no-caret::after{ animation:none; opacity:0; }
-#siteTitle.fade-out{ transition:opacity .8s ease; opacity:0; pointer-events:none; }
-.lead{ margin:0 auto 28px; color:var(--muted); max-width:68ch; line-height:1.55; }
-
-/* ========== 카드 그리드 ========== */
-.cards{
-  max-width:1200px; margin:0 auto 80px; padding:0 16px; list-style:none;
-  display:grid; gap:var(--gap);
-  grid-template-columns:repeat(7,1fr); /* 기본은 모두 접힘(균등 폭) */
-  transition:grid-template-columns var(--speed);
-  overflow:hidden; /* 넘침 방지 */
-}
-.cards.is-expanded{ grid-template-columns:10fr repeat(6,1fr); }
-
-/* 각 칸/카드 */
-.cards > li{
-  min-width:80px; border-radius:var(--radius); position:relative; overflow:hidden;
-  cursor:pointer; /* 클릭 UX */
-}
-.card{
-  height:min(56vh,520px); min-height:360px; border-radius:var(--radius);
-  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.15));
-  border:1px solid var(--line); box-shadow:var(--shadow); overflow:hidden;
-  display:flex; flex-direction:column; justify-content:flex-end; position:relative;
-  transform-style:preserve-3d;
-  transition:transform var(--speed) ease, background .35s ease;
+/* ========== 리셋 & 기본 ========== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+  background: #0d1a1f;
+  color: #e6eef2;
 }
 
-/* 가장자리 하이라이트 */
-.card::before{
-  content:""; position:absolute; inset:0;
-  background:linear-gradient(90deg, rgba(255,255,255,.06), transparent 24% 76%, rgba(255,255,255,.05));
-  mix-blend-mode:overlay; pointer-events:none; transition:opacity var(--speed); opacity:.25;
+/* ========== 그리드 래퍼 ========== */
+.wrap {
+  max-width: 1200px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1.25rem;
 }
 
-/* 배경 이미지 */
-.media{ position:absolute; inset:0; overflow:hidden; }
-.media img{
-  width:100%; height:100%; object-fit:cover;
-  filter:grayscale(.3) contrast(1.05) brightness(.9);
-  transform:scale(1.06);
-  transition:transform var(--speed) ease, filter var(--speed) ease, opacity var(--speed);
-  opacity:.7;
+/* ========== 카드 공통 ========== */
+.handout {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 0fr; /* 기본: 내용 높이 0 (숨김) */
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0f2229, #0a171c);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  overflow: hidden;            /* 내용이 바깥으로 삐져나오는 문제 방지 */
+  isolation: isolate;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  outline: none;
+}
+.handout:focus-visible { box-shadow: 0 0 0 3px rgba(0,188,212,0.35); }
+.handout:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.45);
+  border-color: rgba(0,188,212,0.25);
 }
 
-/* 제목(가로) — 활성화 시 노출 */
-.htitle{
-  position:absolute; left:16px; top:12px; margin:0;
-  font-family:"Noto Serif KR",serif; font-weight:800; letter-spacing:.01em;
-  font-size:clamp(18px,2.6vw,24px);
-  opacity:0; transform:translateY(-6px); transition:opacity var(--speed), transform var(--speed);
+/* 제목 줄: 기본 가로 */
+.handout__title {
+  position: relative;
+  padding: 16px 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  z-index: 1; /* 내용 위 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
 }
 
-/* 제목(세로) — 접힘 상태에서만 표시 */
-.vtitle{
-  position:absolute; left:10px; top:12px; bottom:auto;
-  writing-mode:vertical-rl; text-orientation:mixed;
-  font-family:"Noto Serif KR",serif; font-weight:800; letter-spacing:.06em; font-size:14px;
-  opacity:.9; color:var(--muted); transform:translateZ(30px);
+/* 타이틀 텍스트 + 커서(타자기 느낌) */
+.title-text {
+  white-space: nowrap;          /* 한 줄로 */
+  overflow: hidden;             /* 가로로 넘치면 숨김 */
+  text-overflow: ellipsis;      /* 너무 길면 … */
+  position: relative;
+  z-index: 2;
+}
+.title-caret {
+  width: 1ch;
+  height: 1.25em;
+  display: inline-block;
+  background: currentColor;
+  opacity: 0.75;
+  animation: caret-blink 800ms steps(1, end) infinite;
+  transform: translateY(2px);
+}
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
+/* 커서가 일정 시간 뒤 사라지게 (JS에서 .caret-hide 클래스 부여) */
+.caret-hide .title-caret { display: none; }
+
+/* 내용 영역 */
+.handout__content {
+  padding: 0 18px 18px;
+  overflow: hidden;             /* 내부 스크롤 대신 부드럽게 열림 */
+  opacity: 0;                   /* 기본 숨김 (시각적으로도) */
+  transition: grid-template-rows 0.001s, opacity 220ms ease; /* grid 애니메이션 보정 */
 }
 
-/* 설명/버튼 */
-.desc{
-  position:relative; z-index:1; margin:0 18px 54px 18px; max-width:48ch;
-  color:#e5f0f7; line-height:1.45; opacity:0; white-space:normal; word-break:keep-all;
-  text-wrap:pretty; transition:opacity .35s ease .15s;
+/* hover 시 펼치기: grid-rows를 auto로 바꾸면서 자연스럽게 개방 */
+.handout:hover {
+  grid-template-rows: auto 1fr;          /* 내용 영역 칸을 열어줌 */
 }
-.cta{
-  display:inline-block; margin:0 18px 16px 18px; padding:.55rem .85rem;
-  border-radius:10px; font-weight:700; color:#0b1317;
-  background:linear-gradient(90deg,#a8f5e8,#91d8ff);
-  text-decoration:none; transform:translateY(8px); opacity:0;
-  transition:transform .35s ease .15s, opacity .35s ease .15s, filter .35s;
+.handout:hover .handout__content {
+  opacity: 1;
 }
-.cta:hover{ filter:brightness(1.05) }
 
-/* ========== 상태: 활성(클릭 후) ========== */
-.cards > li[data-active="true"] .card{
-  transform:perspective(900px) rotateY(-6deg); transform-origin:center;
+/* 목록/문단 스타일 */
+.handout__content p, .handout__content li {
+  line-height: 1.65;
+  color: #d6e4ea;
 }
-.cards > li[data-active="true"] .media img{
-  transform:scale(1.02); filter:grayscale(.1) contrast(1) brightness(1); opacity:.92;
+.handout__content ul {
+  padding-left: 1.1rem;
+  margin: .6rem 0 0;
 }
-.cards > li[data-active="true"] .htitle{ opacity:1; transform:translateY(0); }
-.cards > li[data-active="true"] .vtitle{ opacity:0; transition:opacity .25s ease; }
-.cards > li[data-active="true"] .desc,
-.cards > li[data-active="true"] .cta{ opacity:1; transform:none; }
 
-/* ========== 상태: 비활성(접힘) — 세로제목만 보여줌 ========== */
-.cards > li:not([data-active="true"]) .htitle,
-.cards > li:not([data-active="true"]) .desc,
-.cards > li:not([data-active="true"]) .cta{
-  opacity:0 !important; visibility:hidden; pointer-events:none;
+/* ========== 세로 제목 카드 변형 ========== */
+/* 오른쪽에 세로 제목만 보이고, hover 시 왼쪽으로 내용이 펼쳐지는 느낌 */
+.handout--vertical {
+  display: grid;
+  grid-template-columns: 56px 1fr; /* 세로제목(오른쪽 붙일거라 2열) */
+  grid-template-rows: 1fr;
 }
-.cards > li:not([data-active="true"]) .media img{
-  opacity:.45; filter:grayscale(.5) contrast(1); transform:scale(1.03);
+.handout--vertical .handout__title--vertical {
+  grid-column: 2; /* 오른쪽 열 */
+  grid-row: 1;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  justify-content: center;
+  align-items: center;
+  border-left: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 0;
+  min-height: unset;
+  min-width: 56px;
+  padding: 12px 8px;
 }
-.cards > li:not([data-active="true"]) .vtitle{ opacity:.95; }
+.handout--vertical .handout__content {
+  grid-column: 1; /* 왼쪽 열 */
+  grid-row: 1;
+  padding: 18px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  transform: translateX(-12px);
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+/* 기본: 내용은 숨김(시각적으로도) */
+.handout--vertical .handout__content { opacity: 0; }
+/* hover 시: 내용이 슬쩍 나타나며 살짝 제자리로 */
+.handout--vertical:hover .handout__content {
+  opacity: 1;
+  transform: translateX(0);
+}
 
-/* (중요) 호버로 내용 노출시키던 백업 규칙은 제거함 → 클릭 전용 UX */
-
-/* ========== 반응형 ========== */
-@media (max-width:980px){
-  .card{ height:min(52vh,480px) }
+/* 세로 제목에서도 커서 높이 보정 */
+.handout--vertical .title-caret {
+  height: 1em;
+  width: 0.9ch;
 }
-@media (max-width:720px){
-  /* 모바일은 스택 + 내용 항상 노출 */
-  .cards{ grid-template-columns:1fr; overflow:visible; }
-  .cards > li{ min-width:auto; overflow:visible; cursor:auto; }
-  .card{ height:auto; min-height:360px; transform:none !important; }
-  .vtitle{ display:none; }
-  .htitle{ opacity:1; transform:none; }
-  .desc,.cta{ opacity:1; transform:none; visibility:visible; }
-  .media img{ opacity:.92; filter:grayscale(.1) contrast(1) brightness(1); transform:none; }
+
+/* 접근성: 키보드 포커스만으로도 열람되게(hover와 동일 느낌) */
+.handout:focus-within {
+  grid-template-rows: auto 1fr;
+}
+.handout:focus-within .handout__content { opacity: 1; }
+.handout--vertical:focus-within .handout__content {
+  opacity: 1; transform: translateX(0);
+}
+
+/* 반응형 미세 조정 */
+@media (hover: none) and (pointer: coarse) {
+  /* 터치 환경에서는 hover가 없으므로 탭 포커스로 열게 유도 */
+  .handout { cursor: pointer; }
+}
+
+/* 스크롤 생기는 반투명 칸(유령 박스) 방지용: 배경 겹침 제거 */
+.handout__content::before {
+  content: "";
+  display: none;
 }
