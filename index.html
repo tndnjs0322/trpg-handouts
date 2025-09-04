@@ -3,188 +3,236 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Animated Hover Disclosures — fold-back</title>
+  <title>Hover Disclosures — glass + moving dots + glitch</title>
   <link rel="stylesheet" href="https://unpkg.com/normalize.css" />
   <style>
     :root{
-      --gap:8px;
-      --base: clamp(2rem, 8cqi, 80px);
-      --easing: linear(0 0%, .1538 4.09%, .2926 8.29%, .4173 12.63%, .5282 17.12%, .6255 21.77%, .7099 26.61%, .782 31.67%, .8425 37%, .8887 42.23%, .9257 47.79%, .9543 53.78%, .9752 60.32%, .9883 67.11%, .9961 75%, 1 100%);
-      --speed:.6s;
+      --bg: #0d1a1f;            /* 배경색 */
+      --gap: 10px;
+      --base: clamp(2rem, 6vw, 80px);
+      --speed: .6s;
+      --easing: cubic-bezier(.2,.8,.2,1);
+      --glass: rgba(255,255,255,.06);
+      --glass-border: rgba(255,255,255,.14);
+      --panel-bg: rgba(8,12,14,.85);
+      --ring: rgba(0, 200, 220, .22);
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
     }
-    html{color-scheme:dark light}
+    html{ color-scheme: dark light; }
     body{
       margin:0; min-height:100svh;
       display:grid; place-items:start center; gap:1.5rem;
       padding:2rem 1rem 3rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background:#0d1a1f; color:#e6eef2;
-      --size:45px; --line:color-mix(in hsl, canvasText, transparent 70%);
+      background: var(--bg); color:#e6eef2;
       position:relative;
     }
+
+    /* 은은한 격자 (배경 가장 아래) */
     body::before{
-      content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+      --size:45px; --line: color-mix(in hsl, canvasText, transparent 78%);
+      content:""; position:fixed; inset:0; pointer-events:none; z-index:-2;
       background:
         linear-gradient(90deg, var(--line) 1px, transparent 1px var(--size)) 50% 50%/var(--size) var(--size),
         linear-gradient(var(--line) 1px, transparent 1px var(--size)) 50% 50%/var(--size) var(--size);
       mask: linear-gradient(-20deg, transparent 50%, white);
     }
-    h1{margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px); text-transform:lowercase;}
-    .desc{margin:0; opacity:.8; width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; line-height:1.5;}
 
-    /* GRID CORE */
+    /* 움직이는 점 레이어 (콘텐츠 뒤) */
+    #bg-dots{ position:fixed; inset:0; z-index:-1; pointer-events:none; display:block; }
+    @media (prefers-reduced-motion: reduce){ #bg-dots{ display:none; } }
+
+    h1{ margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px); text-transform:lowercase; }
+    .desc{ margin:0; opacity:.8; width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; line-height:1.5; }
+
+    /* ===== 리스트 코어 ===== */
     ul#cards{
       display:grid;
-      grid-template-columns: repeat(7, 1fr); /* 활성 때 JS가 해당 칼럼만 10fr로 변경 */
-      gap:var(--gap);
+      grid-template-columns: repeat(7, 1fr);      /* 활성 칼럼만 JS가 10fr로 변경 */
+      gap: var(--gap);
       list-style:none; padding:0; margin:0;
-      height: clamp(300px, 40dvh, 474px);
-      width: min(1000px, calc(100% - 2rem));
-      transition:grid-template-columns var(--speed) var(--easing);
+      width:min(1100px, calc(100% - 2rem));
+      height: clamp(320px, 42dvh, 480px);
+      transition: grid-template-columns var(--speed) var(--easing);
     }
     ul#cards > li{
       position:relative; min-width:var(--base);
-      overflow:hidden; border-radius:8px;
-      background: light-dark(#fff, #000);
-      border:1px solid color-mix(in hsl, canvas, canvasText 50%);
-      cursor:pointer;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      /* 접힘: 유리창 */
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
     }
+    /* 펼침 시 표면 강화 */
+    ul#cards > li[data-active="true"]{
+      background: #0f1b20;
+      border-color: rgba(255,255,255,.08);
+      backdrop-filter: none;
+    }
+
     article{
-      width: calc(var(--article-width, 300) * 1px);
+      width: calc(var(--article-width, 320) * 1px);
       height:100%;
       position:absolute; inset:0;
       display:flex; flex-direction:column; justify-content:flex-end;
       gap:1rem;
-      padding-inline: calc(var(--base) * 0.5 - 9px);
-      padding-bottom:1rem;
+      padding: 1rem;
       overflow:hidden;
     }
-    /* 세로 제목(책등) */
-    article h3{
-      position:absolute; top:1rem; left:calc(var(--base) * 0.5);
-      transform-origin:0 50%; rotate:90deg;
-      margin:0; font-size:1rem; font-weight:300; text-transform:uppercase; white-space:nowrap;
-      opacity:.6; transition:opacity calc(var(--speed)*1.2) var(--easing);
-    }
-    article svg{width:18px; height:18px; fill:none; opacity:.6; transition:opacity calc(var(--speed)*1.2) var(--easing);}
-    article p, article a{
-      margin:0; opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing); width:fit-content;
-    }
-    article p{ font-size:13px; line-height:1.25; text-wrap:balance; }
-    article a{ position:absolute; bottom:1rem; left:0; color:inherit; text-decoration:none; height:18px; line-height:18px; }
-    article a span{ display:inline-block; translate: calc(var(--base) * 0.5) 0; text-underline-offset:4px; }
-    article a:is(:hover,:focus-visible) span{ text-decoration:underline; }
+
+    /* 이미지: 접힘에선 숨김, 펼치면 컬러 */
     article img{
       position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;
-      filter:grayscale(1) brightness(1.5);
-      scale:1.1;
-      transition-property: filter, scale;
-      transition-duration: calc(var(--speed) * 1.2);
-      transition-timing-function: var(--easing);
+      opacity: 0;
+      filter: grayscale(1) brightness(1.6);
+      scale: 1.08;
+      transition: opacity calc(var(--speed)*1.2) var(--easing),
+                  filter calc(var(--speed)*1.2) var(--easing),
+                  scale   calc(var(--speed)*1.2) var(--easing);
       mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
     }
+    li[data-active="true"] article img{
+      opacity: 1; filter: grayscale(0) brightness(1); scale: 1; transition-delay: .1s;
+    }
 
-    /* 활성 카드만 콘텐츠 표시 */
-    li[data-active="true"] h3, li[data-active="true"] svg{ opacity:1; }
-    li[data-active="true"] p, li[data-active="true"] a{ opacity:1; transition-delay: calc(var(--speed) * 0.25); }
-    li[data-active="true"] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay: calc(var(--speed) * 0.25); }
+    /* 제목: 접힘=세로(책등), 펼침=가로 */
+    article h3{
+      position:absolute;
+      top: .9rem; left: calc(var(--base) * .5);
+      transform-origin: 0 50%; rotate: 90deg;
+      margin:0; font-size: .95rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: rgba(230,238,242,.92);
+      text-shadow: 0 1px 0 rgba(0,0,0,.4);
+      opacity: .9;
+      transition: rotate var(--speed) var(--easing),
+                  top var(--speed) var(--easing),
+                  left var(--speed) var(--easing),
+                  opacity var(--speed) var(--easing);
+    }
+    li[data-active="true"] article h3{
+      rotate: 0deg; top: .9rem; left: 1rem; opacity: 1; text-shadow: none;
+    }
 
-    /* JS 미작동 fallback: hover 시 최소 동작 */
+    /* 본문/링크: 접힘 숨김, 펼치면 등장 */
+    article p, article a{
+      margin:0; opacity:0; width:fit-content;
+      transition: opacity calc(var(--speed)*1.2) var(--easing);
+    }
+    article p{
+      font-size: 13.5px; line-height:1.45; text-wrap:balance;
+      padding: .75rem .85rem;
+      background: var(--panel-bg);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+    }
+    article a{
+      position:absolute; bottom: .9rem; left: 1rem;
+      color: inherit; text-decoration: none; height: 18px; line-height: 18px;
+    }
+    article a span{ text-underline-offset:4px; }
+    article a:is(:hover,:focus-visible) span{ text-decoration: underline; }
+    li[data-active="true"] article p,
+    li[data-active="true"] article a{ opacity: 1; transition-delay: .15s; }
+
+    /* 포커스 링 */
+    ul#cards > li:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
+
+    /* JS 미작동 fallback */
+    ul#cards:not(.js-ready) li:hover article img{ opacity:1; filter:grayscale(0) brightness(1); scale:1; }
     ul#cards:not(.js-ready) li:hover h3,
-    ul#cards:not(.js-ready) li:hover svg,
     ul#cards:not(.js-ready) li:hover p,
     ul#cards:not(.js-ready) li:hover a{ opacity:1; }
-    ul#cards:not(.js-ready) li:hover img{ filter:grayscale(0) brightness(1); scale:1; }
+    ul#cards:not(.js-ready) li:hover h3{ rotate:0deg; top:.9rem; left:1rem; }
 
-    /* 글리치(제목) */
+    /* 글리치(제목) — 1% 확률로만 */
     .glitch{ animation:glitch 380ms steps(2,end) 2; }
     @keyframes glitch{
       0%{ transform:translate(0); color:canvasText; text-shadow:none; }
-      20%{ transform:translate(-1px,1px) skew(1deg); text-shadow:1px 0 #f0f,-1px 0 #0ff; }
-      40%{ transform:translate(1px,-1px) skew(-1deg); text-shadow:-1px 0 #f00,1px 0 #0ff; }
+      20%{ transform:translate(-1px,1px) skew(1deg); text-shadow:1px 0 #7af,-1px 0 #0ff; }
+      40%{ transform:translate(1px,-1px) skew(-1deg); text-shadow:-1px 0 #f66,1px 0 #0ff; }
       60%{ transform:translate(-1px,0); text-shadow:1px 0 #fff,-1px 0 #0ff; }
-      80%{ transform:translate(0,1px); text-shadow:-1px 0 #f0f,1px 0 #fff; }
+      80%{ transform:translate(0,1px); text-shadow:-1px 0 #7af,1px 0 #fff; }
       100%{ transform:translate(0); text-shadow:none; }
     }
   </style>
 </head>
 <body>
-  <h1 class="fluid">the craft of ui</h1>
+  <!-- 움직이는 점 배경 -->
+  <canvas id="bg-dots" aria-hidden="true"></canvas>
+
+  <h1>the craft of ui</h1>
   <p class="desc">
     Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation — it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.
   </p>
 
   <ul id="cards">
-    <li>
-      <article>
-        <h3>The Craft</h3>
-        <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=12" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3>CSS Animation</h3>
-        <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=17" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3>SVG Filters</h3>
-        <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=19" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3>Scroll Animation</h3>
-        <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=42" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3>Taming Canvas</h3>
-        <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=128" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3>Layout Tricks</h3>
-        <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=56" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3>Mastering Time</h3>
-        <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-        <a href="#"><span>Watch now</span></a>
-        <img src="https://picsum.photos/720/720?random=39" alt="" />
-      </article>
-    </li>
+    <li><article>
+      <h3>The Craft</h3>
+      <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=12" alt="">
+    </article></li>
+
+    <li><article>
+      <h3>CSS Animation</h3>
+      <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=17" alt="">
+    </article></li>
+
+    <li><article>
+      <h3>SVG Filters</h3>
+      <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=19" alt="">
+    </article></li>
+
+    <li><article>
+      <h3>Scroll Animation</h3>
+      <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=42" alt="">
+    </article></li>
+
+    <li><article>
+      <h3>Taming Canvas</h3>
+      <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=128" alt="">
+    </article></li>
+
+    <li><article>
+      <h3>Layout Tricks</h3>
+      <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=56" alt="">
+    </article></li>
+
+    <li><article>
+      <h3>Mastering Time</h3>
+      <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
+      <a href="#"><span>Watch now</span></a>
+      <img src="https://picsum.photos/720/720?random=39" alt="">
+    </article></li>
   </ul>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    /* ===== 카드 인터랙션: 가리키면 펼침, 벗어나면 접힘 ===== */
+    (function(){
       const list = document.getElementById('cards');
       if (!list) return;
       list.classList.add('js-ready');
-      const items = Array.from(list.children).filter(n => n.tagName === 'LI');
+      const items = Array.from(list.children);
 
       const collapse = () => {
         items.forEach(el => el.dataset.active = 'false');
         list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
       };
-
       const activateIndex = (idx) => {
         items.forEach((el,i) => el.dataset.active = (i===idx).toString());
         const cols = items.map((_,i)=> i===idx ? '10fr' : '1fr').join(' ');
@@ -198,7 +246,7 @@
         if (idx < 0) { collapse(); return; }
         activateIndex(idx);
 
-        // 1% 확률 글리치(제목)
+        // 1% 확률로 제목 글리치
         if (Math.random() < 0.01) {
           const h3 = li.querySelector('h3');
           if (h3){
@@ -208,37 +256,148 @@
         }
       };
 
-      // 상호작용 진입
       ['pointermove','mouseover','click','focusin','touchstart'].forEach(evt =>
         list.addEventListener(evt, handler, { passive: true })
       );
-
-      // 리스트 바깥으로 나가면 접힘
       ['pointerleave','mouseleave'].forEach(evt =>
-        list.addEventListener(evt, () => collapse())
+        list.addEventListener(evt, collapse)
       );
-
-      // 키보드 포커스가 리스트 밖으로 나가면 접힘
       list.addEventListener('focusout', (e) => {
         if (!list.contains(e.relatedTarget)) collapse();
       });
-
-      // 터치: 리스트 외부 터치 시 접힘
       document.addEventListener('touchstart', (e) => {
         if (!list.contains(e.target)) collapse();
       }, { passive: true });
 
-      // 기사 너비 동기화
       const resync = () => {
         const w = Math.max(280, ...items.map(i => Math.round(i.getBoundingClientRect().width)));
         list.style.setProperty('--article-width', w);
       };
       window.addEventListener('resize', resync);
       resync();
+      collapse(); // 초기: 접힘
+    })();
 
-      // 초기 상태: 모두 접힘
-      collapse();
-    });
+    /* ===== 배경: 은은하게 움직이는 점 (드리프트 + 트윙클) ===== */
+    (function(){
+      const canvas = document.getElementById('bg-dots');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d', { alpha: true });
+      let W=0, H=0, DPR=1, particles=[], rafId=0, last=0;
+
+      const OPT = {
+        density: 0.00007,           // 화면 면적당 밀도
+        minCount: 70,
+        maxCount: 160,
+        radius: [0.7, 2.4],         // px
+        speed:  [3, 12],            // px/s (느리게)
+        baseAlpha: [0.05, 0.18],
+        twinkleHz: [0.10, 0.25],    // 초당 깜빡임
+        shadowBlur: 6               // 글로우 블러
+      };
+
+      const prefersReduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+      const rand = (a,b)=> a + Math.random()*(b-a);
+
+      function resize(){
+        DPR = Math.min(2, window.devicePixelRatio || 1);
+        W = canvas.width  = Math.floor(innerWidth  * DPR);
+        H = canvas.height = Math.floor(innerHeight * DPR);
+        canvas.style.width  = innerWidth  + 'px';
+        canvas.style.height = innerHeight + 'px';
+        spawn();
+      }
+
+      function spawn(){
+        const area = innerWidth * innerHeight;
+        const count = Math.max(OPT.minCount, Math.min(OPT.maxCount, Math.round(area * OPT.density)));
+        particles = Array.from({length: count}, () => {
+          const rCss = rand(OPT.radius[0], OPT.radius[1]);
+          const spCss = rand(OPT.speed[0], OPT.speed[1]);
+          const angle = Math.random() * Math.PI * 2;
+          return {
+            x: Math.random()*W,
+            y: Math.random()*H,
+            r: rCss * DPR,
+            vx: Math.cos(angle) * spCss * DPR,
+            vy: Math.sin(angle) * spCss * DPR,
+            hue: 190 + Math.random()*20,
+            sat: 22 + Math.random()*20,
+            lig: 75 + Math.random()*10,
+            a: rand(OPT.baseAlpha[0], OPT.baseAlpha[1]),
+            twPhase: Math.random()*Math.PI*2,
+            twFreq: rand(OPT.twinkleHz[0], OPT.twinkleHz[1]) * 2*Math.PI
+          };
+        });
+      }
+
+      function frame(now){
+        const dt = Math.min(0.05, (now - (last||now)) / 1000); // 최대 50ms
+        last = now;
+
+        ctx.clearRect(0,0,W,H);
+        ctx.globalCompositeOperation = 'lighter';
+
+        for (const p of particles){
+          // 트윙클
+          p.twPhase += p.twFreq * dt;
+          const tw = 0.5 + 0.5*Math.sin(p.twPhase);
+          const alpha = p.a * (0.7 + 0.3*tw);
+
+          ctx.shadowColor = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${alpha*1.3})`;
+          ctx.shadowBlur  = OPT.shadowBlur * DPR;
+          ctx.fillStyle   = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+          ctx.fill();
+
+          // 이동(느리게)
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          // 화면 래핑
+          if (p.x < -5) p.x = W+5; else if (p.x > W+5) p.x = -5;
+          if (p.y < -5) p.y = H+5; else if (p.y > H+5) p.y = -5;
+        }
+
+        // 비네트 + 상단 하이라이트
+        const g = ctx.createRadialGradient(W*.5, H*.5, 0, W*.5, H*.5, Math.hypot(W,H)*.55);
+        g.addColorStop(.80, 'rgba(0,0,0,0)');
+        g.addColorStop(1.00, 'rgba(0,0,0,.28)');
+        ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+        const lg = ctx.createLinearGradient(0,0,0,H);
+        lg.addColorStop(0.00, 'rgba(255,255,255,0.06)');
+        lg.addColorStop(0.15, 'rgba(255,255,255,0.02)');
+        lg.addColorStop(0.30, 'rgba(255,255,255,0.00)');
+        ctx.fillStyle = lg; ctx.fillRect(0,0,W,H);
+
+        rafId = requestAnimationFrame(frame);
+      }
+
+      function start(){
+        cancelAnimationFrame(rafId);
+        resize();
+        if (prefersReduce){
+          // 정지형 한 번만
+          ctx.clearRect(0,0,W,H);
+          ctx.globalCompositeOperation = 'lighter';
+          for (const p of particles){
+            ctx.shadowColor = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${p.a*1.3})`;
+            ctx.shadowBlur  = OPT.shadowBlur * DPR;
+            ctx.fillStyle   = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${p.a})`;
+            ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+          }
+          return;
+        }
+        last = performance.now();
+        rafId = requestAnimationFrame(frame);
+      }
+
+      addEventListener('resize', resize);
+      start();
+    })();
   </script>
 </body>
 </html>
