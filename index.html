@@ -6,245 +6,139 @@
   <title>the craft of ui</title>
   <style>
   @import url('https://unpkg.com/normalize.css') layer(normalize);
-
   @layer normalize, base, demo;
 
-  /* -------------------- DEMO (원본 유지 + 수정) -------------------- */
+  /* ================= DEMO ================= */
   @layer demo {
-    body {
-      background: #0d1a1f;   /* 네가 좋아한 어두운 톤 */
-      color: #e6eef2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 1rem;
-      padding-block: 2rem;
-      min-height: 100svh;
+    body{
+      background:#0d1a1f; color:#e6eef2;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:1rem; padding-block:2rem; min-height:100svh;
     }
+    h1,p{margin:0}
+    /* 상단 제목: 첫 방문만 타이핑 */
+    h1.fluid{font-size:clamp(28px,6vw,56px); opacity:0; transition:opacity .35s ease}
+    h1.fluid.show{opacity:1}
 
-    h1, p { margin: 0; }
+    /* 설명 */
+    body>p{
+      width:74ch; max-width:calc(100% - 4rem);
+      text-wrap:balance; font-family:monospace; margin-bottom:4rem;
+      line-height:1.5; opacity:.85; font-weight:400;
+    }
+    @media (max-width:768px){ body>p{ text-align:center } }
 
-    /* 상단 제목(첫 방문 타이핑 후 보이기) */
-    h1.fluid {
-      --font-size-min: 22;
-      --font-level: 4.25;
-      font-size: clamp(28px, 6vw, 56px); /* pow() 미지원 가드 */
-      opacity: 0;
-      transition: opacity .35s ease;
+    /* 카드 컨텐츠 기본은 숨김(접힘) */
+    li :is(a,p){ opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing); width:fit-content }
+    li img{
+      filter:grayscale(1) brightness(1.5); scale:1.08;
+      transition-property:filter,scale;
+      transition-duration:calc(var(--speed)*1.2);
+      transition-timing-function:var(--easing);
     }
-    h1.fluid.show { opacity: 1; }
+    [data-active="true"] :is(a,p){ opacity:1; transition-delay:calc(var(--speed)*.25) }
+    [data-active="true"] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay:calc(var(--speed)*.25) }
 
-    h3 { margin: 0; }
-
-    /* 상단 설명문 */
-    body > p {
-      width: 74ch;
-      max-width: calc(100% - 4rem);
-      text-wrap: balance;
-      font-family: monospace;
-      margin-bottom: 4rem;
-      line-height: 1.5;
-      opacity: 0.85;
-      font-weight: 400;
+    /* 카드 레이아웃 */
+    :root{
+      --gap:8px;
+      --base:clamp(2rem,8cqi,80px);
+      --easing:linear(0 0%,.1538 4.09%,.2926 8.29%,.4173 12.63%,.5282 17.12%,.6255 21.77%,.7099 26.61%,.782 31.67%,.8425 37%,.8887 42.23%,.9257 47.79%,.9543 53.78%,.9752 60.32%,.9883 67.11%,.9961 75%,1 100%);
+      --speed:.6s;
     }
-    @media (max-width: 768px) {
-      body > p { text-align: center; }
-    }
-
-    /* 카드 내부 페이드 */
-    li :is(svg, h3) {
-      transition: opacity calc(var(--speed) * 1.2) var(--easing);
-    }
-    li :is(a, p) {
-      opacity: 0; /* 접힘: 본문/링크 숨김 */
-      transition: opacity calc(var(--speed) * 1.2) var(--easing);
-      width: fit-content;
-    }
-    li img {
-      filter: grayscale(1) brightness(1.5);
-      scale: 1.08;
-      transition-property: filter, scale;
-      transition-duration: calc(var(--speed) * 1.2);
-      transition-timing-function: var(--easing);
-    }
-    [data-active='true'] :is(a, p) { opacity: 1; transition-delay: calc(var(--speed) * 0.25); }
-    [data-active='true'] img {
-      filter: grayscale(0) brightness(1);
-      scale: 1;
-      transition-delay: calc(var(--speed) * 0.25);
-    }
-
-    /* 카드 배치/타이포 (원본 구조 기반) */
-    article {
-      width: calc(var(--article-width) * 1px);
-      height: 100%;
-      position: absolute;
-      font-family: monospace;
-      inset: 0 0 0 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      gap: 1rem;
-      padding-inline: calc(var(--base) * 0.5 - 9px);
-      padding-bottom: 1rem;
-      overflow: hidden;
-    }
-
-    /* 이미지가 제목/텍스트를 덮지 않도록 쌓임순서 지정 */
-    article img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; mask: radial-gradient(100% 100% at 100% 0, #fff, #0000); }
-    article h3, article p, article svg, article a { position: relative; z-index: 1; }
-
-    /* ✅ 접힘 상태: 책등처럼 "세로 제목"이 중앙에 항상 보임 */
-    li:not([data-active="true"]) article h3{
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      /* 세로 중앙정렬 */
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      letter-spacing: .08em;
-      opacity: .9;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transform: none; /* 회전 제거 */
-    }
-
-    /* 펼침 상태: 가로 제목 + 상단 좌측 정렬 */
-    li[data-active="true"] article h3{
-      writing-mode: initial;
-      text-orientation: initial;
-      position: absolute;
-      top: 1rem;
-      left: calc(var(--base) * 0.5);
-      transform-origin: 0 50%;
-      transform: none;
-      font-size: 1rem;
-      font-weight: 700;
-      opacity: 1;
-      text-transform: uppercase;
-    }
-
-    article svg { width: 18px; fill: none; }
-    article p {
-      font-size: 13px;
-      text-wrap: balance;
-      line-height: 1.25;
-      --opacity: 0.9;
-    }
-    article a {
-      position: absolute;
-      bottom: 1rem;
-      height: 18px;
-      line-height: 1;
-      color: inherit;
-    }
-    article a:is(:focus-visible, :hover) { outline: none; }
-    article a:is(:focus-visible, :hover) span { text-decoration: underline; text-underline-offset: 4px; }
-    article a span {
-      display: inline-block;
-      line-height: 18px;
-      translate: calc(var(--base) * 0.5);
-      font-weight: 500;
-    }
-
-    /* 컨테이너/그리드 설정 */
-    :root {
-      --gap: 8px;
-      --base: clamp(2rem, 8cqi, 80px);
-      --easing: linear(
-        0 0%, 0.1538 4.09%, 0.2926 8.29%, 0.4173 12.63%, 0.5282 17.12%,
-        0.6255 21.77%, 0.7099 26.61%, 0.782 31.67%, 0.8425 37%,
-        0.8887 42.23%, 0.9257 47.79%, 0.9543 53.78%, 0.9752 60.32%,
-        0.9883 67.11%, 0.9961 75%, 1 100%
-      );
-      --speed: 0.6s;
-    }
-
-    ul {
-      display: grid;
-      container-type: inline-size;
+    ul{
+      display:grid; container-type:inline-size;
       /* ✅ 초기엔 전부 접힘 */
-      grid-template-columns: repeat(7, 1fr);
-      gap: var(--gap);
-      list-style-type: none;
-      justify-content: center;
-      padding: 0;
-      height: clamp(300px, 40dvh, 474px);
-      margin: 0;
-      width: 820px;
-      max-width: calc(100% - 4rem);
-      transition: grid-template-columns var(--speed) var(--easing);
+      grid-template-columns:repeat(7,1fr);
+      gap:var(--gap); list-style:none; justify-content:center; padding:0;
+      height:clamp(300px,40dvh,474px); margin:0; width:820px; max-width:calc(100% - 4rem);
+      transition:grid-template-columns var(--speed) var(--easing);
     }
+    li{
+      background:#0f1b20; position:relative; overflow:hidden;
+      min-width:var(--base); border-radius:8px; border:1px solid rgba(255,255,255,.12);
+    }
+    article{
+      position:absolute; inset:0; width:calc(var(--article-width)*1px); height:100%;
+      display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
+      padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden; font-family:monospace;
+    }
+    /* 이미지가 텍스트를 가리지 않게 */
+    article img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; mask:radial-gradient(100% 100% at 100% 0,#fff,#0000)}
+    article :where(p,svg,a,.title){position:relative; z-index:1}
+    article svg{width:18px; fill:none}
+    article p{font-size:13px; text-wrap:balance; line-height:1.25}
 
-    li {
-      background: #0f1b20;
-      position: relative;
-      overflow: hidden;
-      min-width: var(--base);
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
+    /* ---------- 제목 전환(가로 → 세로) ---------- */
+    .title{
+      position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+      font-weight:700; letter-spacing:.02em;
+    }
+    .title .t{position:absolute; transition:opacity .45s var(--easing), transform .45s var(--easing)}
+    /* 기본: 가로 제목 보임, 세로 제목 숨김 */
+    li:not([data-active="true"]) .title .t-h{
+      opacity:1; transform:translateY(0)
+    }
+    li:not([data-active="true"]) .title .t-v{
+      opacity:0; transform:translateY(8px) scale(.98)
+    }
+    /* 활성(hover/click): 세로 제목이 좌측 상단 ‘책등’처럼 등장, 가로는 자연스럽게 페이드아웃 */
+    li[data-active="true"] .title .t-h{
+      opacity:0; transform:translateY(-6px) scale(.98)
+    }
+    li[data-active="true"] .title .t-v{
+      opacity:1; transform:translate(0,0)
+    }
+    /* 세로 제목 배치 */
+    .title .t-v{
+      writing-mode:vertical-rl; text-orientation:mixed;
+      left:calc(var(--base)*.35); top:1rem; transform-origin:top left;
+      font-weight:700; letter-spacing:.08em;
+      align-self:start; justify-self:start;
+    }
+    /* 가로 제목은 중앙에서 보여줌(접힘에서도 읽기 쉬움) */
+    .title .t-h{
+      writing-mode:initial; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
+      padding-inline:.5rem; font-size:.95rem;
+      /* 좁은 폭 대비 약간 축소 */
+      transform-origin:center; will-change:transform,opacity;
     }
   }
 
-  /* -------------------- BASE (fluid 유지, 눈금 제거) -------------------- */
-  @layer base {
-    :root {
-      --font-size-min: 16;
-      --font-size-max: 20;
-      --font-ratio-min: 1.2;
-      --font-ratio-max: 1.33;
-      --font-width-min: 375;
-      --font-width-max: 1500;
+  /* ================= BASE ================= */
+  @layer base{
+    :root{
+      --font-size-min:16; --font-size-max:20; --font-ratio-min:1.2; --font-ratio-max:1.33;
+      --font-width-min:375; --font-width-max:1500;
     }
-
-    html { color-scheme: dark; } /* 다크 고정 */
-
-    :where(.fluid) {
-      /* 미지원 브라우저는 위 clamp로 가드됨 */
+    html{color-scheme:dark}
+    :where(.fluid){
+      /* 일부 브라우저 pow 미지원 -> 위 clamp 폴백 사용 */
       --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
       --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
       --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
       --fluid-type: clamp(
-        (var(--fluid-min) / 16) * 1rem,
-        ((var(--fluid-min) / 16) * 1rem) -
-          (((var(--fluid-preferred) * var(--font-width-min)) / 16) * 1rem) +
-          (var(--fluid-preferred) * var(--variable-unit, 100vi)),
-        (var(--fluid-max) / 16) * 1rem
+        (var(--fluid-min)/16)*1rem,
+        ((var(--fluid-min)/16)*1rem) - (((var(--fluid-preferred)*var(--font-width-min))/16)*1rem) + (var(--fluid-preferred)*var(--variable-unit,100vi)),
+        (var(--fluid-max)/16)*1rem
       );
-      font-size: var(--fluid-type);
+      font-size:var(--fluid-type);
     }
-
-    *, *:after, *:before { box-sizing: border-box; }
-
-    body {
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      font-family: 'SF Pro Text','SF Pro Icons','AOS Icons','Helvetica Neue',
-        Helvetica, Arial, sans-serif, system-ui;
-    }
-
-    /* 눈금(격자) 배경 완전 제거 (body::before 사용 안 함) */
-    .bear-link { display:none !important; }
+    *,*:before,*:after{box-sizing:border-box}
+    body{display:grid; place-items:center; min-height:100vh; font-family:'SF Pro Text','SF Pro Icons','AOS Icons','Helvetica Neue',Helvetica,Arial,sans-serif,system-ui}
+    /* 눈금/곰 제거 */
+    .bear-link{display:none !important}
   }
 
-  /* 배경 캔버스 레이어 */
-  #bg-dots{
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-  }
+  /* 배경 캔버스 */
+  #bg-dots{position:fixed; inset:0; z-index:-1; pointer-events:none}
   </style>
 </head>
 <body>
   <!-- 움직이는 점 배경 -->
   <canvas id="bg-dots" aria-hidden="true"></canvas>
 
-  <!-- 상단 제목/설명 -->
+  <!-- 상단 제목(첫 방문 1회 타이핑) -->
   <h1 class="fluid">the craft of ui</h1>
   <p>
     Unlock the art and science of interface development. This isn’t just about
@@ -252,103 +146,88 @@
     tools, understanding the nuances, and shaping experiences with intention.
   </p>
 
-  <!-- ✅ 초기엔 모두 접힘 (data-active 없음) -->
+  <!-- ✅ 초기 모두 접힘 (hover/click 시에만 펼침) -->
   <ul>
     <li>
       <article>
-        <h3>The Craft</h3>
-        <p>
-          Gain the confidence to build anything you envision, transforming
-          motion, interaction, and design principles into second nature.
-        </p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 3h12l4 6-10 13L2 9Z" />
-          <path d="M11 3 8 9l4 13 4-13-3-6" />
-          <path d="M2 9h20" />
-        </svg>
+        <h3 class="title" aria-label="The Craft">
+          <span class="t t-h">The Craft</span>
+          <span class="t t-v" aria-hidden="true">The Craft</span>
+        </h3>
+        <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=12" alt="" />
       </article>
     </li>
     <li>
       <article>
-        <h3>CSS Animation</h3>
-        <p>Master CSS animations from first @keyframes to advanced craft.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="18" height="18" x="3" y="3" rx="2" />
-          <path d="M7 3v18" /><path d="M3 7.5h4" /><path d="M3 12h18" />
-          <path d="M3 16.5h4" /><path d="M17 3v18" /><path d="M17 7.5h4" /><path d="M17 16.5h4" />
-        </svg>
+        <h3 class="title" aria-label="CSS Animation">
+          <span class="t t-h">CSS Animation</span>
+          <span class="t t-v" aria-hidden="true">CSS Animation</span>
+        </h3>
+        <p>Master CSS animations from your first @keyframes to the tricks nobody teaches.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=17" alt="" />
       </article>
     </li>
     <li>
       <article>
-        <h3>SVG Filters</h3>
-        <p>Use noise & filters to create flames, stickers, and more.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
+        <h3 class="title" aria-label="SVG Filters">
+          <span class="t t-h">SVG Filters</span>
+          <span class="t t-v" aria-hidden="true">SVG Filters</span>
+        </h3>
+        <p>Use noise and filters to craft flames, stickers, and more — shaders on a budget.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=19" alt="" />
       </article>
     </li>
     <li>
       <article>
-        <h3>Scroll Animation</h3>
-        <p>Guide users with tasteful, performance-friendly scroll effects.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 17V5a2 2 0 0 0-2-2H4" />
-          <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
-        </svg>
+        <h3 class="title" aria-label="Scroll Animation">
+          <span class="t t-h">Scroll Animation</span>
+          <span class="t t-v" aria-hidden="true">Scroll Animation</span>
+        </h3>
+        <p>Guide users with tasteful, performance-first scroll effects.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=42" alt="" />
       </article>
     </li>
     <li>
       <article>
-        <h3>Taming Canvas</h3>
-        <p>Tame the pixel playground with performance-first patterns.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-          <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-          <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-          <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-        </svg>
+        <h3 class="title" aria-label="Taming Canvas">
+          <span class="t t-h">Taming Canvas</span>
+          <span class="t t-v" aria-hidden="true">Taming Canvas</span>
+        </h3>
+        <p>Tame the pixel playground with performance-driven patterns.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=128" alt="" />
       </article>
     </li>
     <li>
       <article>
-        <h3>Layout Tricks</h3>
+        <h3 class="title" aria-label="Layout Tricks">
+          <span class="t t-h">Layout Tricks</span>
+          <span class="t t-v" aria-hidden="true">Layout Tricks</span>
+        </h3>
         <p>Sometimes a rethink beats adding another library.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/>
-          <path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=56" alt="" />
       </article>
     </li>
     <li>
       <article>
-        <h3>Mastering Time</h3>
-        <p>Time is more than easing—use it as a core design material.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 22h14" /><path d="M5 2h14" />
-          <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
-          <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
-        </svg>
+        <h3 class="title" aria-label="Mastering Time">
+          <span class="t t-h">Mastering Time</span>
+          <span class="t t-v" aria-hidden="true">Mastering Time</span>
+        </h3>
+        <p>Time isn’t just easing — treat it as a core design material.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=39" alt="" />
       </article>
@@ -377,19 +256,15 @@
       activate([...items].indexOf(li));
     }
 
-    // hover + 클릭 + 키보드 포커스
     list.addEventListener('pointermove', setFromEvent, {passive:true});
     list.addEventListener('click', setFromEvent);
     list.addEventListener('focusin', setFromEvent, true);
-
-    // 영역 벗어나면 다시 접힘
     list.addEventListener('pointerleave', collapse);
     list.addEventListener('focusout', (e)=> { if (!list.contains(e.relatedTarget)) collapse(); });
 
-    // 처음 로드 시 확실히 접힘
     collapse();
 
-    // 너가 쓰던 width 동기화
+    // article width 동기화
     function resync(){
       const w = Math.max(...[...items].map(i=> i.offsetWidth || 0), 280);
       list.style.setProperty('--article-width', w);
@@ -433,13 +308,13 @@
 
     let W=0, H=0, DPR=1, pts=[], last=0, raf=0;
     const OPT = {
-      density: 0.00007, /* 화면 면적당 점 수 */
-      min: 70, max: 160,        /* 점 개수 */
-      r: [0.7, 2.4],            /* 반지름(px) */
-      v: [3, 12],               /* 속도(px/s) */
-      a: [0.05, 0.18],          /* 불투명도 */
-      hz:[.10, .25],            /* 맥동 주파수 */
-      blur: 6                   /* 그림자 블러 */
+      density: 0.00007,
+      min: 70, max: 160,
+      r: [0.7, 2.4],
+      v: [3, 12],
+      a: [0.05, 0.18],
+      hz: [.10, .25],
+      blur: 6
     };
     const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     const rnd = (a,b)=> a + Math.random()*(b-a);
@@ -489,9 +364,8 @@
       raf = requestAnimationFrame(frame);
     }
     function start(){
-      cancelAnimationFrame(raf);
-      resize();
-      if (reduce) { ctx.clearRect(0,0,W,H); return; }
+      cancelAnimationFrame(raf); resize();
+      if (reduce){ ctx.clearRect(0,0,W,H); return; }
       raf = requestAnimationFrame(frame);
     }
     addEventListener('resize', resize);
