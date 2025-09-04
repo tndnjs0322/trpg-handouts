@@ -1,80 +1,21 @@
-// 클릭으로만 확장; 호버 시엔 세로 제목만 보이는 모드
-document.addEventListener('DOMContentLoaded', () => {
-  /* ===== 1) 중앙 타이틀 타자효과: 1회 → 잠깐 유지 → 커서 멈춤 → 페이드아웃 ===== */
-  const titleEl = document.getElementById('siteTitle');
-  const titleText = 'the craft of ui';
-  typeOnce(titleEl, titleText, { speed: 75, stay: 1200, fadeAfter: 1800 });
+/**
+ * 커서(타자기 느낌) 깜박임을 일정 시간 뒤 자동 제거
+ * - .type-once 요소를 찾아, 2.5초 뒤 부모 제목 영역에 .caret-hide 클래스를 부여
+ * - 카드가 hover로 열릴 때만 내용이 보이므로, 커서는 시선 유도만 하고 사라짐
+ */
+(function () {
+  const TITLES = document.querySelectorAll('.type-once');
+  const HIDE_AFTER_MS = 2500;
 
-  function typeOnce(el, text, { speed = 80, stay = 1000, fadeAfter = 1500 } = {}) {
-    el.textContent = '';
-    let i = 0;
-    const itv = setInterval(() => {
-      el.textContent += text[i++];
-      if (i >= text.length) {
-        clearInterval(itv);
-        setTimeout(() => {
-          el.classList.add('no-caret');     // 커서 멈춤
-          setTimeout(() => el.classList.add('fade-out'), fadeAfter); // 타이틀 페이드아웃
-        }, stay);
-      }
-    }, speed);
-  }
-
-  /* ===== 2) 카드: 클릭/키보드로만 활성화 ===== */
-  const cards = document.querySelector('.cards');
-  const items = Array.from(cards.querySelectorAll(':scope > li'));
-  const mmMobile = window.matchMedia('(max-width: 720px)');
-
-  function activate(index) {
-    items.forEach(li => {
-      li.removeAttribute('data-active');
-      li.setAttribute('aria-expanded', 'false');
-    });
-    if (index == null || mmMobile.matches) {
-      cards.classList.remove('is-expanded');
-      return;
+  TITLES.forEach((el) => {
+    // 최초 한 번만 처리
+    if (el.dataset.typeonce === "true") {
+      setTimeout(() => {
+        const header = el.closest('.handout__title');
+        if (header) header.classList.add('caret-hide');
+      }, HIDE_AFTER_MS);
+      // 중복 방지
+      el.dataset.typeonce = "done";
     }
-    items[index].setAttribute('data-active', 'true');
-    items[index].setAttribute('aria-expanded', 'true');
-    cards.classList.add('is-expanded');
-  }
-
-  // 클릭으로 토글
-  items.forEach((li, i) => {
-    li.setAttribute('tabindex', '0');
-    li.addEventListener('click', e => {
-      // 확장 상태에서 CTA를 누르면 링크 동작만 하도록 버블 차단
-      if (e.target.closest('.cta')) return;
-
-      if (li.hasAttribute('data-active')) activate(null);
-      else activate(i);
-    });
-
-    // 키보드 접근성: Enter/Space 토글, Esc 닫기, 좌우 이동
-    li.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        if (li.hasAttribute('data-active')) activate(null);
-        else activate(i);
-      } else if (e.key === 'Escape') {
-        activate(null);
-      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        const dir = e.key === 'ArrowRight' ? 1 : -1;
-        const next = (i + dir + items.length) % items.length;
-        items[next].focus();
-      }
-    });
   });
-
-  // 바깥 클릭 시 닫기
-  document.addEventListener('click', e => {
-    if (!cards.contains(e.target)) activate(null);
-  });
-
-  // 화면 크기 바뀌면 초기화(모바일 전환 등)
-  mmMobile.addEventListener('change', () => activate(null));
-
-  // 첫 진입은 모두 접힘
-  activate(null);
-});
+})();
