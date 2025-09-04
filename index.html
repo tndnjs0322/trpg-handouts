@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
 <style>
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');font-weight:600;font-style:normal;font-display:swap}
@@ -32,6 +33,10 @@
   --spine-r: 12px;
   --spine-gloss: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 42%);
   --spine-shadow: linear-gradient(90deg, rgba(0,0,0,.26), rgba(0,0,0,0) 50%);
+
+  /* 접힘 때 스파인 아이콘 사이즈/여백 */
+  --spine-icon: clamp(14px, calc(var(--spine-w)*0.52), 26px);
+  --spine-pad: clamp(8px, calc(var(--spine-w)*0.22), 12px);
 
   /* 이미지 톤 */
   --tint: hsla(198, 38%, 48%, .10);
@@ -125,23 +130,18 @@ article img{
 
 /* 텍스트 */
 article p{ margin:0; font-size:13px; line-height:1.28; text-wrap:balance; position:relative; z-index:2; opacity:0; transition:opacity calc(var(--speed)*1.05) var(--easing) }
-article svg{ width:18px; height:18px; fill:none; position:relative; z-index:2 }
 
-/* 스파인 위 아이콘 크기 기준 */
-:root{
-  --spine-icon: clamp(14px, calc(var(--spine-w)*0.52), 26px);
-}
-
-/* 기본 아이콘 위치(펼쳤을 때는 카드 안쪽 좌하단) */
+/* 아이콘: 기본(펼침 시) = 카드 안쪽 좌하단 */
 article svg{
   position:absolute;
   left: clamp(12px, calc(var(--base)*.5), 28px);
   bottom: 12px;
   width: 18px;
   height: 18px;
+  fill:none;
   z-index: 2;
   opacity: .85;
-  pointer-events: none; /* 호버/클릭 가로막지 않게 */
+  pointer-events: none; /* 호버/클릭 방해 금지 */
   transition:
     transform var(--speed) var(--easing),
     opacity var(--speed) var(--easing),
@@ -149,23 +149,24 @@ article svg{
     bottom var(--speed) var(--easing),
     width var(--speed) var(--easing),
     height var(--speed) var(--easing),
-    z-index var(--speed) var(--easing);
+    z-index var(--speed) var(--easing),
+    filter var(--speed) var(--easing);
 }
 
-/* 접힘 상태: 아이콘을 책등(스파인) 중앙에 고정, 위로 올려 보여주기 */
+/* 접힘 상태: 스파인 아래쪽에 아이콘 보이기(가로는 스파인 중앙) */
 li:not([data-active="true"]) article svg{
   left: 0;
-  bottom: 50%;
-  transform: translateY(50%); /* bottom:50% 기준으로 아래서 위로 절반 밀어 가운데 정렬 */
+  bottom: var(--spine-pad);
+  transform: none;
   width: var(--spine-icon);
   height: var(--spine-icon);
   opacity: 1;
-  z-index: 4;                 /* 스파인(over z=3)보다 위에 */
-  margin-left: calc((var(--spine-w) - var(--spine-icon)) / 2);
+  z-index: 4; /* 스파인(::after, z=3) 위로 */
+  margin-left: calc((var(--spine-w) - var(--spine-icon)) / 2); /* 가로 중앙 정렬 */
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
 }
 
-/* 펼친 상태: 원래 자리로 */
+/* 펼치면 카드 안쪽으로 복귀 */
 li[data-active="true"] article svg{
   left: clamp(12px, calc(var(--base)*.5), 28px);
   bottom: 12px;
@@ -176,8 +177,8 @@ li[data-active="true"] article svg{
   z-index: 2;
   filter: none;
 }
-  
-/* 접힘/펼침 상태 */
+
+/* 접힘/펼침 상태에 따른 이미지/텍스트/스크림 */
 li:not([data-active="true"]) article img{ opacity:0 }
 li:not([data-active="true"]) .scrim{ opacity:0 }
 li:not([data-active="true"]) article::after{ opacity:1 }
@@ -265,7 +266,7 @@ h1.fluid.glitch::after{
 /* 배경 캔버스 */
 #bg-dots{position:fixed; inset:0; z-index:-1; pointer-events:none}
 
-/* ===== Glitch Language (0.1%) 보조 시각효과 ===== */
+/* ===== Glitch Language (0.1%) 보조 시각효과(전체) ===== */
 body.glitch-lang {
   --glitch-shadow: 1px;
 }
@@ -277,6 +278,19 @@ body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
 }
 @media (prefers-reduced-motion: reduce) {
   body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
+    text-shadow: .5px 0 #f0f, -.5px 0 #0ff;
+  }
+}
+
+/* ===== 카드 로컬 글리치(제목/내용 전용) ===== */
+article.glitch-lang :where(h3, p, .title .t-h, .title .t-v, span){
+  position: relative;
+  text-shadow:
+    var(--glitch-shadow, 1px) 0 #f0f,
+    calc(var(--glitch-shadow, 1px) * -1) 0 #0ff;
+}
+@media (prefers-reduced-motion: reduce) {
+  article.glitch-lang :where(h3, p, .title .t-h, .title .t-v, span){
     text-shadow: .5px 0 #f0f, -.5px 0 #0ff;
   }
 }
@@ -442,7 +456,7 @@ body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
   });
 })();
 
-/* 상단 H1: 첫 방문 1회 타이핑 + 쉬ーン */
+/* 상단 H1: 첫 방문 1회 타이핑 + 쉬ーン + 가끔 글리치 */
 (() => {
   const h1 = document.querySelector('h1.fluid');
   if (!h1) return;
@@ -540,7 +554,7 @@ body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
   start();
 })();
 
-/* ===== 0.1% 확률 “글리치 언어” 이스터에그 =====
+/* ===== 0.1% 확률 “글리치 언어” 이스터에그(전체 본문) =====
    - 페이지 로드 시 0.001 (=0.1%) 확률로 발동
    - 텍스트 일부를 글리치풍 유니코드로 치환
    - 6초 뒤 자동 복구, 세션당 1회
@@ -599,6 +613,81 @@ body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
     for (const rec of replaced) if (rec.node.parentNode) rec.node.nodeValue = rec.text;
     document.body.classList.remove('glitch-lang');
   }, DURATION);
+})();
+
+/* ===== 카드 개별 글리치 언어 (1%) =====
+   - 각 카드(article)에서 pointerenter/click 시 1% 확률 발동
+   - 라틴/숫자는 대체 유니코드로 치환, 한글은 가독성 위해 글자 유지(채널 분리 효과만)
+   - 1.8초 뒤 자동 복구
+   - 카드당 쿨다운(3.5초) 적용
+*/
+(() => {
+  const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  if (reduce) return;
+
+  const ALT = {
+    A:'Λ',B:'ß',C:'ᄃ',D:'Ɗ',E:'Ξ',F:'Ғ',G:'Ǥ',H:'Ħ',I:'ɪ',J:'ʆ',
+    K:'Ҝ',L:'Ꮮ',M:'ᴍ',N:'И',O:'Ø',P:'Ƥ',Q:'Ǫ',R:'Я',S:'Ƨ',T:'Ŧ',
+    U:'Џ',V:'Ṽ',W:'Ш',X:'Ӿ',Y:'¥',Z:'Ẕ',
+    a:'ʌ',b:'ь',c:'ς',d:'ɖ',e:'ɛ',f:'ғ',g:'ɠ',h:'ђ',i:'ɨ',j:'ʝ',
+    k:'ҡ',l:'l',m:'ɯ',n:'п',o:'ø',p:'ρ',q:'φ',r:'я',s:'ᔓ',t:'ŧ',
+    u:'ս',v:'√',w:'ω',x:'ж',y:'у',z:'ž',
+    '0':'𝟘','1':'𝟙','2':'𝟚','3':'𝟛','4':'𝟜','5':'𝟝','6':'𝟞','7':'𝟟','8':'𝟠','9':'𝟡'
+  };
+  const COMB = ['\u0336','\u033f','\u0348']; // 얇은 취소선/위첨 등
+  const maybeComb = (ch) => (Math.random() < 0.06 ? ch + COMB[(Math.random()*COMB.length)|0] : ch);
+  const glitchify = (str) => str.replace(/./g, ch => ALT[ch] ? maybeComb(ALT[ch]) : ch);
+
+  const IGNORE_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','IFRAME','SVG','CANVAS']);
+
+  const glitchArticle = (article, DUR=1800) => {
+    const replaced = [];
+    const walker = document.createTreeWalker(
+      article,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node){
+          const el = node.parentElement;
+          if (!el) return NodeFilter.FILTER_REJECT;
+          if (IGNORE_TAGS.has(el.tagName)) return NodeFilter.FILTER_REJECT;
+          if (el.closest('svg,[aria-hidden="true"],[hidden]')) return NodeFilter.FILTER_REJECT;
+          // 제목(.title 내부) 또는 본문 <p>만
+          if (!el.closest('.title, p')) return NodeFilter.FILTER_REJECT;
+          const v = node.nodeValue;
+          if (!v || !v.trim()) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+    let n;
+    while ((n = walker.nextNode())) {
+      const txt = n.nodeValue;
+      replaced.push({ node:n, text:txt });
+      n.nodeValue = glitchify(txt); // 라틴/숫자 치환
+    }
+    article.classList.add('glitch-lang'); // 채널 분리 비주얼
+    setTimeout(() => {
+      for (const rec of replaced) if (rec.node.parentNode) rec.node.nodeValue = rec.text;
+      article.classList.remove('glitch-lang');
+    }, DUR);
+  };
+
+  const PROB = 0.01;       // 1%
+  const COOLDOWN = 3500;   // ms
+  const arts = document.querySelectorAll('ul li article');
+  arts.forEach((art) => {
+    let cooling = false;
+    const tryGlitch = () => {
+      if (cooling) return;
+      if (Math.random() < PROB) {
+        cooling = true;
+        glitchArticle(art);
+        setTimeout(() => (cooling = false), COOLDOWN);
+      }
+    };
+    art.addEventListener('pointerenter', tryGlitch, { passive: true });
+    art.addEventListener('click', tryGlitch);
+  });
 })();
 </script>
 </body>
