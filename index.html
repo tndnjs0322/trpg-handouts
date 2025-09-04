@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hover Disclosures — glass + moving dots + typed title once</title>
+  <title>Hover Disclosures — glass + moving dots + one-time typing + gradient image</title>
   <link rel="stylesheet" href="https://unpkg.com/normalize.css" />
   <style>
     :root{
@@ -19,7 +19,8 @@
       padding:2rem 1rem 3rem; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
       background:var(--bg); color:#e6eef2; position:relative;
     }
-    /* 은은한 격자 */
+
+    /* 은은한 격자 배경 */
     body::before{
       --size:45px; --line:color-mix(in hsl, canvasText, transparent 78%);
       content:""; position:fixed; inset:0; pointer-events:none; z-index:-2;
@@ -28,19 +29,20 @@
         linear-gradient(var(--line) 1px,transparent 1px var(--size)) 50% 50%/var(--size) var(--size);
       mask:linear-gradient(-20deg,transparent 50%,white);
     }
+
     /* 움직이는 점 레이어 */
     #bg-dots{position:fixed; inset:0; z-index:-1; pointer-events:none; display:block;}
     @media (prefers-reduced-motion:reduce){#bg-dots{display:none}}
 
-    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 고정 */
+    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 상시 표시 */
     h1{
       margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px);
       text-transform:lowercase; opacity:0; transition:opacity .4s ease;
     }
-    h1.show{ opacity:1; }
+    h1.show{opacity:1;}
     .desc{margin:0; opacity:.8; width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; line-height:1.5;}
 
-    /* ===== 카드 ===== */
+    /* ===== 카드 레이아웃 ===== */
     ul#cards{
       display:grid; grid-template-columns:repeat(7,1fr); gap:var(--gap);
       list-style:none; padding:0; margin:0; width:min(1100px,calc(100% - 2rem));
@@ -58,14 +60,18 @@
       width:calc(var(--article-width,320) * 1px); height:100%; position:absolute; inset:0;
       display:flex; flex-direction:column; justify-content:flex-end; gap:1rem; padding:1rem; overflow:hidden;
     }
-    /* 이미지 자동 맞춤 */
+
+    /* 이미지: 카드에 꽉 채우고 오른쪽으로 은은한 투명 그라데이션 페이드 */
     article img{
       position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;
-      opacity:0; filter:grayscale(1) brightness(1.6); scale:1.08;
-      transition:opacity calc(var(--speed)*1.2) var(--easing), filter calc(var(--speed)*1.2) var(--easing), scale calc(var(--speed)*1.2) var(--easing);
-      mask:radial-gradient(100% 100% at 100% 0,#fff,#0000);
+      opacity:0; filter:grayscale(1) brightness(1.6);
+      transition:
+        opacity calc(var(--speed)*1.2) var(--easing),
+        filter  calc(var(--speed)*1.2) var(--easing);
+      -webkit-mask-image: linear-gradient(to right, #fff 55%, rgba(255,255,255,0) 88%);
+              mask-image: linear-gradient(to right, #fff 55%, rgba(255,255,255,0) 88%);
     }
-    li[data-active="true"] article img{ opacity:1; filter:grayscale(0) brightness(1); scale:1; transition-delay:.1s; }
+    li[data-active="true"] article img{ opacity:1; filter:grayscale(0) brightness(1); }
 
     /* 책등(세로) 제목 — 접힘에만 보임 */
     .title-spine{
@@ -74,38 +80,58 @@
       color:rgba(230,238,242,.92); text-shadow:0 1px 0 rgba(0,0,0,.4); opacity:.9; transition:opacity .25s var(--easing);
       pointer-events:none;
     }
-    li[data-active="true"] .title-spine{ opacity:0; }
+    li[data-active="true"] .title-spine{opacity:0;} /* 그냥 사라지기 */
 
     /* 가로 제목/내용 — 타이핑(최초 1회), 이후엔 페이드 */
     .title-main,.body-main{
       margin:0; opacity:0; visibility:hidden; position:relative; color:#eaf3f6;
       transition:opacity .25s var(--easing), visibility .25s var(--easing);
+      z-index:2; /* 이미지 위 */
     }
     .title-main{ font-weight:800; font-size:1.05rem; letter-spacing:.02em; }
     .body-main{
       font-size:13.5px; line-height:1.45; text-wrap:balance; padding:.75rem .85rem;
       background:var(--panel-bg); border:1px solid rgba(255,255,255,.06); border-radius:10px; backdrop-filter:blur(4px);
     }
+    /* 활성 카드에서 카피는 오른쪽 컬럼으로 이동 */
+    li[data-active="true"] article{
+      --copy-left: clamp(48%, 520px, 62%); /* 오른쪽 영역 시작점 */
+    }
+    li[data-active="true"] .title-main,
+    li[data-active="true"] .body-main,
+    li[data-active="true"] .cta{
+      margin-left: var(--copy-left);
+      max-width: calc(100% - var(--copy-left) - 1rem);
+    }
+    /* 본문 길 때 은은 스크롤 (스크롤바 숨김) */
+    li[data-active="true"] .body-main{
+      max-height: min(44dvh, calc(100% - 6.5rem));
+      overflow: auto;
+      scrollbar-width: none; -ms-overflow-style: none;
+    }
+    li[data-active="true"] .body-main::-webkit-scrollbar{ display:none; }
 
-    /* 커서(타자기) 공용 */
+    /* 타이핑 커서 */
     .typing::after{
       content:""; position:absolute; display:inline-block; width:1ch; height:1.15em;
       background:var(--caret); margin-left:2px; translate:0 .1em; animation:caret 800ms steps(1,end) infinite;
     }
     @keyframes caret{50%{opacity:0}}
 
-    .cta{position:absolute; bottom:.9rem; left:1rem; color:inherit; text-decoration:none; height:18px; line-height:18px; opacity:0; transition:opacity .35s var(--easing) .2s;}
+    /* CTA */
+    .cta{position:absolute; bottom:.9rem; left:1rem; color:inherit; text-decoration:none; height:18px; line-height:18px; opacity:0; transition:opacity .35s var(--easing) .2s; z-index:2;}
     .cta span{ text-underline-offset:4px; }
     .cta:is(:hover,:focus-visible) span{ text-decoration:underline; }
 
+    /* 포커스 링 */
     ul#cards>li:focus-visible{ outline:3px solid var(--ring); outline-offset:2px; }
 
     /* JS 미작동 fallback */
-    ul#cards:not(.js-ready) li:hover article img{opacity:1; filter:grayscale(0) brightness(1); scale:1;}
+    ul#cards:not(.js-ready) li:hover article img{opacity:1; filter:grayscale(0) brightness(1);}
     ul#cards:not(.js-ready) li:hover .title-spine{opacity:0;}
     ul#cards:not(.js-ready) li:hover .title-main, ul#cards:not(.js-ready) li:hover .body-main{opacity:1; visibility:visible;}
 
-    /* 가끔 글리치 */
+    /* 가끔 글리치 (제목) */
     .glitch{ animation:glitch 380ms steps(2,end) 2; }
     @keyframes glitch{
       0%{ transform:translate(0); text-shadow:none; }
@@ -123,7 +149,8 @@
 
   <h1 data-title="the craft of ui">the craft of ui</h1>
   <p class="desc">
-    Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation — it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.
+    Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation —
+    it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.
   </p>
 
   <ul id="cards">
@@ -132,54 +159,60 @@
       <h3 class="title-main" data-text="The Craft"></h3>
       <p  class="body-main"  data-text="Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=12" alt="">
+      <img src="https://picsum.photos/1280/800?random=12" alt="">
     </article></li>
+
     <li><article>
       <h3 class="title-spine">CSS Animation</h3>
       <h3 class="title-main" data-text="CSS Animation"></h3>
       <p class="body-main" data-text="Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=17" alt="">
+      <img src="https://picsum.photos/1280/800?random=17" alt="">
     </article></li>
+
     <li><article>
       <h3 class="title-spine">SVG Filters</h3>
       <h3 class="title-main" data-text="SVG Filters"></h3>
       <p class="body-main" data-text="Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=19" alt="">
+      <img src="https://picsum.photos/1280/800?random=19" alt="">
     </article></li>
+
     <li><article>
       <h3 class="title-spine">Scroll Animation</h3>
       <h3 class="title-main" data-text="Scroll Animation"></h3>
       <p class="body-main" data-text="Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=42" alt="">
+      <img src="https://picsum.photos/1280/800?random=42" alt="">
     </article></li>
+
     <li><article>
       <h3 class="title-spine">Taming Canvas</h3>
       <h3 class="title-main" data-text="Taming Canvas"></h3>
       <p class="body-main" data-text="Grasp how to tame the pixel playground and when to do so. Whilst building with 'Performance Driven Development'."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=128" alt="">
+      <img src="https://picsum.photos/1280/800?random=128" alt="">
     </article></li>
+
     <li><article>
       <h3 class="title-spine">Layout Tricks</h3>
       <h3 class="title-main" data-text="Layout Tricks"></h3>
       <p class="body-main" data-text="Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=56" alt="">
+      <img src="https://picsum.photos/1280/800?random=56" alt="">
     </article></li>
+
     <li><article>
       <h3 class="title-spine">Mastering Time</h3>
       <h3 class="title-main" data-text="Mastering Time"></h3>
       <p class="body-main" data-text="It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first."></p>
       <a href="#" class="cta"><span>Watch now</span></a>
-      <img src="https://picsum.photos/720/720?random=39" alt="">
+      <img src="https://picsum.photos/1280/800?random=39" alt="">
     </article></li>
   </ul>
 
   <script>
-    /* ===== 메인 제목: 첫 방문만 타이핑, 이후엔 고정 표시 ===== */
+    /* ===== 메인 제목: 첫 방문만 타이핑, 이후엔 상시 표시 ===== */
     (function(){
       const h1 = document.querySelector('h1');
       if (!h1) return;
@@ -188,25 +221,22 @@
       const seen = sessionStorage.getItem('__intro_title_typed__') === '1';
 
       function show(){ h1.classList.add('show'); }
-      function typeOnce(speed=36){
+      function typeOnce(speed=38){
         h1.textContent = ''; h1.classList.add('typing'); show();
         const chars = [...text]; let i = 0;
         const id = setInterval(()=>{
           if (i >= chars.length){
             clearInterval(id);
             h1.classList.remove('typing');
-            sessionStorage.setItem('__intro_title_typed__','1'); // 이후엔 타이핑 안 함
+            sessionStorage.setItem('__intro_title_typed__','1');
             return;
           }
           h1.append(chars[i++]);
         }, speed);
       }
 
-      if (reduce || seen){
-        h1.textContent = text; show();
-      }else{
-        typeOnce(38); // 타이핑 속도(조절 가능)
-      }
+      if (reduce || seen){ h1.textContent = text; show(); }
+      else { typeOnce(); }
     })();
 
     /* ===== 카드 인터랙션 + "한 번만" 타이핑 ===== */
@@ -238,14 +268,21 @@
         });
         list.style.gridTemplateColumns=`repeat(${items.length}, 1fr)`;
       }
+
       function activateIndex(idx){
         items.forEach((el,i)=>el.dataset.active=(i===idx).toString());
         list.style.gridTemplateColumns = items.map((_,i)=>i===idx?'10fr':'1fr').join(' ');
         const li=items[idx], t=li.querySelector('.title-main'), b=li.querySelector('.body-main'), c=li.querySelector('.cta');
         const tt=t.dataset.text||t.textContent||"", tb=b.dataset.text||b.textContent||"";
         if (t.dataset.typed!=='true' && Math.random()<0.01){ t.classList.add('glitch'); t.addEventListener('animationend',()=>t.classList.remove('glitch'),{once:true}); }
-        if (t.dataset.typed==='true'){ t.textContent=tt; show(t); if (b.dataset.typed==='true'){ b.textContent=tb; show(b); if(c) c.style.opacity=1; } else { typeIn(b,tb,12,()=>{ if(c) c.style.opacity=1; }); } }
-        else { typeIn(t,tt,22,()=>{ typeIn(b,tb,12,()=>{ if(c) c.style.opacity=1; }); }); }
+
+        if (t.dataset.typed==='true'){
+          t.textContent=tt; show(t);
+          if (b.dataset.typed==='true'){ b.textContent=tb; show(b); if(c) c.style.opacity=1; }
+          else { typeIn(b,tb,12,()=>{ if(c) c.style.opacity=1; }); }
+        } else {
+          typeIn(t,tt,22,()=>{ typeIn(b,tb,12,()=>{ if(c) c.style.opacity=1; }); });
+        }
       }
 
       const handler=e=>{
@@ -253,6 +290,7 @@
         const idx=items.indexOf(li); if(idx<0){collapse(); return;}
         activateIndex(idx);
       };
+
       ['pointermove','mouseover','click','focusin','touchstart'].forEach(evt=>list.addEventListener(evt,handler,{passive:true}));
       ['pointerleave','mouseleave'].forEach(evt=>list.addEventListener(evt,collapse));
       list.addEventListener('focusout',e=>{ if(!list.contains(e.relatedTarget)) collapse(); });
@@ -268,22 +306,42 @@
       const ctx=canvas.getContext('2d',{alpha:true}); let W=0,H=0,DPR=1,parts=[],last=0,rafId=0;
       const OPT={density:0.00007,minCount:70,maxCount:160,radius:[0.7,2.4],speed:[3,12],baseAlpha:[0.05,0.18],twinkleHz:[0.10,0.25],shadowBlur:6};
       const reduce=matchMedia?.('(prefers-reduced-motion: reduce)').matches??false; const rand=(a,b)=>a+Math.random()*(b-a);
+
       function resize(){DPR=Math.min(2,devicePixelRatio||1); W=canvas.width=Math.floor(innerWidth*DPR); H=canvas.height=Math.floor(innerHeight*DPR); canvas.style.width=innerWidth+'px'; canvas.style.height=innerHeight+'px'; spawn();}
-      function spawn(){const area=innerWidth*innerHeight; const n=Math.max(OPT.minCount,Math.min(OPT.maxCount,Math.round(area*OPT.density)));
+      function spawn(){
+        const area=innerWidth*innerHeight;
+        const n=Math.max(OPT.minCount,Math.min(OPT.maxCount,Math.round(area*OPT.density)));
         parts=Array.from({length:n},()=>{const rc=rand(OPT.radius[0],OPT.radius[1]), sp=rand(OPT.speed[0],OPT.speed[1]), a=Math.random()*Math.PI*2;
           return {x:Math.random()*W,y:Math.random()*H,r:rc*DPR,vx:Math.cos(a)*sp*DPR,vy:Math.sin(a)*sp*DPR,h:190+Math.random()*20,s:22+Math.random()*20,l:75+Math.random()*10,a:rand(OPT.baseAlpha[0],OPT.baseAlpha[1]),ph:Math.random()*Math.PI*2,f:rand(OPT.twinkleHz[0],OPT.twinkleHz[1])*2*Math.PI};});
       }
-      function frame(now){const dt=Math.min(0.05,(now-(last||now))/1000); last=now; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
-        for(const p of parts){p.ph+=p.f*dt; const tw=0.5+0.5*Math.sin(p.ph); const alpha=p.a*(0.7+0.3*tw);
-          ctx.shadowColor=`hsla(${p.h} ${p.s}% ${p.l}% / ${alpha*1.3})`; ctx.shadowBlur=OPT.shadowBlur*DPR; ctx.fillStyle=`hsla(${p.h} ${p.s}% ${p.l}% / ${alpha})`;
+      function frame(now){
+        const dt=Math.min(0.05,(now-(last||now))/1000); last=now; ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
+        for(const p of parts){
+          p.ph+=p.f*dt; const tw=0.5+0.5*Math.sin(p.ph); const alpha=p.a*(0.7+0.3*tw);
+          ctx.shadowColor=`hsla(${p.h} ${p.s}% ${p.l}% / ${alpha*1.3})`; ctx.shadowBlur=OPT.shadowBlur*DPR;
+          ctx.fillStyle=`hsla(${p.h} ${p.s}% ${p.l}% / ${alpha})`;
           ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-          p.x+=p.vx*dt; p.y+=p.vy*dt; if(p.x<-5)p.x=W+5; else if(p.x>W+5)p.x=-5; if(p.y<-5)p.y=H+5; else if(p.y>H+5)p.y=-5;}
+          p.x+=p.vx*dt; p.y+=p.vy*dt;
+          if(p.x<-5)p.x=W+5; else if(p.x>W+5)p.x=-5;
+          if(p.y<-5)p.y=H+5; else if(p.y>H+5)p.y=-5;
+        }
         const g=ctx.createRadialGradient(W*.5,H*.5,0,W*.5,H*.5,Math.hypot(W,H)*.55); g.addColorStop(.80,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.28)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
         const lg=ctx.createLinearGradient(0,0,0,H); lg.addColorStop(0,'rgba(255,255,255,.06)'); lg.addColorStop(.15,'rgba(255,255,255,.02)'); lg.addColorStop(.30,'rgba(255,255,255,0)'); ctx.fillStyle=lg; ctx.fillRect(0,0,W,H);
         rafId=requestAnimationFrame(frame);
       }
-      function start(){cancelAnimationFrame(rafId); resize(); if(reduce){ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter'; for(const p of parts){ctx.shadowColor=`hsla(${p.h} ${p.s}% ${p.l}% / ${p.a*1.3})`; ctx.shadowBlur=OPT.shadowBlur*DPR; ctx.fillStyle=`hsla(${p.h} ${p.s}% ${p.l}% / ${p.a})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();} return;}
-        rafId=requestAnimationFrame(frame);}
+      function start(){
+        cancelAnimationFrame(rafId); resize();
+        if(reduce){
+          ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='lighter';
+          for(const p of parts){
+            ctx.shadowColor=`hsla(${p.h} ${p.s}% ${p.l}% / ${p.a*1.3})`; ctx.shadowBlur=OPT.shadowBlur*DPR;
+            ctx.fillStyle=`hsla(${p.h} ${p.s}% ${p.l}% / ${p.a})`;
+            ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+          }
+          return;
+        }
+        rafId=requestAnimationFrame(frame);
+      }
       addEventListener('resize',resize); start();
     })();
   </script>
