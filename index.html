@@ -102,7 +102,7 @@
       top: 1rem;
       left: calc(var(--base) * 0.5);
       transform-origin: 0 50%;
-      rotate: 90deg;
+      rotate: 90deg;              /* 세로 제목(책등) */
       font-size: 1rem;
       font-weight: 300;
       text-transform: uppercase;
@@ -148,7 +148,7 @@
       mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
     }
 
-    /* 컨테이너/그리드 설정 (네 값 유지) */
+    /* 컨테이너/그리드 설정 */
     :root {
       --gap: 8px;
       --base: clamp(2rem, 8cqi, 80px);
@@ -164,7 +164,8 @@
     ul {
       display: grid;
       container-type: inline-size;
-      grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr; /* 첫 카드 확장 */
+      /* ✅ 초기엔 전부 접힘 */
+      grid-template-columns: repeat(7, 1fr);
       gap: var(--gap);
       list-style-type: none;
       justify-content: center;
@@ -242,15 +243,17 @@
   <!-- 움직이는 점 배경 -->
   <canvas id="bg-dots" aria-hidden="true"></canvas>
 
-  <!-- ===== 너가 준 HTML 그대로 ===== -->
+  <!-- 상단 제목/설명 -->
   <h1 class="fluid">the craft of ui</h1>
   <p>
     Unlock the art and science of interface development. This isn’t just about
     pushing pixels or following documentation — it’s about mastering the
     tools, understanding the nuances, and shaping experiences with intention.
   </p>
+
+  <!-- ✅ 초기엔 모두 접힘: data-active 없음 -->
   <ul>
-    <li data-active="true">
+    <li>
       <article>
         <h3>The Craft</h3>
         <p>
@@ -406,7 +409,7 @@
   </ul>
 
   <script>
-  /* ===== 카드 확장/접힘 (hover/click/focus) — 네 로직 기반 + '벗어나면 접힘' 추가 ===== */
+  /* ===== 카드 확장/접힘 (hover/click/focus) — 초기 전부 접힘 유지 ===== */
   (() => {
     const list = document.querySelector('ul');
     if (!list) return;
@@ -443,6 +446,9 @@
     list.addEventListener('focusout', (e) => {
       if (!list.contains(e.relatedTarget)) collapse();
     });
+
+    // 초기에도 확실히 접혀 있도록 한 번 호출
+    collapse();
 
     // 원본 로직: article width 동기화
     const resync = () => {
