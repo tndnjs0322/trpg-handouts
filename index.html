@@ -22,10 +22,10 @@
   --title-dur:.52s;
   --title-delay-in:.06s;
 
-  /* ▶ 적당한 확장 폭 */
-  --active-fr: 12;
-  --inactive-fr: .8;
-  --expanded-min: 360px;
+  /* ▶ 펼쳤을 때 중간 폭 */
+  --active-fr: 8;
+  --inactive-fr: 1;
+  --expanded-min: 320px;
 
   /* 스파인(책등) */
   --spine-w: clamp(28px, calc(var(--base)*0.58), 56px);
@@ -60,8 +60,8 @@ ul{
   grid-template-columns:repeat(7,1fr);
   gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
   height:clamp(300px,40dvh,474px);
-  /* ▶ 컨테이너 폭을 적당히 */
-  width: clamp(820px, 88vw, 1120px);
+  /* ▶ 컨테이너 폭: 너무 크지 않게 */
+  width: clamp(820px, 86vw, 1040px);
   max-width: 100%;
   transition:grid-template-columns var(--speed) var(--easing);
 }
@@ -69,7 +69,9 @@ li{
   position:relative; overflow:hidden; min-width:var(--base);
   border-radius:12px; background:#0f1b20; border:1px solid rgba(255,255,255,.12);
   contain:layout paint;
+  z-index:0;
 }
+li[data-active="true"]{ z-index:1; } /* 겹침 방지용 레이어만 살짝 위 */
 article{
   position:absolute; inset:0; width:100%; height:100%;
   display:flex; flex-direction:column; justify-content:flex-end; gap:.8rem;
@@ -274,6 +276,7 @@ li[data-active="true"] .title .t-h{
 </ul>
 
 <script>
+/* 펼침 비율: 중간 폭 + 겹침 방지 */
 (() => {
   const list = document.querySelector('ul');
   if (!list) return;
@@ -281,9 +284,9 @@ li[data-active="true"] .title .t-h{
   let active = -1, raf = 0;
 
   const css = getComputedStyle(document.documentElement);
-  const ACTIVE_FR = parseFloat(css.getPropertyValue('--active-fr')) || 12;
-  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || .8;
-  const EXPANDED_MIN = (css.getPropertyValue('--expanded-min') || '360px').trim();
+  const ACTIVE_FR = parseFloat(css.getPropertyValue('--active-fr')) || 8;
+  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || 1;
+  const EXPANDED_MIN = (css.getPropertyValue('--expanded-min') || '320px').trim();
 
   const setCols = (idx) => {
     list.style.gridTemplateColumns = items.map((_, i) =>
@@ -324,6 +327,7 @@ li[data-active="true"] .title .t-h{
   collapse();
 })();
 
+/* 이미지 URL을 CSS 변수(--img)로 넣기 */
 (() => {
   const arts = document.querySelectorAll('article');
   arts.forEach((a) => {
@@ -334,6 +338,7 @@ li[data-active="true"] .title .t-h{
   });
 })();
 
+/* 상단 제목: 첫 방문 1회만 타이핑 */
 (() => {
   const h1 = document.querySelector('h1.fluid');
   if (!h1) return;
@@ -353,6 +358,7 @@ li[data-active="true"] .title .t-h{
   if (reduce || seen){ h1.textContent = text; show(); } else { typeOnce(); }
 })();
 
+/* 배경: 은은하게 움직이는 점 */
 (() => {
   const cvs = document.getElementById('bg-dots'); if (!cvs) return;
   const ctx = cvs.getContext('2d', { alpha: true });
