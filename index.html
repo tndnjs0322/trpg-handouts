@@ -23,6 +23,11 @@
   --title-dur:.52s;
   --title-delay-in:.06s;
 
+  /* 확장 폭(더 넓게) */
+  --active-fr: 18;           /* 펼쳐진 카드 가중치 */
+  --inactive-fr: .5;         /* 접힌 카드 가중치(더 얇게) */
+  --expanded-min: 420px;     /* 펼칠 때 최소 픽셀 폭 */
+
   /* 스파인(책등) */
   --spine-w: clamp(28px, calc(var(--base)*0.58), 56px);
   --spine-r: 12px;
@@ -52,9 +57,13 @@ body>p{
 
 /* 리스트(초기 모두 접힘) */
 ul{
-  display:grid; grid-template-columns:repeat(7,1fr);
+  display:grid; 
+  grid-template-columns:repeat(7,1fr);
   gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
-  height:clamp(300px,40dvh,474px); width:820px; max-width:calc(100% - 4rem);
+  height:clamp(300px,40dvh,474px);
+  /* 더 넓게 펼쳐질 수 있게 컨테이너 폭 업 */
+  width: clamp(820px, 92vw, 1280px);
+  max-width: 100%;
   transition:grid-template-columns var(--speed) var(--easing);
 }
 li{
@@ -89,7 +98,7 @@ article::before{
   opacity:0; transition: opacity var(--speed) var(--easing);
 }
 
-/* 스파인(접힘 때만 표시, 이미지/스크림 위) */
+/* 스파인(접힘 때만 표시) */
 article::after{
   content:""; position:absolute; top:0; left:0; height:100%; width:var(--spine-w);
   border-top-left-radius: var(--spine-r); border-bottom-left-radius: var(--spine-r);
@@ -110,7 +119,7 @@ article::after{
 /* 본 이미지: 펼치면 꽉 차게 */
 article img{
   position:absolute; inset:0; width:100%; height:100%;
-  object-fit: cover; /* <= 꽉 차게 */
+  object-fit: cover;
   z-index:0; pointer-events:none; opacity:1; transition:opacity var(--speed) var(--easing);
 }
 
@@ -266,28 +275,40 @@ li[data-active="true"] .title .t-h{
 </ul>
 
 <script>
-/* 빠른 hover/click 확장 + 영역 벗어나면 접힘 */
+/* 더 넓게 펼쳐지도록: active/inactive 비율 + 최소폭 반영 */
 (() => {
   const list = document.querySelector('ul');
   if (!list) return;
   const items = Array.from(list.querySelectorAll('li'));
   let active = -1, raf = 0;
 
+  const css = getComputedStyle(document.documentElement);
+  const ACTIVE_FR = parseFloat(css.getPropertyValue('--active-fr')) || 18;
+  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || .5;
+  const EXPANDED_MIN = (css.getPropertyValue('--expanded-min') || '420px').trim();
+
   const setCols = (idx) => {
-    list.style.gridTemplateColumns = items.map((_, i) => (i === idx ? '10fr' : '1fr')).join(' ');
+    list.style.gridTemplateColumns = items.map((_, i) =>
+      i === idx
+        ? `minmax(${EXPANDED_MIN}, ${ACTIVE_FR}fr)`
+        : `minmax(var(--spine-w), ${INACTIVE_FR}fr)`
+    ).join(' ');
   };
+
   const applyActive = (idx) => {
     if (idx === active) return;
     active = idx;
     items.forEach((li, i) => li.dataset.active = (i === active).toString());
     setCols(active);
   };
+
   const collapse = () => {
     if (active === -1) return;
     active = -1;
     items.forEach((li) => li.dataset.active = 'false');
     list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
   };
+
   const schedule = (idx) => {
     if (idx === active) return;
     cancelAnimationFrame(raf);
@@ -302,11 +323,10 @@ li[data-active="true"] .title .t-h{
   list.addEventListener('pointerleave', collapse);
   list.addEventListener('focusout', (e) => { if (!list.contains(e.relatedTarget)) collapse(); });
 
-  // 초기: 전부 접힘
   collapse();
 })();
 
-/* 이미지 URL을 CSS 변수(--img)로 넣기 (스파인/배경에 재사용) */
+/* 이미지 URL을 CSS 변수(--img)로 넣기 */
 (() => {
   const arts = document.querySelectorAll('article');
   arts.forEach((a) => {
