@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hover Disclosures — static image feel + no grid</title>
+  <title>Hover Disclosures — static image fade</title>
   <link rel="stylesheet" href="https://unpkg.com/normalize.css" />
   <style>
     :root{
@@ -12,7 +12,11 @@
       --glass:rgba(255,255,255,.06); --glass-border:rgba(255,255,255,.14);
       --panel-bg:rgba(8,12,14,.88); --ring:rgba(0,200,220,.22);
       --shadow:0 10px 30px rgba(0,0,0,.4); --caret:#e6eef2;
-      --card-bg:#0f1b20; /* 펼친 카드 배경 & 이미지 오른쪽 스크림 색 */
+      --card-bg:#0f1b20;
+
+      /* 이미지 페이드 구간(퍼센트) — 필요하면 여기만 조절 */
+      --fade-start: 60%;
+      --fade-end:   88%;
     }
     html{color-scheme:dark light}
     body{
@@ -23,13 +27,13 @@
       background:var(--bg); color:#e6eef2; position:relative;
     }
 
-    /* ← “눈금(그리드)” 완전 제거됨 (이전 body::before 블럭 삭제) */
+    /* ✔ 격자(눈금) 완전 제거: body::before 없음 */
 
-    /* 움직이는 점 레이어 (배경) */
+    /* 움직이는 점 배경 */
     #bg-dots{position:fixed; inset:0; z-index:-1; pointer-events:none; display:block;}
     @media (prefers-reduced-motion:reduce){#bg-dots{display:none}}
 
-    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 상시표시 */
+    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 상시 표시 */
     h1{
       margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px);
       text-transform:lowercase; opacity:0; transition:opacity .4s ease;
@@ -49,7 +53,6 @@
       box-shadow:var(--shadow); background:var(--glass); border:1px solid var(--glass-border);
       backdrop-filter:blur(8px) saturate(120%); -webkit-backdrop-filter:blur(8px) saturate(120%);
     }
-    /* 펼친 상태: 유리효과 제거하고 고정 배경 */
     ul#cards>li[data-active="true"]{ background:var(--card-bg); border-color:rgba(255,255,255,.08); backdrop-filter:none; }
 
     article{
@@ -59,21 +62,19 @@
       padding:1rem; overflow:hidden;
     }
 
-    /* 이미지: 고정(비디오처럼 안 보이도록) + 오른쪽 “색상 스크림” 오버레이 */
+    /* 이미지: 고정 + 마스크 기반 페이드(투명) → 카드 배경과 자연스럽게 연결 */
     article img{
       position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;
       opacity:0; filter:grayscale(1) brightness(1.6);
       transition:opacity calc(var(--speed)*1.2) var(--easing),
                  filter  calc(var(--speed)*1.2) var(--easing);
-    }
-    /* 스크림(오버레이) — 투명 아님, 카드 배경색으로 자연스러운 페이드 */
-    article::after{
-      content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
-      background: linear-gradient(to right, rgba(0,0,0,0) 52%, var(--card-bg) 86%);
-      opacity: .95; /* 살짝 더 또렷하게 */
-      transition: opacity var(--speed) var(--easing);
+      /* 오른쪽으로 서서히 투명해짐(표준/웹킷 모두) */
+      -webkit-mask-image: linear-gradient(to right, #000 var(--fade-start), rgba(0,0,0,0) var(--fade-end));
+              mask-image: linear-gradient(to right, #000 var(--fade-start), rgba(0,0,0,0) var(--fade-end));
     }
     li[data-active="true"] article img{ opacity:1; filter:grayscale(0) brightness(1); }
+
+    /* (중요) 예전 오버레이 제거: article::after 사용 안함 */
 
     /* 책등(세로) 제목 — 접힘에만 보임 */
     .title-spine{
@@ -83,23 +84,22 @@
       opacity:.9; transition:opacity .25s var(--easing);
       pointer-events:none;
     }
-    li[data-active="true"] .title-spine{opacity:0;} /* 그냥 사라지기 */
+    li[data-active="true"] .title-spine{opacity:0;}
 
     /* 가로 제목/내용 — 타이핑(최초 1회), 이후엔 페이드 */
     .title-main,.body-main{
       margin:0; opacity:0; visibility:hidden; position:relative; color:#eaf3f6;
       transition:opacity .25s var(--easing), visibility .25s var(--easing);
-      z-index:2; /* 이미지+스크림 위 */
+      z-index:2;
     }
     .title-main{ font-weight:800; font-size:1.05rem; letter-spacing:.02em; }
     .body-main{
       font-size:13.5px; line-height:1.45; text-wrap:balance; padding:.75rem .85rem;
       background:var(--panel-bg); border:1px solid rgba(255,255,255,.06); border-radius:10px;
-      /* ⛔ backdrop-filter 제거 → 배경 움직임 영향 없음 */
-      /* backdrop-filter: blur(4px);  삭제 */
+      /* backdrop-filter 제거(영상 느낌 방지) */
     }
 
-    /* 활성 카드에서 카피는 오른쪽 컬럼으로 */
+    /* 활성 카드: 텍스트 오른쪽 컬럼 */
     li[data-active="true"] article{ --copy-left: clamp(48%, 520px, 62%); }
     li[data-active="true"] .title-main,
     li[data-active="true"] .body-main,
@@ -107,7 +107,7 @@
       margin-left: var(--copy-left);
       max-width: calc(100% - var(--copy-left) - 1rem);
     }
-    /* 본문 길 때 은은 스크롤(스크롤바 숨김) */
+    /* 본문 길 때 스크롤(스크롤바 숨김) */
     li[data-active="true"] .body-main{
       max-height: min(44dvh, calc(100% - 6.5rem));
       overflow:auto; scrollbar-width:none; -ms-overflow-style:none;
@@ -145,7 +145,6 @@
   </style>
 </head>
 <body>
-  <!-- 움직이는 점 배경 (살아있지만 카드 내부는 고정처럼 보임) -->
   <canvas id="bg-dots" aria-hidden="true"></canvas>
 
   <h1 data-title="the craft of ui">the craft of ui</h1>
@@ -162,7 +161,6 @@
       <a href="#" class="cta"><span>Watch now</span></a>
       <img src="https://picsum.photos/1280/800?random=12" alt="">
     </article></li>
-
     <li><article>
       <h3 class="title-spine">CSS Animation</h3>
       <h3 class="title-main" data-text="CSS Animation"></h3>
@@ -170,7 +168,6 @@
       <a href="#" class="cta"><span>Watch now</span></a>
       <img src="https://picsum.photos/1280/800?random=17" alt="">
     </article></li>
-
     <li><article>
       <h3 class="title-spine">SVG Filters</h3>
       <h3 class="title-main" data-text="SVG Filters"></h3>
@@ -178,7 +175,6 @@
       <a href="#" class="cta"><span>Watch now</span></a>
       <img src="https://picsum.photos/1280/800?random=19" alt="">
     </article></li>
-
     <li><article>
       <h3 class="title-spine">Scroll Animation</h3>
       <h3 class="title-main" data-text="Scroll Animation"></h3>
@@ -186,7 +182,6 @@
       <a href="#" class="cta"><span>Watch now</span></a>
       <img src="https://picsum.photos/1280/800?random=42" alt="">
     </article></li>
-
     <li><article>
       <h3 class="title-spine">Taming Canvas</h3>
       <h3 class="title-main" data-text="Taming Canvas"></h3>
@@ -194,7 +189,6 @@
       <a href="#" class="cta"><span>Watch now</span></a>
       <img src="https://picsum.photos/1280/800?random=128" alt="">
     </article></li>
-
     <li><article>
       <h3 class="title-spine">Layout Tricks</h3>
       <h3 class="title-main" data-text="Layout Tricks"></h3>
@@ -202,7 +196,6 @@
       <a href="#" class="cta"><span>Watch now</span></a>
       <img src="https://picsum.photos/1280/800?random=56" alt="">
     </article></li>
-
     <li><article>
       <h3 class="title-spine">Mastering Time</h3>
       <h3 class="title-main" data-text="Mastering Time"></h3>
@@ -213,7 +206,7 @@
   </ul>
 
   <script>
-    /* ===== 메인 제목: 첫 방문만 타이핑, 이후엔 상시 표시 ===== */
+    /* 메인 타이틀: 첫 방문만 타이핑, 이후엔 상시 표시 */
     (function(){
       const h1 = document.querySelector('h1');
       if (!h1) return;
@@ -237,7 +230,7 @@
       if (reduce || seen){ h1.textContent = text; show(); } else { typeOnce(); }
     })();
 
-    /* ===== 카드 인터랙션 + "한 번만" 타이핑 ===== */
+    /* 카드 인터랙션 + "한 번만" 타이핑 */
     (function(){
       const list = document.getElementById('cards'); if (!list) return;
       list.classList.add('js-ready');
@@ -296,7 +289,7 @@
       addEventListener('resize',resync); resync(); collapse();
     })();
 
-    /* ===== 배경: 은은하게 움직이는 점 ===== */
+    /* 배경: 은은하게 움직이는 점 */
     (function(){
       const canvas=document.getElementById('bg-dots'); if(!canvas) return;
       const ctx=canvas.getContext('2d',{alpha:true}); let W=0,H=0,DPR=1,parts=[],last=0,rafId=0;
