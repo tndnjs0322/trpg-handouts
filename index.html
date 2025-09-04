@@ -37,9 +37,10 @@
       --gap:8px;
       --base:clamp(2rem,8cqi,80px);
       --easing: cubic-bezier(.22,.8,.2,1);
-      --speed: .45s;         /* 카드 전개 시간(살짝 단축) */
-      --title-dur: .55s;     /* 제목 전환 시간(빠르게) */
-      --title-delay-in: .06s;/* 가로 제목 등장 딜레이 */
+      --speed: .45s;          /* 카드 전개 시간 */
+      --title-dur: .55s;      /* 제목 전환 시간 */
+      --title-delay-in: .06s; /* 가로 제목 등장 딜레이 */
+      --spine-w: clamp(20px, calc(var(--base)*0.55), 58px); /* 접힘용 이미지 스트립 너비 */
     }
 
     body{
@@ -83,10 +84,10 @@
     li{
       background:#0f1b20; position:relative; overflow:hidden;
       min-width:var(--base); border-radius:10px; border:1px solid rgba(255,255,255,.12);
-      contain: layout paint; /* 카드 간 레이아웃 분리로 성능 안정 */
+      contain: layout paint;
     }
     article{
-      position:absolute; inset:0; width:100%; height:100%; /* ← 측정 없이 100% */
+      position:absolute; inset:0; width:100%; height:100%;
       display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
       padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
     }
@@ -99,14 +100,47 @@
       filter: blur(16px) brightness(.86) saturate(.95);
       transform: scale(1.06);
     }
+
+    /* 🟠 접힘 썸네일(책등 느낌) — cover로 깔끔, 펼치면 사라짐 */
+    article::after{
+      content:"";
+      position:absolute; top:0; left:calc(var(--base)*0.18);
+      width:var(--spine-w); height:100%;
+      background: center/cover no-repeat var(--img, none);
+      border-radius:8px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08),
+        inset 0 -40px 60px rgba(0,0,0,.18); /* 아래쪽 살짝 어둡게 */
+      opacity:0; transform:translateZ(0) scale(1.04);
+      transition: opacity var(--speed) var(--easing),
+                  transform var(--speed) var(--easing),
+                  filter var(--speed) var(--easing);
+      pointer-events:none; z-index:1;
+    }
+
     /* 🟢 실제 이미지는 'contain' + 이벤트 안 가로채게 */
     article img{
       position:absolute; inset:0; width:100%; height:100%;
       object-fit: contain;  /* ← 안 잘림 */
       z-index:1;
-      pointer-events: none; /* ← 마우스 이벤트 가로채지 않음 */
+      pointer-events: none;
+      transition: opacity var(--speed) var(--easing);
+      opacity:1; /* 기본값 */
     }
 
+    /* 접힘 상태: contain 이미지는 감추고, 썸네일 스트립 보여주기 */
+    li:not([data-active="true"]) article img{
+      opacity:0;
+    }
+    li:not([data-active="true"]) article::after{
+      opacity:1;
+      filter: grayscale(.12) contrast(1.05) brightness(.93);
+    }
+
+    /* 펼침 상태: 썸네일은 사라지고 실제 이미지 노출 */
+    li[data-active="true"] article::after{
+      opacity:0; transform:scale(1);
+    }
     /* 텍스트/아이콘/제목은 위 레이어 */
     article :where(p,svg,.title){ position:relative; z-index:2 }
     article svg{width:18px; fill:none}
@@ -285,7 +319,7 @@
           <span class="t t-v" aria-hidden="true">Mastering Time</span>
         </h3>
         <p>Time isn’t just easing — treat it as a core design material.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+        <svg xmlns="http://www.w3.org/0 24 24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l-4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
         <img src="https://picsum.photos/720/720?random=39" alt="" />
       </article>
     </li>
@@ -324,14 +358,14 @@
       raf = requestAnimationFrame(() => applyActive(idx));
     };
 
-    // ★ pointerenter 로 즉시 반응
+    // pointerenter 로 즉시 반응
     items.forEach((li, i) => {
       li.addEventListener('pointerenter', () => schedule(i), { passive: true });
       li.addEventListener('click', () => applyActive(i));
       li.addEventListener('focusin', () => applyActive(i));
     });
 
-    // 컨테이너에서만 접힘 처리 (갭 위에서 흔들리지 않음)
+    // 컨테이너에서만 접힘 처리
     list.addEventListener('pointerleave', collapse);
     list.addEventListener('focusout', (e) => {
       if (!list.contains(e.relatedTarget)) collapse();
@@ -341,7 +375,7 @@
     collapse();
   })();
 
-  /* ===== 이미지 URL을 CSS 변수(--img)로 넣어서 블러 배경에 재사용 ===== */
+  /* ===== 이미지 URL을 CSS 변수(--img)로 넣어서 블러/썸네일에 재사용 ===== */
   (() => {
     const arts = document.querySelectorAll('article');
     arts.forEach((a) => {
@@ -388,7 +422,7 @@
 
     let W=0, H=0, DPR=1, pts=[], last=0, raf=0;
     const OPT = {
-      density: 0.00006,           /* 살짝 낮춰 성능 확보 */
+      density: 0.00006,
       min: 60, max: 140,
       r: [0.7, 2.2],
       v: [3, 11],
