@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hover Disclosures — glass + moving dots + glitch</title>
+  <title>Hover Disclosures — glass + moving dots + type-in</title>
   <link rel="stylesheet" href="https://unpkg.com/normalize.css" />
   <style>
     :root{
@@ -17,6 +17,7 @@
       --panel-bg: rgba(8,12,14,.85);
       --ring: rgba(0, 200, 220, .22);
       --shadow: 0 10px 30px rgba(0,0,0,.4);
+      --caret: #e6eef2;
     }
     html{ color-scheme: dark light; }
     body{
@@ -28,7 +29,7 @@
       position:relative;
     }
 
-    /* 은은한 격자 (배경 가장 아래) */
+    /* 은은한 격자 */
     body::before{
       --size:45px; --line: color-mix(in hsl, canvasText, transparent 78%);
       content:""; position:fixed; inset:0; pointer-events:none; z-index:-2;
@@ -38,11 +39,22 @@
       mask: linear-gradient(-20deg, transparent 50%, white);
     }
 
-    /* 움직이는 점 레이어 (콘텐츠 뒤) */
+    /* 움직이는 점 레이어 */
     #bg-dots{ position:fixed; inset:0; z-index:-1; pointer-events:none; display:block; }
     @media (prefers-reduced-motion: reduce){ #bg-dots{ display:none; } }
 
-    h1{ margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px); text-transform:lowercase; }
+    /* 메인 타이틀: 잠깐 보였다가 사라짐 */
+    h1{
+      margin:0; font-weight:800; letter-spacing:.02em; font-size:clamp(28px,6vw,72px);
+      text-transform:lowercase; opacity:0; animation: intro 2.2s ease forwards;
+    }
+    @keyframes intro{
+      0%{ opacity:0; transform: translateY(8px)}
+      12%{ opacity:1; transform: translateY(0)}
+      70%{ opacity:1}
+      100%{ opacity:0; transform: translateY(-8px)}
+    }
+
     .desc{ margin:0; opacity:.8; width:74ch; max-width:calc(100% - 4rem); text-wrap:balance; line-height:1.5; }
 
     /* ===== 리스트 코어 ===== */
@@ -67,7 +79,7 @@
       backdrop-filter: blur(8px) saturate(120%);
       -webkit-backdrop-filter: blur(8px) saturate(120%);
     }
-    /* 펼침 시 표면 강화 */
+    /* 펼침 */
     ul#cards > li[data-active="true"]{
       background: #0f1b20;
       border-color: rgba(255,255,255,.08);
@@ -84,11 +96,11 @@
       overflow:hidden;
     }
 
-    /* 이미지: 접힘에선 숨김, 펼치면 컬러 */
+    /* 이미지: 카드 크기에 자동 맞춤 */
     article img{
-      position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;
-      opacity: 0;
-      filter: grayscale(1) brightness(1.6);
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; pointer-events:none;
+      opacity: 0; filter: grayscale(1) brightness(1.6);
       scale: 1.08;
       transition: opacity calc(var(--speed)*1.2) var(--easing),
                   filter calc(var(--speed)*1.2) var(--easing),
@@ -99,60 +111,52 @@
       opacity: 1; filter: grayscale(0) brightness(1); scale: 1; transition-delay: .1s;
     }
 
-    /* 제목: 접힘=세로(책등), 펼침=가로 */
-    article h3{
-      position:absolute;
-      top: .9rem; left: calc(var(--base) * .5);
+    /* 책등(세로) 제목 — 접힘에만 보임 */
+    .title-spine{
+      position:absolute; top: .9rem; left: calc(var(--base) * .5);
       transform-origin: 0 50%; rotate: 90deg;
       margin:0; font-size: .95rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      color: rgba(230,238,242,.92);
-      text-shadow: 0 1px 0 rgba(0,0,0,.4);
-      opacity: .9;
-      transition: rotate var(--speed) var(--easing),
-                  top var(--speed) var(--easing),
-                  left var(--speed) var(--easing),
-                  opacity var(--speed) var(--easing);
+      color: rgba(230,238,242,.92); text-shadow: 0 1px 0 rgba(0,0,0,.4);
+      opacity: .9; transition: opacity .25s var(--easing), transform .25s var(--easing);
+      pointer-events:none;
     }
-    li[data-active="true"] article h3{
-      rotate: 0deg; top: .9rem; left: 1rem; opacity: 1; text-shadow: none;
+    li[data-active="true"] .title-spine{
+      opacity:0; transform: translateX(6px) rotate(90deg);
     }
 
-    /* 본문/링크: 접힘 숨김, 펼치면 등장 */
-    article p, article a{
-      margin:0; opacity:0; width:fit-content;
-      transition: opacity calc(var(--speed)*1.2) var(--easing);
+    /* 가로 제목/내용 — 타이핑으로 등장 */
+    .title-main, .body-main{
+      margin:0; opacity:0; visibility:hidden;
+      position:relative; color:#eaf3f6;
     }
-    article p{
+    .title-main{ font-weight:800; font-size:1.05rem; letter-spacing:.02em; }
+    .body-main{
       font-size: 13.5px; line-height:1.45; text-wrap:balance;
-      padding: .75rem .85rem;
-      background: var(--panel-bg);
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 10px;
-      backdrop-filter: blur(4px);
+      padding: .75rem .85rem; background: var(--panel-bg);
+      border: 1px solid rgba(255,255,255,.06); border-radius: 10px; backdrop-filter: blur(4px);
     }
-    article a{
-      position:absolute; bottom: .9rem; left: 1rem;
-      color: inherit; text-decoration: none; height: 18px; line-height: 18px;
+
+    /* 커서(타자기) */
+    .typing::after{
+      content:""; position:absolute; display:inline-block; width:1ch; height:1.15em;
+      background: var(--caret); margin-left:2px; translate: 0 .1em;
+      animation: caret 800ms steps(1,end) infinite;
     }
-    article a span{ text-underline-offset:4px; }
-    article a:is(:hover,:focus-visible) span{ text-decoration: underline; }
-    li[data-active="true"] article p,
-    li[data-active="true"] article a{ opacity: 1; transition-delay: .15s; }
+    @keyframes caret{50%{opacity:0}}
 
     /* 포커스 링 */
     ul#cards > li:focus-visible{ outline: 3px solid var(--ring); outline-offset: 2px; }
 
     /* JS 미작동 fallback */
     ul#cards:not(.js-ready) li:hover article img{ opacity:1; filter:grayscale(0) brightness(1); scale:1; }
-    ul#cards:not(.js-ready) li:hover h3,
-    ul#cards:not(.js-ready) li:hover p,
-    ul#cards:not(.js-ready) li:hover a{ opacity:1; }
-    ul#cards:not(.js-ready) li:hover h3{ rotate:0deg; top:.9rem; left:1rem; }
+    ul#cards:not(.js-ready) li:hover .title-spine{ opacity:0; }
+    ul#cards:not(.js-ready) li:hover .title-main,
+    ul#cards:not(.js-ready) li:hover .body-main{ opacity:1; visibility:visible; }
 
-    /* 글리치(제목) — 1% 확률로만 */
+    /* 글리치 — 가끔 */
     .glitch{ animation:glitch 380ms steps(2,end) 2; }
     @keyframes glitch{
-      0%{ transform:translate(0); color:canvasText; text-shadow:none; }
+      0%{ transform:translate(0); text-shadow:none; }
       20%{ transform:translate(-1px,1px) skew(1deg); text-shadow:1px 0 #7af,-1px 0 #0ff; }
       40%{ transform:translate(1px,-1px) skew(-1deg); text-shadow:-1px 0 #f66,1px 0 #0ff; }
       60%{ transform:translate(-1px,0); text-shadow:1px 0 #fff,-1px 0 #0ff; }
@@ -172,72 +176,137 @@
 
   <ul id="cards">
     <li><article>
-      <h3>The Craft</h3>
-      <p>Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">The Craft</h3>
+      <h3 class="title-main" data-text="The Craft"></h3>
+      <p  class="body-main"  data-text="Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=12" alt="">
     </article></li>
 
     <li><article>
-      <h3>CSS Animation</h3>
-      <p>Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">CSS Animation</h3>
+      <h3 class="title-main" data-text="CSS Animation"></h3>
+      <p class="body-main" data-text="Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=17" alt="">
     </article></li>
 
     <li><article>
-      <h3>SVG Filters</h3>
-      <p>Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">SVG Filters</h3>
+      <h3 class="title-main" data-text="SVG Filters"></h3>
+      <p class="body-main" data-text="Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=19" alt="">
     </article></li>
 
     <li><article>
-      <h3>Scroll Animation</h3>
-      <p>Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">Scroll Animation</h3>
+      <h3 class="title-main" data-text="Scroll Animation"></h3>
+      <p class="body-main" data-text="Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=42" alt="">
     </article></li>
 
     <li><article>
-      <h3>Taming Canvas</h3>
-      <p>Grasp how to tame the pixel playground and when to do so. Whilst building with "Performance Driven Development".</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">Taming Canvas</h3>
+      <h3 class="title-main" data-text="Taming Canvas"></h3>
+      <p class="body-main" data-text="Grasp how to tame the pixel playground and when to do so. Whilst building with 'Performance Driven Development'."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=128" alt="">
     </article></li>
 
     <li><article>
-      <h3>Layout Tricks</h3>
-      <p>Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">Layout Tricks</h3>
+      <h3 class="title-main" data-text="Layout Tricks"></h3>
+      <p class="body-main" data-text="Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=56" alt="">
     </article></li>
 
     <li><article>
-      <h3>Mastering Time</h3>
-      <p>It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.</p>
-      <a href="#"><span>Watch now</span></a>
+      <h3 class="title-spine">Mastering Time</h3>
+      <h3 class="title-main" data-text="Mastering Time"></h3>
+      <p class="body-main" data-text="It's not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first."></p>
+      <a href="#" class="cta" style="opacity:0;transition:opacity .35s var(--easing) .25s"><span>Watch now</span></a>
       <img src="https://picsum.photos/720/720?random=39" alt="">
     </article></li>
   </ul>
 
   <script>
-    /* ===== 카드 인터랙션: 가리키면 펼침, 벗어나면 접힘 ===== */
+    /* ===== 카드 인터랙션 + 타이핑 ===== */
     (function(){
       const list = document.getElementById('cards');
       if (!list) return;
       list.classList.add('js-ready');
       const items = Array.from(list.children);
 
-      const collapse = () => {
-        items.forEach(el => el.dataset.active = 'false');
+      // 타이핑 유틸
+      const timers = new WeakMap();
+      function stopTyping(el){
+        const t = timers.get(el); if (t){ clearInterval(t); timers.delete(el); }
+      }
+      function typeIn(el, text, speed=24, done){
+        stopTyping(el);
+        el.textContent = ""; el.style.visibility = 'visible'; el.style.opacity = '1';
+        el.classList.add('typing');
+        // 줄바꿈 보존
+        const chars = [...text];
+        let i = 0;
+        const id = setInterval(()=>{
+          if (i >= chars.length){
+            clearInterval(id); timers.delete(el);
+            el.classList.remove('typing');  // 커서 제거
+            if (done) done();
+            return;
+          }
+          const ch = chars[i++];
+          if (ch === '\n') el.appendChild(document.createElement('br'));
+          else el.append(ch);
+        }, speed);
+        timers.set(el, id);
+      }
+      function clearTyped(el){
+        stopTyping(el);
+        el.textContent = ""; el.style.opacity = '0'; el.style.visibility = 'hidden';
+        el.classList.remove('typing');
+      }
+
+      function collapse(){
+        items.forEach(li => {
+          li.dataset.active = 'false';
+          const title = li.querySelector('.title-main');
+          const body  = li.querySelector('.body-main');
+          clearTyped(title); clearTyped(body);
+          const cta = li.querySelector('.cta'); if (cta) cta.style.opacity = 0;
+        });
         list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
-      };
-      const activateIndex = (idx) => {
+      }
+
+      function activateIndex(idx){
         items.forEach((el,i) => el.dataset.active = (i===idx).toString());
         const cols = items.map((_,i)=> i===idx ? '10fr' : '1fr').join(' ');
         list.style.gridTemplateColumns = cols;
-      };
+
+        const li = items[idx];
+        const title = li.querySelector('.title-main');
+        const body  = li.querySelector('.body-main');
+        const cta   = li.querySelector('.cta');
+
+        clearTyped(title); clearTyped(body);
+
+        // 1) 제목 타이핑
+        const t1 = title.dataset.text || title.textContent || "";
+        // 1% 확률 글리치
+        if (Math.random() < 0.01) title.classList.add('glitch');
+        title.addEventListener('animationend', ()=> title.classList.remove('glitch'), {once:true});
+        typeIn(title, t1, 22, () => {
+          // 2) 본문 타이핑
+          const t2 = body.dataset.text || body.textContent || "";
+          typeIn(body, t2, 12, () => {
+            if (cta) cta.style.opacity = 1; // 링크는 타이핑 뒤 등장
+          });
+        });
+      }
 
       const handler = (e) => {
         const li = e.target.closest('li');
@@ -245,15 +314,6 @@
         const idx = items.indexOf(li);
         if (idx < 0) { collapse(); return; }
         activateIndex(idx);
-
-        // 1% 확률로 제목 글리치
-        if (Math.random() < 0.01) {
-          const h3 = li.querySelector('h3');
-          if (h3){
-            h3.classList.add('glitch');
-            h3.addEventListener('animationend', () => h3.classList.remove('glitch'), { once:true });
-          }
-        }
       };
 
       ['pointermove','mouseover','click','focusin','touchstart'].forEach(evt =>
@@ -278,7 +338,7 @@
       collapse(); // 초기: 접힘
     })();
 
-    /* ===== 배경: 은은하게 움직이는 점 (드리프트 + 트윙클) ===== */
+    /* ===== 배경: 은은하게 움직이는 점 ===== */
     (function(){
       const canvas = document.getElementById('bg-dots');
       if (!canvas) return;
@@ -287,16 +347,11 @@
       let W=0, H=0, DPR=1, particles=[], rafId=0, last=0;
 
       const OPT = {
-        density: 0.00007,           // 화면 면적당 밀도
-        minCount: 70,
-        maxCount: 160,
-        radius: [0.7, 2.4],         // px
-        speed:  [3, 12],            // px/s (느리게)
-        baseAlpha: [0.05, 0.18],
-        twinkleHz: [0.10, 0.25],    // 초당 깜빡임
-        shadowBlur: 6               // 글로우 블러
+        density: 0.00007, minCount: 70, maxCount: 160,
+        radius: [0.7, 2.4], speed: [3, 12],
+        baseAlpha: [0.05, 0.18], twinkleHz: [0.10, 0.25],
+        shadowBlur: 6
       };
-
       const prefersReduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
       const rand = (a,b)=> a + Math.random()*(b-a);
 
@@ -308,7 +363,6 @@
         canvas.style.height = innerHeight + 'px';
         spawn();
       }
-
       function spawn(){
         const area = innerWidth * innerHeight;
         const count = Math.max(OPT.minCount, Math.min(OPT.maxCount, Math.round(area * OPT.density)));
@@ -317,72 +371,44 @@
           const spCss = rand(OPT.speed[0], OPT.speed[1]);
           const angle = Math.random() * Math.PI * 2;
           return {
-            x: Math.random()*W,
-            y: Math.random()*H,
-            r: rCss * DPR,
-            vx: Math.cos(angle) * spCss * DPR,
-            vy: Math.sin(angle) * spCss * DPR,
-            hue: 190 + Math.random()*20,
-            sat: 22 + Math.random()*20,
-            lig: 75 + Math.random()*10,
+            x: Math.random()*W, y: Math.random()*H, r: rCss * DPR,
+            vx: Math.cos(angle) * spCss * DPR, vy: Math.sin(angle) * spCss * DPR,
+            hue: 190 + Math.random()*20, sat: 22 + Math.random()*20, lig: 75 + Math.random()*10,
             a: rand(OPT.baseAlpha[0], OPT.baseAlpha[1]),
-            twPhase: Math.random()*Math.PI*2,
-            twFreq: rand(OPT.twinkleHz[0], OPT.twinkleHz[1]) * 2*Math.PI
+            twPhase: Math.random()*Math.PI*2, twFreq: rand(OPT.twinkleHz[0], OPT.twinkleHz[1]) * 2*Math.PI
           };
         });
       }
-
       function frame(now){
-        const dt = Math.min(0.05, (now - (last||now)) / 1000); // 최대 50ms
-        last = now;
-
-        ctx.clearRect(0,0,W,H);
-        ctx.globalCompositeOperation = 'lighter';
-
+        const dt = Math.min(0.05, (now - (last||now)) / 1000); last = now;
+        ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation = 'lighter';
         for (const p of particles){
-          // 트윙클
           p.twPhase += p.twFreq * dt;
           const tw = 0.5 + 0.5*Math.sin(p.twPhase);
           const alpha = p.a * (0.7 + 0.3*tw);
-
           ctx.shadowColor = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${alpha*1.3})`;
           ctx.shadowBlur  = OPT.shadowBlur * DPR;
           ctx.fillStyle   = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${alpha})`;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-          ctx.fill();
-
-          // 이동(느리게)
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
-
-          // 화면 래핑
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+          p.x += p.vx * dt; p.y += p.vy * dt;
           if (p.x < -5) p.x = W+5; else if (p.x > W+5) p.x = -5;
           if (p.y < -5) p.y = H+5; else if (p.y > H+5) p.y = -5;
         }
-
-        // 비네트 + 상단 하이라이트
         const g = ctx.createRadialGradient(W*.5, H*.5, 0, W*.5, H*.5, Math.hypot(W,H)*.55);
-        g.addColorStop(.80, 'rgba(0,0,0,0)');
-        g.addColorStop(1.00, 'rgba(0,0,0,.28)');
+        g.addColorStop(.80, 'rgba(0,0,0,0)'); g.addColorStop(1.00, 'rgba(0,0,0,.28)');
         ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-
         const lg = ctx.createLinearGradient(0,0,0,H);
         lg.addColorStop(0.00, 'rgba(255,255,255,0.06)');
         lg.addColorStop(0.15, 'rgba(255,255,255,0.02)');
         lg.addColorStop(0.30, 'rgba(255,255,255,0.00)');
         ctx.fillStyle = lg; ctx.fillRect(0,0,W,H);
-
         rafId = requestAnimationFrame(frame);
       }
-
       function start(){
         cancelAnimationFrame(rafId);
         resize();
         if (prefersReduce){
-          // 정지형 한 번만
-          ctx.clearRect(0,0,W,H);
-          ctx.globalCompositeOperation = 'lighter';
+          ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation = 'lighter';
           for (const p of particles){
             ctx.shadowColor = `hsla(${p.hue} ${p.sat}% ${p.lig}% / ${p.a*1.3})`;
             ctx.shadowBlur  = OPT.shadowBlur * DPR;
@@ -391,10 +417,8 @@
           }
           return;
         }
-        last = performance.now();
         rafId = requestAnimationFrame(frame);
       }
-
       addEventListener('resize', resize);
       start();
     })();
