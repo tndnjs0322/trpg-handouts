@@ -9,20 +9,18 @@
 
   @layer normalize, base, demo;
 
-  /* -------------------- DEMO (네 스타일 유지 + 수정) -------------------- */
+  /* -------------------- DEMO (원본 유지 + 수정) -------------------- */
   @layer demo {
     body {
-      /* 배경 고정(네가 원한 남청색 톤) + 눈금 제거 */
-      background: #0d1a1f;
+      background: #0d1a1f;   /* 네가 좋아한 어두운 톤 */
       color: #e6eef2;
-
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column;
       gap: 1rem;
       padding-block: 2rem;
-      min-height: 100svh; /* 캔버스 배경과 함께 꽉 채움 */
+      min-height: 100svh;
     }
 
     h1, p { margin: 0; }
@@ -31,15 +29,13 @@
     h1.fluid {
       --font-size-min: 22;
       --font-level: 4.25;
-      /* pow() 미지원 브라우저 대비 가드 */
-      font-size: clamp(28px, 6vw, 56px);
-
+      font-size: clamp(28px, 6vw, 56px); /* pow() 미지원 가드 */
       opacity: 0;
       transition: opacity .35s ease;
     }
     h1.fluid.show { opacity: 1; }
 
-    h3 { white-space: nowrap; margin: 0; }
+    h3 { margin: 0; }
 
     /* 상단 설명문 */
     body > p {
@@ -58,37 +54,34 @@
 
     /* 카드 내부 페이드 */
     li :is(svg, h3) {
-      opacity: 0.6;
       transition: opacity calc(var(--speed) * 1.2) var(--easing);
     }
     li :is(a, p) {
-      opacity: 0;
+      opacity: 0; /* 접힘: 본문/링크 숨김 */
       transition: opacity calc(var(--speed) * 1.2) var(--easing);
       width: fit-content;
     }
     li img {
       filter: grayscale(1) brightness(1.5);
-      scale: 1.1;
+      scale: 1.08;
       transition-property: filter, scale;
       transition-duration: calc(var(--speed) * 1.2);
       transition-timing-function: var(--easing);
     }
-    [data-active='true'] :is(a, p, h3, svg) { opacity: var(--opacity, 1); }
-    [data-active='true'] :is(a, p) { transition-delay: calc(var(--speed) * 0.25); }
+    [data-active='true'] :is(a, p) { opacity: 1; transition-delay: calc(var(--speed) * 0.25); }
     [data-active='true'] img {
       filter: grayscale(0) brightness(1);
       scale: 1;
       transition-delay: calc(var(--speed) * 0.25);
     }
 
-    /* 카드 배치/타이포 (네 구조 유지) */
+    /* 카드 배치/타이포 (원본 구조 기반) */
     article {
       width: calc(var(--article-width) * 1px);
       height: 100%;
       position: absolute;
       font-family: monospace;
-      top: 0;
-      left: 0;
+      inset: 0 0 0 0;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -97,26 +90,50 @@
       padding-bottom: 1rem;
       overflow: hidden;
     }
-    article h3 {
+
+    /* 이미지가 제목/텍스트를 덮지 않도록 쌓임순서 지정 */
+    article img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; mask: radial-gradient(100% 100% at 100% 0, #fff, #0000); }
+    article h3, article p, article svg, article a { position: relative; z-index: 1; }
+
+    /* ✅ 접힘 상태: 책등처럼 "세로 제목"이 중앙에 항상 보임 */
+    li:not([data-active="true"]) article h3{
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      /* 세로 중앙정렬 */
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: .08em;
+      opacity: .9;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transform: none; /* 회전 제거 */
+    }
+
+    /* 펼침 상태: 가로 제목 + 상단 좌측 정렬 */
+    li[data-active="true"] article h3{
+      writing-mode: initial;
+      text-orientation: initial;
       position: absolute;
       top: 1rem;
       left: calc(var(--base) * 0.5);
       transform-origin: 0 50%;
-      rotate: 90deg;              /* 세로 제목(책등) */
+      transform: none;
       font-size: 1rem;
-      font-weight: 300;
+      font-weight: 700;
+      opacity: 1;
       text-transform: uppercase;
-      font-family: monospace;
     }
-    article svg { width: 18px; fill: none; }
 
+    article svg { width: 18px; fill: none; }
     article p {
       font-size: 13px;
       text-wrap: balance;
       line-height: 1.25;
-      --opacity: 0.8;
+      --opacity: 0.9;
     }
-
     article a {
       position: absolute;
       bottom: 1rem;
@@ -124,28 +141,13 @@
       line-height: 1;
       color: inherit;
     }
-    article a:is(:focus-visible, :hover) {
-      outline: none;
-    }
-    article a:is(:focus-visible, :hover) span {
-      text-decoration: underline;
-      text-underline-offset: 4px;
-    }
+    article a:is(:focus-visible, :hover) { outline: none; }
+    article a:is(:focus-visible, :hover) span { text-decoration: underline; text-underline-offset: 4px; }
     article a span {
       display: inline-block;
       line-height: 18px;
       translate: calc(var(--base) * 0.5);
       font-weight: 500;
-    }
-
-    article img {
-      position: absolute;
-      pointer-events: none;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
     }
 
     /* 컨테이너/그리드 설정 */
@@ -178,7 +180,7 @@
     }
 
     li {
-      background: #0f1b20; /* 다크 카드 */
+      background: #0f1b20;
       position: relative;
       overflow: hidden;
       min-width: var(--base);
@@ -201,7 +203,7 @@
     html { color-scheme: dark; } /* 다크 고정 */
 
     :where(.fluid) {
-      /* 네가 쓰던 fluid 계산식 유지(미지원 브라우저는 위 clamp로 가드됨) */
+      /* 미지원 브라우저는 위 clamp로 가드됨 */
       --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
       --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
       --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
@@ -225,8 +227,7 @@
         Helvetica, Arial, sans-serif, system-ui;
     }
 
-    /* ❌ 눈금(격자) 배경 완전 제거: body::before 규칙 삭제 */
-    /* 곰 링크도 제거(혹시 DOM에 남아 있어도 숨김) */
+    /* 눈금(격자) 배경 완전 제거 (body::before 사용 안 함) */
     .bear-link { display:none !important; }
   }
 
@@ -251,7 +252,7 @@
     tools, understanding the nuances, and shaping experiences with intention.
   </p>
 
-  <!-- ✅ 초기엔 모두 접힘: data-active 없음 -->
+  <!-- ✅ 초기엔 모두 접힘 (data-active 없음) -->
   <ul>
     <li>
       <article>
@@ -273,20 +274,12 @@
     <li>
       <article>
         <h3>CSS Animation</h3>
-        <p>
-          Master CSS animations from your very first set of @keyframes right
-          through to things no one else ever teaches you.
-        </p>
+        <p>Master CSS animations from first @keyframes to advanced craft.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect width="18" height="18" x="3" y="3" rx="2" />
-          <path d="M7 3v18" />
-          <path d="M3 7.5h4" />
-          <path d="M3 12h18" />
-          <path d="M3 16.5h4" />
-          <path d="M17 3v18" />
-          <path d="M17 7.5h4" />
-          <path d="M17 16.5h4" />
+          <path d="M7 3v18" /><path d="M3 7.5h4" /><path d="M3 12h18" />
+          <path d="M3 16.5h4" /><path d="M17 3v18" /><path d="M17 7.5h4" /><path d="M17 16.5h4" />
         </svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=17" alt="" />
@@ -295,10 +288,7 @@
     <li>
       <article>
         <h3>SVG Filters</h3>
-        <p>
-          Shaders on a budget. Learn how to use noise to your advantage whilst
-          making flames and stickers.
-        </p>
+        <p>Use noise & filters to create flames, stickers, and more.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
@@ -310,16 +300,11 @@
     <li>
       <article>
         <h3>Scroll Animation</h3>
-        <p>
-          Take your users on a journey with the joy of tasteful scroll
-          animation. You might not even need JavaScript.
-        </p>
+        <p>Guide users with tasteful, performance-friendly scroll effects.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 17V5a2 2 0 0 0-2-2H4" />
-          <path
-            d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"
-          />
+          <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
         </svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=42" alt="" />
@@ -328,19 +313,14 @@
     <li>
       <article>
         <h3>Taming Canvas</h3>
-        <p>
-          Grasp how to tame the pixel playground and when to do so. Whilst
-          building with "Performance Driven Development".
-        </p>
+        <p>Tame the pixel playground with performance-first patterns.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
           <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
           <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
           <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-          <path
-            d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"
-          />
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
         </svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=128" alt="" />
@@ -349,29 +329,11 @@
     <li>
       <article>
         <h3>Layout Tricks</h3>
-        <p>
-          Do you really need a library for that? Sometimes stepping back and
-          rethinking the problem yields a nifty solution.
-        </p>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path
-            d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"
-          />
-          <path d="m14 7 3 3" />
-          <path d="M5 6v4" />
-          <path d="M19 14v4" />
-          <path d="M10 2v2" />
-          <path d="M7 8H3" />
-          <path d="M21 16h-4" />
-          <path d="M11 3H9" />
+        <p>Sometimes a rethink beats adding another library.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/>
+          <path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=56" alt="" />
@@ -380,27 +342,12 @@
     <li>
       <article>
         <h3>Mastering Time</h3>
-        <p>
-          It's not all just easings and compositions. Time plays a crucial
-          part in various UI patterns that might not seem obvious at first.
-        </p>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M5 22h14" />
-          <path d="M5 2h14" />
-          <path
-            d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"
-          />
-          <path
-            d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"
-          />
+        <p>Time is more than easing—use it as a core design material.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 22h14" /><path d="M5 2h14" />
+          <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+          <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
         </svg>
         <a href="#"><span>Watch now</span></a>
         <img src="https://picsum.photos/720/720?random=39" alt="" />
@@ -409,56 +356,45 @@
   </ul>
 
   <script>
-  /* ===== 카드 확장/접힘 (hover/click/focus) — 초기 전부 접힘 유지 ===== */
+  /* ===== 카드 확장/접힘 (hover/click/focus) — 초기 전부 접힘 ===== */
   (() => {
     const list = document.querySelector('ul');
     if (!list) return;
     const items = list.querySelectorAll('li');
 
-    const setIndex = (event) => {
-      const closest = event.target.closest('li');
-      if (closest) {
-        const index = [...items].indexOf(closest);
-        const cols = new Array(list.children.length)
-          .fill()
-          .map((_, i) => {
-            items[i].dataset.active = (index === i).toString();
-            return index === i ? '10fr' : '1fr';
-          })
-          .join(' ');
-        list.style.setProperty('grid-template-columns', cols);
-      }
-    };
+    function activate(index){
+      items.forEach((li,i)=> li.dataset.active = (i===index).toString());
+      const cols = [...items].map((_,i)=> i===index ? '10fr' : '1fr').join(' ');
+      list.style.gridTemplateColumns = cols;
+    }
+    function collapse(){
+      items.forEach(li=> li.dataset.active = 'false');
+      list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
+    }
+    function setFromEvent(e){
+      const li = e.target.closest('li');
+      if (!li || !list.contains(li)) { collapse(); return; }
+      activate([...items].indexOf(li));
+    }
 
-    list.addEventListener('focus', setIndex, true);
-    list.addEventListener('click', setIndex);
-    list.addEventListener('pointermove', setIndex);
+    // hover + 클릭 + 키보드 포커스
+    list.addEventListener('pointermove', setFromEvent, {passive:true});
+    list.addEventListener('click', setFromEvent);
+    list.addEventListener('focusin', setFromEvent, true);
 
-    // 영역을 벗어나면 자동 접힘
-    const collapse = () => {
-      [...items].forEach((it) => (it.dataset.active = 'false'));
-      list.style.setProperty(
-        'grid-template-columns',
-        \`repeat(\${list.children.length}, 1fr)\`
-      );
-    };
+    // 영역 벗어나면 다시 접힘
     list.addEventListener('pointerleave', collapse);
-    list.addEventListener('focusout', (e) => {
-      if (!list.contains(e.relatedTarget)) collapse();
-    });
+    list.addEventListener('focusout', (e)=> { if (!list.contains(e.relatedTarget)) collapse(); });
 
-    // 초기에도 확실히 접혀 있도록 한 번 호출
+    // 처음 로드 시 확실히 접힘
     collapse();
 
-    // 원본 로직: article width 동기화
-    const resync = () => {
-      const w = Math.max(
-        ...[...items].map((i) => i.offsetWidth || 0),
-        280
-      );
+    // 너가 쓰던 width 동기화
+    function resync(){
+      const w = Math.max(...[...items].map(i=> i.offsetWidth || 0), 280);
       list.style.setProperty('--article-width', w);
-    };
-    window.addEventListener('resize', resync);
+    }
+    addEventListener('resize', resync);
     resync();
   })();
 
@@ -470,22 +406,22 @@
     const seen = sessionStorage.getItem('__title_typed__') === '1';
     const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-    function show() { h1.classList.add('show'); }
-    function typeOnce(speed = 38) {
+    function show(){ h1.classList.add('show'); }
+    function typeOnce(speed = 38){
       h1.textContent = '';
       show();
       let i = 0;
-      const id = setInterval(() => {
-        if (i >= text.length) {
+      const id = setInterval(()=>{
+        if (i >= text.length){
           clearInterval(id);
-          sessionStorage.setItem('__title_typed__', '1');
+          sessionStorage.setItem('__title_typed__','1');
           return;
         }
         h1.append(text[i++]);
       }, speed);
     }
 
-    if (reduce || seen) { h1.textContent = text; show(); }
+    if (reduce || seen){ h1.textContent = text; show(); }
     else { typeOnce(); }
   })();
 
@@ -498,7 +434,7 @@
     let W=0, H=0, DPR=1, pts=[], last=0, raf=0;
     const OPT = {
       density: 0.00007, /* 화면 면적당 점 수 */
-      min: 70, max: 160,        /* 점 개수 클램프 */
+      min: 70, max: 160,        /* 점 개수 */
       r: [0.7, 2.4],            /* 반지름(px) */
       v: [3, 12],               /* 속도(px/s) */
       a: [0.05, 0.18],          /* 불투명도 */
@@ -541,9 +477,9 @@
         p.ph += p.f * dt;
         const tw = .5 + .5*Math.sin(p.ph);
         const al = p.alpha * (.7 + .3*tw);
-        ctx.shadowColor = \`hsla(\${p.h} \${p.s}% \${p.l}% / \${al*1.3})\`;
+        ctx.shadowColor = `hsla(${p.h} ${p.s}% ${p.l}% / ${al*1.3})`;
         ctx.shadowBlur  = OPT.blur * DPR;
-        ctx.fillStyle   = \`hsla(\${p.h} \${p.s}% \${p.l}% / \${al})\`;
+        ctx.fillStyle   = `hsla(${p.h} ${p.s}% ${p.l}% / ${al})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
 
         p.x += p.vx*dt; p.y += p.vy*dt;
