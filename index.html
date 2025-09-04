@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>the craft of ui</title>
 
-  <!-- 영문: Inter / 한글: Pretendard(눈누) -->
+  <!-- 영문 Inter / 한글 Pretendard(눈누) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-  /* Pretendard from Noonnu (weights 400/600/700) */
+  /* Pretendard weights */
   @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
@@ -35,6 +32,15 @@
 
   /* ================= DEMO ================= */
   @layer demo {
+    :root{
+      --gap:8px;
+      --base:clamp(2rem,8cqi,80px);
+      --easing: cubic-bezier(.22,.8,.2,1); /* 더 자연스러운 ease-out */
+      --speed: .6s;                         /* 카드 전개 시간 */
+      --title-dur: .65s;                    /* 제목 전환 시간 */
+      --title-delay-in: .06s;               /* 가로 제목 등장 딜레이 */
+    }
+
     body{
       background:#0d1a1f; color:#e6eef2;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -51,7 +57,6 @@
     }
     h1.fluid.show{opacity:1}
 
-    /* 설명 */
     body>p{
       width:74ch; max-width:calc(100% - 4rem);
       text-wrap:balance; margin-bottom:4rem;
@@ -63,24 +68,16 @@
     li :is(a,p){ opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing); width:fit-content }
     li img{
       filter:grayscale(1) brightness(1.5); scale:1.08;
-      transition-property:filter,scale;
-      transition-duration:calc(var(--speed)*1.2);
-      transition-timing-function:var(--easing);
+      transition: filter calc(var(--speed)*1.2) var(--easing),
+                  scale   calc(var(--speed)*1.2) var(--easing);
     }
     [data-active="true"] :is(a,p){ opacity:1; transition-delay:calc(var(--speed)*.25) }
     [data-active="true"] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay:calc(var(--speed)*.25) }
 
-    /* 카드 레이아웃 */
-    :root{
-      --gap:8px;
-      --base:clamp(2rem,8cqi,80px);
-      --easing:linear(0 0%,.1538 4.09%,.2926 8.29%,.4173 12.63%,.5282 17.12%,.6255 21.77%,.7099 26.61%,.782 31.67%,.8425 37%,.8887 42.23%,.9257 47.79%,.9543 53.78%,.9752 60.32%,.9883 67.11%,.9961 75%,1 100%);
-      --speed:.6s;
-    }
+    /* 리스트/그리드 */
     ul{
       display:grid; container-type:inline-size;
-      /* ✅ 초기엔 전부 접힘 */
-      grid-template-columns:repeat(7,1fr);
+      grid-template-columns:repeat(7,1fr); /* 초기 전부 접힘 */
       gap:var(--gap); list-style:none; justify-content:center; padding:0;
       height:clamp(300px,40dvh,474px); margin:0; width:820px; max-width:calc(100% - 4rem);
       transition:grid-template-columns var(--speed) var(--easing);
@@ -94,40 +91,58 @@
       display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
       padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
     }
+
     /* 이미지가 텍스트를 가리지 않게 */
-    article img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; mask:radial-gradient(100% 100% at 100% 0,#fff,#0000)}
+    article img{
+      position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0;
+      mask: radial-gradient(110% 100% at 100% 0, #fff, #0000); /* 우상단 쪽 은은한 마스킹 */
+    }
     article :where(p,svg,a,.title){position:relative; z-index:1}
     article svg{width:18px; fill:none}
     article p{font-size:13px; text-wrap:balance; line-height:1.25}
 
-    /* ---------- 제목 전환(세로 → 가로) ---------- */
+    /* ---------- 제목 전환(세로 → 가로, 더 자연스럽게) ---------- */
     .title{
       position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
       font-weight:700; letter-spacing:.02em;
+      contain: layout paint; /* 전환 성능 안정화 */
     }
     .title .t{
-      position:absolute;
+      position:absolute; will-change: transform, opacity, filter, letter-spacing, clip-path;
       transition:
-        opacity .5s var(--easing),
-        transform .5s var(--easing),
-        filter .5s var(--easing);
-      will-change: transform, opacity, filter;
+        opacity       var(--title-dur) var(--easing),
+        transform     var(--title-dur) var(--easing),
+        filter        var(--title-dur) var(--easing),
+        letter-spacing var(--title-dur) var(--easing),
+        clip-path     var(--title-dur) var(--easing);
     }
 
-    /* 기본(접힘): 세로 제목 보임, 가로 제목 숨김  */
+    /* 기본(접힘): 세로 제목 보임, 가로 제목은 왼쪽에서 살짝 숨김(마스크) */
     li:not([data-active="true"]) .title .t-v{
-      opacity:1; transform:translateY(0); filter:none;
+      opacity:1; transform:translateY(0) scale(1); filter:none;
     }
     li:not([data-active="true"]) .title .t-h{
-      opacity:0; transform:translateY(8px) scale(.98); filter:blur(.3px);
+      opacity:0;
+      /* 왼쪽에서 들어올 준비: 약간 기울고 간격 넓힘 + 부분 마스크 */
+      transform: translateX(-14px) skewX(-3deg);
+      letter-spacing:.06em;
+      clip-path: inset(0 35% 0 0 round 2px);
+      filter: blur(.25px);
     }
 
-    /* 활성(hover/click): 가로 제목 등장, 세로 제목 페이드아웃 */
+    /* 활성(hover/click): 가로 제목이 부드럽게 유입, 세로 제목은 상단으로 얕게 사라짐 */
     li[data-active="true"] .title .t-v{
-      opacity:0; transform:translateY(-6px) scale(.98); filter:blur(.4px);
+      opacity:0; transform:translateY(-8px) scale(.985);
+      filter: blur(.2px);
+      transition-delay: 0s; /* 먼저 빠지기 */
     }
     li[data-active="true"] .title .t-h{
-      opacity:1; transform:translate(0,0); filter:none;
+      opacity:1;
+      transform: translateX(0) skewX(0deg);
+      letter-spacing: .01em;              /* 타이핑 후 안정되는 느낌 */
+      clip-path: inset(0 0 0 0 round 2px);/* 마스크 열림 */
+      filter: none;
+      transition-delay: var(--title-delay-in); /* 세로가 물러난 뒤 살짝 늦게 등장 */
     }
 
     /* 세로 제목 배치 (책등 느낌) */
@@ -154,7 +169,7 @@
     }
     html{color-scheme:dark}
     :where(.fluid){
-      /* 일부 브라우저 pow 미지원 -> 위 clamp 폴백 사용 */
+      /* pow() 미지원 브라우저는 아래 clamp 폴백 사용 */
       --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
       --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
       --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
@@ -187,7 +202,7 @@
     tools, understanding the nuances, and shaping experiences with intention.
   </p>
 
-  <!-- ✅ 초기 모두 접힘 (hover/click 시에만 펼침) -->
+  <!-- ✅ 카드들 -->
   <ul>
     <li>
       <article>
