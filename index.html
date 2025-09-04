@@ -4,7 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>the craft of ui</title>
+
+  <!-- 영문: Inter / 한글: Pretendard(눈누) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
   <style>
+  /* Pretendard from Noonnu (weights 400/600/700) */
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
   @import url('https://unpkg.com/normalize.css') layer(normalize);
   @layer normalize, base, demo;
 
@@ -14,17 +39,23 @@
       background:#0d1a1f; color:#e6eef2;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       gap:1rem; padding-block:2rem; min-height:100svh;
+      font-family: Inter, Pretendard, system-ui, -apple-system, "Segoe UI", Roboto,
+                   "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
     }
     h1,p{margin:0}
-    /* 상단 제목: 첫 방문만 타이핑 */
-    h1.fluid{font-size:clamp(28px,6vw,56px); opacity:0; transition:opacity .35s ease}
+
+    /* 상단 제목: 첫 방문 1회 타이핑 */
+    h1.fluid{
+      font-size:clamp(28px,6vw,56px); font-weight:700; letter-spacing:.01em;
+      opacity:0; transition:opacity .35s ease;
+    }
     h1.fluid.show{opacity:1}
 
     /* 설명 */
     body>p{
       width:74ch; max-width:calc(100% - 4rem);
-      text-wrap:balance; font-family:monospace; margin-bottom:4rem;
-      line-height:1.5; opacity:.85; font-weight:400;
+      text-wrap:balance; margin-bottom:4rem;
+      line-height:1.55; opacity:.9; font-weight:400;
     }
     @media (max-width:768px){ body>p{ text-align:center } }
 
@@ -56,12 +87,12 @@
     }
     li{
       background:#0f1b20; position:relative; overflow:hidden;
-      min-width:var(--base); border-radius:8px; border:1px solid rgba(255,255,255,.12);
+      min-width:var(--base); border-radius:10px; border:1px solid rgba(255,255,255,.12);
     }
     article{
       position:absolute; inset:0; width:calc(var(--article-width)*1px); height:100%;
       display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
-      padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden; font-family:monospace;
+      padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
     }
     /* 이미지가 텍스트를 가리지 않게 */
     article img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; mask:radial-gradient(100% 100% at 100% 0,#fff,#0000)}
@@ -69,39 +100,49 @@
     article svg{width:18px; fill:none}
     article p{font-size:13px; text-wrap:balance; line-height:1.25}
 
-    /* ---------- 제목 전환(가로 → 세로) ---------- */
+    /* ---------- 제목 전환(세로 → 가로) ---------- */
     .title{
       position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
       font-weight:700; letter-spacing:.02em;
     }
-    .title .t{position:absolute; transition:opacity .45s var(--easing), transform .45s var(--easing)}
-    /* 기본: 가로 제목 보임, 세로 제목 숨김 */
-    li:not([data-active="true"]) .title .t-h{
-      opacity:1; transform:translateY(0)
+    .title .t{
+      position:absolute;
+      transition:
+        opacity .5s var(--easing),
+        transform .5s var(--easing),
+        filter .5s var(--easing);
+      will-change: transform, opacity, filter;
     }
+
+    /* 기본(접힘): 세로 제목 보임, 가로 제목 숨김  */
     li:not([data-active="true"]) .title .t-v{
-      opacity:0; transform:translateY(8px) scale(.98)
+      opacity:1; transform:translateY(0); filter:none;
     }
-    /* 활성(hover/click): 세로 제목이 좌측 상단 ‘책등’처럼 등장, 가로는 자연스럽게 페이드아웃 */
-    li[data-active="true"] .title .t-h{
-      opacity:0; transform:translateY(-6px) scale(.98)
+    li:not([data-active="true"]) .title .t-h{
+      opacity:0; transform:translateY(8px) scale(.98); filter:blur(.3px);
     }
+
+    /* 활성(hover/click): 가로 제목 등장, 세로 제목 페이드아웃 */
     li[data-active="true"] .title .t-v{
-      opacity:1; transform:translate(0,0)
+      opacity:0; transform:translateY(-6px) scale(.98); filter:blur(.4px);
     }
-    /* 세로 제목 배치 */
+    li[data-active="true"] .title .t-h{
+      opacity:1; transform:translate(0,0); filter:none;
+    }
+
+    /* 세로 제목 배치 (책등 느낌) */
     .title .t-v{
       writing-mode:vertical-rl; text-orientation:mixed;
       left:calc(var(--base)*.35); top:1rem; transform-origin:top left;
-      font-weight:700; letter-spacing:.08em;
+      font-weight:700; letter-spacing:.08em; font-size:.98rem;
       align-self:start; justify-self:start;
     }
-    /* 가로 제목은 중앙에서 보여줌(접힘에서도 읽기 쉬움) */
+    /* 가로 제목: 펼쳐졌을 때 상단 좌측 */
     .title .t-h{
       writing-mode:initial; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
-      padding-inline:.5rem; font-size:.95rem;
-      /* 좁은 폭 대비 약간 축소 */
-      transform-origin:center; will-change:transform,opacity;
+      top:1rem; left:calc(var(--base) * .5);
+      font-size:1rem; font-weight:700; text-transform:uppercase;
+      transform-origin:left center;
     }
   }
 
@@ -125,7 +166,7 @@
       font-size:var(--fluid-type);
     }
     *,*:before,*:after{box-sizing:border-box}
-    body{display:grid; place-items:center; min-height:100vh; font-family:'SF Pro Text','SF Pro Icons','AOS Icons','Helvetica Neue',Helvetica,Arial,sans-serif,system-ui}
+    body{display:grid; place-items:center; min-height:100vh}
     /* 눈금/곰 제거 */
     .bear-link{display:none !important}
   }
