@@ -1,130 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Craft of UI — Vertical Hover Spread</title>
-
-  <!-- 한글/영문 겸용 폰트 -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
-
-  <!-- 메인 스타일 -->
-  <link rel="stylesheet" href="./css/style.css">
+  <title>TRPG Handouts</title>
+  <link rel="preload" href="trpg-handouts/css/abyss.css" as="style" />
+  <link rel="stylesheet" href="trpg-handouts/css/style.css" />
 </head>
 <body>
-  <!-- 상단 타이핑 타이틀 -->
-  <header class="site-header">
-    <h1 id="siteTitle" aria-label="the craft of ui"></h1>
-    <p class="lead">
-      Unlock the art and science of interface development. This isn’t just about pushing pixels or following documentation — it’s about mastering the tools, understanding the nuances, and shaping experiences with intention.
-    </p>
-  </header>
+  <main class="wrap">
+    <!-- 카드 예시 1: 기본 가로 제목 -->
+    <article class="handout" tabindex="0">
+      <header class="handout__title">
+        <span class="title-text type-once" data-typeonce="true">폐허의 기록</span>
+        <span class="title-caret" aria-hidden="true"></span>
+      </header>
+      <section class="handout__content">
+        <p>
+          오래된 문서 조각. 가장자리는 그을음과 습기에 젖어 있다. <br/>
+          ‘…그 문은 우리를 기억하지 않는다.’
+        </p>
+      </section>
+    </article>
 
-  <!-- 카드 그리드 -->
-  <main>
-    <ul id="cardList" class="cards" aria-label="Sections">
-      <!-- 기본: 모두 접힘(아무 카드도 활성화 아님) -->
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">THE CRAFT</div>
-          <h3 class="htitle">The Craft</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop" alt="The Craft image">
-          </div>
-          <p class="desc">
-            Gain the confidence to build anything you envision, transforming motion, interaction, and design principles into second nature.
-          </p>
-          <a class="cta" href="#" aria-label="Watch now">Watch now</a>
-        </article>
-      </li>
+    <!-- 카드 예시 2: 기본 가로 제목 -->
+    <article class="handout" tabindex="0">
+      <header class="handout__title">
+        <span class="title-text type-once" data-typeonce="true">밤의 증언록</span>
+        <span class="title-caret" aria-hidden="true"></span>
+      </header>
+      <section class="handout__content">
+        <ul>
+          <li>목격 시각: 02:17</li>
+          <li>위치: 동쪽 제방 근처</li>
+          <li>비고: 기록자 서명 없음</li>
+        </ul>
+      </section>
+    </article>
 
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">CSS ANIMATION</div>
-          <h3 class="htitle">CSS Animation</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1600&auto=format&fit=crop" alt="CSS Animation image">
-          </div>
-          <p class="desc">
-            Master CSS animations from your very first set of @keyframes right through to things no one else ever teaches you.
-          </p>
-          <a class="cta" href="#">Watch now</a>
-        </article>
-      </li>
+    <!-- 카드 예시 3: 오른쪽 세로 제목 카드 -->
+    <article class="handout handout--vertical" tabindex="0">
+      <header class="handout__title handout__title--vertical">
+        <span class="title-text type-once" data-typeonce="true">침묵의 문</span>
+        <span class="title-caret" aria-hidden="true"></span>
+      </header>
+      <section class="handout__content">
+        <p>
+          문 너머에서 들려오는 건 발걸음이 아니라 바람의 이름이었다. <br/>
+          의식을 망치면 대가를 치른다.
+        </p>
+      </section>
+    </article>
 
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">SVG FILTERS</div>
-          <h3 class="htitle">SVG Filters</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1445251836269-d158eaa028a6?q=80&w=1600&auto=format&fit=crop" alt="SVG Filters image">
-          </div>
-          <p class="desc">
-            Shaders on a budget. Learn how to use noise to your advantage whilst making flames and stickers.
-          </p>
-          <a class="cta" href="#">Watch now</a>
-        </article>
-      </li>
-
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">SCROLL ANIMATION</div>
-          <h3 class="htitle">Scroll Animation</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop" alt="Scroll Animation image">
-          </div>
-          <p class="desc">
-            Take your users on a journey with the joy of tasteful scroll animation. You might not even need JavaScript.
-          </p>
-          <a class="cta" href="#">Watch now</a>
-        </article>
-      </li>
-
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">TAMING CANVAS</div>
-          <h3 class="htitle">Taming Canvas</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?q=80&w=1600&auto=format&fit=crop" alt="Taming Canvas image">
-          </div>
-          <p class="desc">
-            Grasp how to tame the pixel playground and when to do so. Whilst building with “Performance Driven Development”.
-          </p>
-          <a class="cta" href="#">Watch now</a>
-        </article>
-      </li>
-
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">LAYOUT TRICKS</div>
-          <h3 class="htitle">Layout Tricks</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1600&auto=format&fit=crop" alt="Layout Tricks image">
-          </div>
-          <p class="desc">
-            Do you really need a library for that? Sometimes stepping back and rethinking the problem yields a nifty solution.
-          </p>
-          <a class="cta" href="#">Watch now</a>
-        </article>
-      </li>
-
-      <li aria-expanded="false">
-        <article class="card">
-          <div class="vtitle">MASTERING TIME</div>
-          <h3 class="htitle">Mastering Time</h3>
-          <div class="media">
-            <img src="https://images.unsplash.com/photo-1520976029652-8dfc47d7d29b?q=80&w=1600&auto=format&fit=crop" alt="Mastering Time image">
-          </div>
-          <p class="desc">
-            It’s not all just easings and compositions. Time plays a crucial part in various UI patterns that might not seem obvious at first.
-          </p>
-          <a class="cta" href="#">Watch now</a>
-        </article>
-      </li>
-    </ul>
   </main>
 
-  <!-- 메인 스크립트 (경로 확인!) -->
-  <script src="./js/app.js" defer></script>
+  <script src="trpg-handouts/css/app.js"></script>
 </body>
 </html>
