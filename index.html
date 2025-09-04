@@ -40,7 +40,8 @@
       --speed: .45s;          /* 카드 전개 시간 */
       --title-dur: .55s;      /* 제목 전환 시간 */
       --title-delay-in: .06s; /* 가로 제목 등장 딜레이 */
-      --spine-w: clamp(20px, calc(var(--base)*0.55), 58px); /* 접힘용 이미지 스트립 너비 */
+      --cover-w: clamp(58px, calc(var(--base)*1.3), 120px); /* 접힘 커버 너비 */
+      --cover-r: 10px;        /* 접힘 커버 모서리 */
     }
 
     body{
@@ -83,7 +84,7 @@
     }
     li{
       background:#0f1b20; position:relative; overflow:hidden;
-      min-width:var(--base); border-radius:10px; border:1px solid rgba(255,255,255,.12);
+      min-width:var(--base); border-radius:12px; border:1px solid rgba(255,255,255,.12);
       contain: layout paint;
     }
     article{
@@ -101,21 +102,30 @@
       transform: scale(1.06);
     }
 
-    /* 🟠 접힘 썸네일(책등 느낌) — cover로 깔끔, 펼치면 사라짐 */
+    /* 🟣 접힘 커버(팩 표지) — 중앙에 작은 카드 형태 */
     article::after{
       content:"";
-      position:absolute; top:0; left:calc(var(--base)*0.18);
-      width:var(--spine-w); height:100%;
-      background: center/cover no-repeat var(--img, none);
-      border-radius:8px;
+      position:absolute; left:50%; top:50%;
+      width:var(--cover-w); aspect-ratio: 3/4; /* 세로형 커버 비율 */
+      transform: translate(-50%, -50%) rotate(-1.2deg);
+      border-radius: var(--cover-r);
+      background:
+        /* 글로시 하이라이트 */
+        linear-gradient(120deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.1) 12%, rgba(255,255,255,0) 30%),
+        /* 아래쪽 빈티지 음영 */
+        linear-gradient( to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,.22) 100%),
+        center/cover no-repeat var(--img, none);
       box-shadow:
-        0 0 0 1px rgba(255,255,255,.08),
-        inset 0 -40px 60px rgba(0,0,0,.18); /* 아래쪽 살짝 어둡게 */
-      opacity:0; transform:translateZ(0) scale(1.04);
+        0 10px 20px rgba(0,0,0,.35),
+        0 0 0 1px rgba(255,255,255,.10),
+        inset 0 0 0 1px rgba(255,255,255,.06);
+      filter: saturate(1.05) contrast(1.02) brightness(.98);
+      opacity:0; /* 기본은 안 보이게, 접힘 상태에서만 보임 */
       transition: opacity var(--speed) var(--easing),
                   transform var(--speed) var(--easing),
                   filter var(--speed) var(--easing);
-      pointer-events:none; z-index:1;
+      z-index:1;
+      pointer-events:none;
     }
 
     /* 🟢 실제 이미지는 'contain' + 이벤트 안 가로채게 */
@@ -125,22 +135,25 @@
       z-index:1;
       pointer-events: none;
       transition: opacity var(--speed) var(--easing);
-      opacity:1; /* 기본값 */
+      opacity:1; /* 펼침에서 보임 */
     }
 
-    /* 접힘 상태: contain 이미지는 감추고, 썸네일 스트립 보여주기 */
+    /* 접힘 상태: contain 이미지는 감추고, 팩 커버 보여주기 */
     li:not([data-active="true"]) article img{
       opacity:0;
     }
     li:not([data-active="true"]) article::after{
       opacity:1;
-      filter: grayscale(.12) contrast(1.05) brightness(.93);
+      transform: translate(-50%, -50%) rotate(-1.2deg);
     }
 
-    /* 펼침 상태: 썸네일은 사라지고 실제 이미지 노출 */
+    /* 펼침 상태: 커버는 사라지고 실제 이미지 노출 */
     li[data-active="true"] article::after{
-      opacity:0; transform:scale(1);
+      opacity:0;
+      transform: translate(-50%, -50%) rotate(0deg) scale(.98);
+      filter: brightness(.96);
     }
+
     /* 텍스트/아이콘/제목은 위 레이어 */
     article :where(p,svg,.title){ position:relative; z-index:2 }
     article svg{width:18px; fill:none}
@@ -297,194 +310,4 @@
           <span class="t t-v" aria-hidden="true">Taming Canvas</span>
         </h3>
         <p>Tame the pixel playground with performance-driven patterns.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-        <img src="https://picsum.photos/720/720?random=128" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3 class="title" aria-label="Layout Tricks">
-          <span class="t t-h">Layout Tricks</span>
-          <span class="t t-v" aria-hidden="true">Layout Tricks</span>
-        </h3>
-        <p>Sometimes a rethink beats adding another library.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
-        <img src="https://picsum.photos/720/720?random=56" alt="" />
-      </article>
-    </li>
-    <li>
-      <article>
-        <h3 class="title" aria-label="Mastering Time">
-          <span class="t t-h">Mastering Time</span>
-          <span class="t t-v" aria-hidden="true">Mastering Time</span>
-        </h3>
-        <p>Time isn’t just easing — treat it as a core design material.</p>
-        <svg xmlns="http://www.w3.org/0 24 24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l-4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
-        <img src="https://picsum.photos/720/720?random=39" alt="" />
-      </article>
-    </li>
-  </ul>
-
-  <script>
-  /* ===== 카드 확장/접힘 — 빠른 반응 버전 ===== */
-  (() => {
-    const list = document.querySelector('ul');
-    if (!list) return;
-    const items = Array.from(list.querySelectorAll('li'));
-    let active = -1;
-    let raf = 0;
-
-    const setCols = (idx) => {
-      list.style.gridTemplateColumns = items.map((_, i) => (i === idx ? '10fr' : '1fr')).join(' ');
-    };
-
-    const applyActive = (idx) => {
-      if (idx === active) return;              // 중복 방지
-      active = idx;
-      items.forEach((li, i) => (li.dataset.active = (i === active).toString()));
-      setCols(active);
-    };
-
-    const collapse = () => {
-      if (active === -1) return;
-      active = -1;
-      items.forEach((li) => (li.dataset.active = 'false'));
-      list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
-    };
-
-    const schedule = (idx) => {
-      if (idx === active) return;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => applyActive(idx));
-    };
-
-    // pointerenter 로 즉시 반응
-    items.forEach((li, i) => {
-      li.addEventListener('pointerenter', () => schedule(i), { passive: true });
-      li.addEventListener('click', () => applyActive(i));
-      li.addEventListener('focusin', () => applyActive(i));
-    });
-
-    // 컨테이너에서만 접힘 처리
-    list.addEventListener('pointerleave', collapse);
-    list.addEventListener('focusout', (e) => {
-      if (!list.contains(e.relatedTarget)) collapse();
-    });
-
-    // 초기 접힘
-    collapse();
-  })();
-
-  /* ===== 이미지 URL을 CSS 변수(--img)로 넣어서 블러/썸네일에 재사용 ===== */
-  (() => {
-    const arts = document.querySelectorAll('article');
-    arts.forEach((a) => {
-      const img = a.querySelector('img');
-      if (!img) return;
-      const apply = () => a.style.setProperty('--img', `url("${img.currentSrc || img.src}")`);
-      if (img.complete) apply();
-      else img.addEventListener('load', apply, { once: true });
-    });
-  })();
-
-  /* ===== 상단 제목: 첫 방문 1회만 타이핑 ===== */
-  (() => {
-    const h1 = document.querySelector('h1.fluid');
-    if (!h1) return;
-    const text = h1.textContent.trim();
-    const seen = sessionStorage.getItem('__title_typed__') === '1';
-    const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-    function show(){ h1.classList.add('show'); }
-    function typeOnce(speed = 34){
-      h1.textContent = '';
-      show();
-      let i = 0;
-      const id = setInterval(()=>{
-        if (i >= text.length){
-          clearInterval(id);
-          sessionStorage.setItem('__title_typed__','1');
-          return;
-        }
-        h1.append(text[i++]);
-      }, speed);
-    }
-
-    if (reduce || seen){ h1.textContent = text; show(); }
-    else { typeOnce(); }
-  })();
-
-  /* ===== 배경: 은은하게 움직이는 점(Canvas) ===== */
-  (() => {
-    const cvs = document.getElementById('bg-dots');
-    if (!cvs) return;
-    const ctx = cvs.getContext('2d', { alpha: true });
-
-    let W=0, H=0, DPR=1, pts=[], last=0, raf=0;
-    const OPT = {
-      density: 0.00006,
-      min: 60, max: 140,
-      r: [0.7, 2.2],
-      v: [3, 11],
-      a: [0.05, 0.16],
-      hz: [.10, .24],
-      blur: 6
-    };
-    const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    const rnd = (a,b)=> a + Math.random()*(b-a);
-
-    function resize(){
-      DPR = Math.min(2, devicePixelRatio || 1);
-      W = cvs.width  = Math.floor(innerWidth  * DPR);
-      H = cvs.height = Math.floor(innerHeight * DPR);
-      cvs.style.width  = innerWidth + 'px';
-      cvs.style.height = innerHeight + 'px';
-      spawn();
-    }
-    function spawn(){
-      const area = innerWidth * innerHeight;
-      const n = Math.max(OPT.min, Math.min(OPT.max, Math.round(area * OPT.density)));
-      pts = Array.from({length:n}, () => {
-        const r  = rnd(...OPT.r) * DPR;
-        const sp = rnd(...OPT.v) * DPR;
-        const a  = Math.random() * Math.PI * 2;
-        return {
-          x: Math.random()*W, y: Math.random()*H, r,
-          vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
-          h: 200 + Math.random()*20, s: 28 + Math.random()*18, l: 76 + Math.random()*8,
-          alpha: rnd(...OPT.a),
-          ph: Math.random()*Math.PI*2,
-          f: rnd(...OPT.hz)*2*Math.PI
-        };
-      });
-    }
-    function frame(t){
-      const dt = Math.min(.05, (t-(last||t))/1000); last = t;
-      ctx.clearRect(0,0,W,H);
-      ctx.globalCompositeOperation = 'lighter';
-      for (const p of pts){
-        p.ph += p.f * dt;
-        const tw = .5 + .5*Math.sin(p.ph);
-        const al = p.alpha * (.7 + .3*tw);
-        ctx.shadowColor = `hsla(${p.h} ${p.s}% ${p.l}% / ${al*1.2})`;
-        ctx.shadowBlur  = OPT.blur * DPR;
-        ctx.fillStyle   = `hsla(${p.h} ${p.s}% ${p.l}% / ${al})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
-
-        p.x += p.vx*dt; p.y += p.vy*dt;
-        if (p.x < -5) p.x = W+5; else if (p.x > W+5) p.x = -5;
-        if (p.y < -5) p.y = H+5; else if (p.y > H+5) p.y = -5;
-      }
-      raf = requestAnimationFrame(frame);
-    }
-    function start(){
-      cancelAnimationFrame(raf); resize();
-      if (reduce){ ctx.clearRect(0,0,W,H); return; }
-      raf = requestAnimationFrame(frame);
-    }
-    addEventListener('resize', resize);
-    start();
-  })();
-  </script>
-</body>
-</html>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4
