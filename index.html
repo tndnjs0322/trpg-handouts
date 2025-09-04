@@ -1,318 +1,251 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Cards — vertical spine left, text right</title>
-<style>
-  :root{
-    --bg:#000;               /* 페이지 배경(눈금 없음) */
-    --card-bg:#000;          /* 카드 바탕 */
-    --text:#fff;             /* 기본 텍스트 */
-    --muted:#d9d9d9;         /* 설명 텍스트 */
-    --border:#fff;           /* 카드 테두리 */
-    --radius:12px;
-    --gap:14px;
-    --spine-w:44px;          /* 세로 제목 영역 폭 (스크린샷 감성) */
-    --pad:20px;              /* 카드 내부 패딩 */
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font:14px/1.6 ui-sans-serif,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,sans-serif;
-    display:grid; place-items:center;
-    padding:28px 18px;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>the craft of ui</title>
+  <style>
+  @import url('https://unpkg.com/normalize.css') layer(normalize);
+
+  @layer normalize, base, demo;
+
+  /* -------------------- DEMO (네 스타일 유지 + 수정) -------------------- */
+  @layer demo {
+    body {
+      /* 배경 고정(네가 원한 남청색 톤) + 눈금 제거 */
+      background: #0d1a1f;
+      color: #e6eef2;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+      padding-block: 2rem;
+      min-height: 100svh; /* 캔버스 배경과 함께 꽉 채움 */
+    }
+
+    h1, p { margin: 0; }
+
+    /* 상단 제목(첫 방문 타이핑 후 보이기) */
+    h1.fluid {
+      --font-size-min: 22;
+      --font-level: 4.25;
+      /* pow() 미지원 브라우저 대비 가드 */
+      font-size: clamp(28px, 6vw, 56px);
+
+      opacity: 0;
+      transition: opacity .35s ease;
+    }
+    h1.fluid.show { opacity: 1; }
+
+    h3 { white-space: nowrap; margin: 0; }
+
+    /* 상단 설명문 */
+    body > p {
+      width: 74ch;
+      max-width: calc(100% - 4rem);
+      text-wrap: balance;
+      font-family: monospace;
+      margin-bottom: 4rem;
+      line-height: 1.5;
+      opacity: 0.85;
+      font-weight: 400;
+    }
+    @media (max-width: 768px) {
+      body > p { text-align: center; }
+    }
+
+    /* 카드 내부 페이드 */
+    li :is(svg, h3) {
+      opacity: 0.6;
+      transition: opacity calc(var(--speed) * 1.2) var(--easing);
+    }
+    li :is(a, p) {
+      opacity: 0;
+      transition: opacity calc(var(--speed) * 1.2) var(--easing);
+      width: fit-content;
+    }
+    li img {
+      filter: grayscale(1) brightness(1.5);
+      scale: 1.1;
+      transition-property: filter, scale;
+      transition-duration: calc(var(--speed) * 1.2);
+      transition-timing-function: var(--easing);
+    }
+    [data-active='true'] :is(a, p, h3, svg) { opacity: var(--opacity, 1); }
+    [data-active='true'] :is(a, p) { transition-delay: calc(var(--speed) * 0.25); }
+    [data-active='true'] img {
+      filter: grayscale(0) brightness(1);
+      scale: 1;
+      transition-delay: calc(var(--speed) * 0.25);
+    }
+
+    /* 카드 배치/타이포 (네 구조 유지) */
+    article {
+      width: calc(var(--article-width) * 1px);
+      height: 100%;
+      position: absolute;
+      font-family: monospace;
+      top: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding-inline: calc(var(--base) * 0.5 - 9px);
+      padding-bottom: 1rem;
+      overflow: hidden;
+    }
+    article h3 {
+      position: absolute;
+      top: 1rem;
+      left: calc(var(--base) * 0.5);
+      transform-origin: 0 50%;
+      rotate: 90deg;
+      font-size: 1rem;
+      font-weight: 300;
+      text-transform: uppercase;
+      font-family: monospace;
+    }
+    article svg { width: 18px; fill: none; }
+
+    article p {
+      font-size: 13px;
+      text-wrap: balance;
+      line-height: 1.25;
+      --opacity: 0.8;
+    }
+
+    article a {
+      position: absolute;
+      bottom: 1rem;
+      height: 18px;
+      line-height: 1;
+      color: inherit;
+    }
+    article a:is(:focus-visible, :hover) {
+      outline: none;
+    }
+    article a:is(:focus-visible, :hover) span {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    article a span {
+      display: inline-block;
+      line-height: 18px;
+      translate: calc(var(--base) * 0.5);
+      font-weight: 500;
+    }
+
+    article img {
+      position: absolute;
+      pointer-events: none;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      mask: radial-gradient(100% 100% at 100% 0, #fff, #0000);
+    }
+
+    /* 컨테이너/그리드 설정 (네 값 유지) */
+    :root {
+      --gap: 8px;
+      --base: clamp(2rem, 8cqi, 80px);
+      --easing: linear(
+        0 0%, 0.1538 4.09%, 0.2926 8.29%, 0.4173 12.63%, 0.5282 17.12%,
+        0.6255 21.77%, 0.7099 26.61%, 0.782 31.67%, 0.8425 37%,
+        0.8887 42.23%, 0.9257 47.79%, 0.9543 53.78%, 0.9752 60.32%,
+        0.9883 67.11%, 0.9961 75%, 1 100%
+      );
+      --speed: 0.6s;
+    }
+
+    ul {
+      display: grid;
+      container-type: inline-size;
+      grid-template-columns: 10fr 1fr 1fr 1fr 1fr 1fr 1fr; /* 첫 카드 확장 */
+      gap: var(--gap);
+      list-style-type: none;
+      justify-content: center;
+      padding: 0;
+      height: clamp(300px, 40dvh, 474px);
+      margin: 0;
+      width: 820px;
+      max-width: calc(100% - 4rem);
+      transition: grid-template-columns var(--speed) var(--easing);
+    }
+
+    li {
+      background: #0f1b20; /* 다크 카드 */
+      position: relative;
+      overflow: hidden;
+      min-width: var(--base);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
   }
 
-  /* ========== 레이아웃 ========== */
-  ul#cards{
-    list-style:none; padding:0; margin:0;
-    display:grid; gap:var(--gap);
-    grid-template-columns: repeat(7, 1fr);   /* JS가 활성 카드에 맞춰 바꿈 */
-    width:min(1100px, 100%);
-    height:340px;                             /* 카드 높이 */
-  }
-  li.card{
-    position:relative; overflow:hidden; cursor:pointer; min-width:60px;
-    background:var(--card-bg);
-    border:2px solid var(--border);
-    border-radius:var(--radius);
-    height:100%;
+  /* -------------------- BASE (fluid 유지, 눈금 제거) -------------------- */
+  @layer base {
+    :root {
+      --font-size-min: 16;
+      --font-size-max: 20;
+      --font-ratio-min: 1.2;
+      --font-ratio-max: 1.33;
+      --font-width-min: 375;
+      --font-width-max: 1500;
+    }
+
+    html { color-scheme: dark; } /* 다크 고정 */
+
+    :where(.fluid) {
+      /* 네가 쓰던 fluid 계산식 유지(미지원 브라우저는 위 clamp로 가드됨) */
+      --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
+      --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
+      --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
+      --fluid-type: clamp(
+        (var(--fluid-min) / 16) * 1rem,
+        ((var(--fluid-min) / 16) * 1rem) -
+          (((var(--fluid-preferred) * var(--font-width-min)) / 16) * 1rem) +
+          (var(--fluid-preferred) * var(--variable-unit, 100vi)),
+        (var(--fluid-max) / 16) * 1rem
+      );
+      font-size: var(--fluid-type);
+    }
+
+    *, *:after, *:before { box-sizing: border-box; }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      font-family: 'SF Pro Text','SF Pro Icons','AOS Icons','Helvetica Neue',
+        Helvetica, Arial, sans-serif, system-ui;
+    }
+
+    /* ❌ 눈금(격자) 배경 완전 제거: body::before 규칙 삭제 */
+    /* 곰 링크도 제거(혹시 DOM에 남아 있어도 숨김) */
+    .bear-link { display:none !important; }
   }
 
-  /* ========== 세로 제목(책등) ========== */
-  .spine{
-    position:absolute;
-    inset:8px auto 8px 8px;
-    width:var(--spine-w);
-    display:flex; align-items:center; justify-content:center;
-    writing-mode:vertical-rl; text-orientation:mixed;
-    letter-spacing:.12em; text-transform:uppercase;
-    font-weight:800; font-size:14px;
-    color:var(--text);
-    user-select:none; pointer-events:none;
+  /* 배경 캔버스 레이어 */
+  #bg-dots{
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
   }
-
-  /* ========== 본문(오른쪽 넓게) ========== */
-  .content{
-    position:absolute;
-    left: calc(var(--spine-w) + var(--pad) + 8px);
-    right: var(--pad);
-    top: calc(var(--pad) + 6px);
-    bottom: calc(var(--pad) + 36px); /* CTA 공간 */
-    display:flex; align-items:flex-end; /* 스샷처럼 아래쪽에 카피 배치 */
-    opacity:0; visibility:hidden;
-    transition:opacity .25s ease, visibility .25s ease;
-  }
-  .content p{
-    margin:0;
-    color:var(--muted);
-    font-weight:600;
-    line-height:1.55;
-    max-width: 520px; /* 읽기 폭 */
-  }
-
-  /* ========== CTA (왼쪽 정렬, 하단) ========== */
-  .cta{
-    position:absolute;
-    left: calc(var(--spine-w) + var(--pad) + 8px);
-    bottom: 10px;
-    display:inline-flex; align-items:center; gap:10px;
-    color:var(--text); text-decoration:none; font-weight:700;
-    opacity:0; transition:opacity .25s ease .05s;
-  }
-  .cta svg{width:18px; height:18px; display:block}
-
-  /* ========== 아이콘(접힘 상태에서만 하단 중앙) ========== */
-  .icon-only{
-    position:absolute; left:50%; transform:translateX(-50%);
-    bottom:10px; opacity:.9;
-  }
-  .icon-only svg{width:18px; height:18px; display:block}
-
-  /* ========== 상태 전환 ========== */
-  .card[data-active="true"] .content{opacity:1; visibility:visible}
-  .card[data-active="true"] .cta{opacity:1}
-  .card[data-active="true"] .icon-only{display:none}
-
-  /* 키보드 접근성 */
-  .card:focus-visible{outline:3px solid #3ae; outline-offset:2px}
-</style>
+  </style>
 </head>
 <body>
+  <!-- 움직이는 점 배경 -->
+  <canvas id="bg-dots" aria-hidden="true"></canvas>
 
-<ul id="cards">
-  <!-- 1 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">THE CRAFT</h3>
-    <div class="content">
-      <p>
-        Gain the confidence to build anything you envision, transforming motion,
-        interaction, and design principles into second nature.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 22h14M5 2h14" />
-        <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
-        <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m12 2 4 7-4 13L8 9l4-7Z" />
-      </svg>
-    </div>
-  </li>
-
-  <!-- 2 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">CSS ANIMATION</h3>
-    <div class="content">
-      <p>
-        Master CSS animations from your very first set of @keyframes right
-        through to things no one else ever teaches you.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect width="18" height="18" x="3" y="3" rx="2" />
-        <path d="M7 3v18M3 7.5h4M3 12h18M3 16.5h4M17 3v18M17 7.5h4M17 16.5h4" />
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect width="18" height="18" x="3" y="3" rx="2"/>
-      </svg>
-    </div>
-  </li>
-
-  <!-- 3 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">SVG FILTERS</h3>
-    <div class="content">
-      <p>
-        Shaders on a budget. Learn how to use noise to your advantage whilst
-        making flames and stickers.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="22 3 2 3 12 14 22 3"/>
-      </svg>
-    </div>
-  </li>
-
-  <!-- 4 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">SCROLL ANIMATION</h3>
-    <div class="content">
-      <p>
-        Take your users on a journey with the joy of tasteful scroll animation.
-        You might not even need JavaScript.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 17V5a2 2 0 0 0-2-2H4"/>
-        <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/>
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2v20M6 6h12M6 12h12M6 18h12"/>
-      </svg>
-    </div>
-  </li>
-
-  <!-- 5 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">TAMING CANVAS</h3>
-    <div class="content">
-      <p>
-        Grasp how to tame the pixel playground and when to do so.
-        Whilst building with “Performance Driven Development”.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
-        <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
-        <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
-        <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
-        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="8"/>
-      </svg>
-    </div>
-  </li>
-
-  <!-- 6 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">LAYOUT TRICKS</h3>
-    <div class="content">
-      <p>
-        Do you really need a library for that? Sometimes stepping back and
-        rethinking the problem yields a nifty solution.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/>
-        <path d="m14 7 3 3"/>
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 4h16v16H4zM4 14h16"/>
-      </svg>
-    </div>
-  </li>
-
-  <!-- 7 -->
-  <li class="card" tabindex="0">
-    <h3 class="spine">MASTERING TIME</h3>
-    <div class="content">
-      <p>
-        It's not all just easings and compositions. Time plays a crucial part
-        in various UI patterns that might not seem obvious at first.
-      </p>
-    </div>
-    <a class="cta" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 6v6l4 2"/>
-        <circle cx="12" cy="12" r="10"/>
-      </svg>
-      <span>Watch now</span>
-    </a>
-    <div class="icon-only">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-      </svg>
-    </div>
-  </li>
-</ul>
-
-<script>
-  // 활성/접힘 컨트롤 (호버·클릭·포커스)
-  const list = document.getElementById('cards');
-  const items = [...list.children];
-
-  function collapse() {
-    items.forEach(li => li.dataset.active = 'false');
-    list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
-  }
-  function activate(idx) {
-    items.forEach((li,i)=> li.dataset.active = (i===idx).toString());
-    list.style.gridTemplateColumns = items.map((_,i)=> i===idx ? '10fr' : '1fr').join(' ');
-  }
-
-  const setFromEvent = (e) => {
-    const li = e.target.closest('.card');
-    if (!li || !list.contains(li)) { collapse(); return; }
-    activate(items.indexOf(li));
-  };
-
-  list.addEventListener('pointermove', setFromEvent);
-  list.addEventListener('click', setFromEvent);
-  list.addEventListener('focusin', setFromEvent, true);
-  list.addEventListener('pointerleave', collapse);
-  list.addEventListener('focusout', (e)=>{ if(!list.contains(e.relatedTarget)) collapse(); });
-
-  // 초기 상태: 전부 접힘
-  collapse();
-</script>
-
-</body>
-</html>
+  <!-- ===== 너가 준 HTML 그대로 ===== -->
+  <h1 class="fluid">the craft of ui</h1>
+  <p>
+    Unlock the art and science of interface development. This isn’t just about
+    pushing pixels or following documentation — it’s about mastering the
+    tools, understanding the nuances, and shaping experiences with intention.
+  </
