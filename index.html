@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>the craft of ui</title>
 
-  <!-- 영문 Inter / 한글 Pretendard(눈누) -->
+  <!-- 영문 Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
   <style>
-  /* Pretendard weights */
+  /* 한글 Pretendard(눈누) */
   @font-face {
     font-family: 'Pretendard';
     src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
@@ -35,10 +36,10 @@
     :root{
       --gap:8px;
       --base:clamp(2rem,8cqi,80px);
-      --easing: cubic-bezier(.22,.8,.2,1); /* 더 자연스러운 ease-out */
-      --speed: .6s;                         /* 카드 전개 시간 */
-      --title-dur: .65s;                    /* 제목 전환 시간 */
-      --title-delay-in: .06s;               /* 가로 제목 등장 딜레이 */
+      --easing: cubic-bezier(.22,.8,.2,1);
+      --speed: .45s;         /* 카드 전개 시간(살짝 단축) */
+      --title-dur: .55s;     /* 제목 전환 시간(빠르게) */
+      --title-delay-in: .06s;/* 가로 제목 등장 딜레이 */
     }
 
     body{
@@ -49,8 +50,6 @@
                    "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
     }
     h1,p{margin:0}
-
-    /* 상단 제목: 첫 방문 1회 타이핑 */
     h1.fluid{
       font-size:clamp(28px,6vw,56px); font-weight:700; letter-spacing:.01em;
       opacity:0; transition:opacity .35s ease;
@@ -64,15 +63,14 @@
     }
     @media (max-width:768px){ body>p{ text-align:center } }
 
-    /* 카드 컨텐츠 기본은 숨김(접힘) */
-    li :is(a,p){ opacity:0; transition:opacity calc(var(--speed)*1.2) var(--easing); width:fit-content }
-    li img{
-      filter:grayscale(1) brightness(1.5); scale:1.08;
-      transition: filter calc(var(--speed)*1.2) var(--easing),
-                  scale   calc(var(--speed)*1.2) var(--easing);
+    /* 카드 컨텐츠: 텍스트는 접힘 상태에서 숨김 */
+    li p{
+      opacity:0; transition:opacity calc(var(--speed)*1.1) var(--easing);
+      width:fit-content;
     }
-    [data-active="true"] :is(a,p){ opacity:1; transition-delay:calc(var(--speed)*.25) }
-    [data-active="true"] img{ filter:grayscale(0) brightness(1); scale:1; transition-delay:calc(var(--speed)*.25) }
+    [data-active="true"] p{
+      opacity:1; transition-delay:calc(var(--speed)*.15);
+    }
 
     /* 리스트/그리드 */
     ul{
@@ -85,64 +83,76 @@
     li{
       background:#0f1b20; position:relative; overflow:hidden;
       min-width:var(--base); border-radius:10px; border:1px solid rgba(255,255,255,.12);
+      contain: layout paint; /* 카드 간 레이아웃 분리로 성능 안정 */
     }
     article{
-      position:absolute; inset:0; width:calc(var(--article-width)*1px); height:100%;
+      position:absolute; inset:0; width:100%; height:100%; /* ← 측정 없이 100% */
       display:flex; flex-direction:column; justify-content:flex-end; gap:1rem;
       padding-inline:calc(var(--base)*.5 - 9px); padding-bottom:1rem; overflow:hidden;
     }
 
-    /* 이미지가 텍스트를 가리지 않게 */
-    article img{
-      position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0;
-      mask: radial-gradient(110% 100% at 100% 0, #fff, #0000); /* 우상단 쪽 은은한 마스킹 */
+    /* 🔵 블러 배경(이미지 복제) — 레터박스 자연스럽게 메움 */
+    article::before{
+      content:"";
+      position:absolute; inset:0; z-index:0;
+      background: center/cover no-repeat var(--img, none);
+      filter: blur(16px) brightness(.86) saturate(.95);
+      transform: scale(1.06);
     }
-    article :where(p,svg,a,.title){position:relative; z-index:1}
+    /* 🟢 실제 이미지는 'contain' + 이벤트 안 가로채게 */
+    article img{
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit: contain;  /* ← 안 잘림 */
+      z-index:1;
+      pointer-events: none; /* ← 마우스 이벤트 가로채지 않음 */
+    }
+
+    /* 텍스트/아이콘/제목은 위 레이어 */
+    article :where(p,svg,.title){ position:relative; z-index:2 }
     article svg{width:18px; fill:none}
     article p{font-size:13px; text-wrap:balance; line-height:1.25}
 
-    /* ---------- 제목 전환(세로 → 가로, 더 자연스럽게) ---------- */
+    /* ---------- 제목 전환(세로 → 가로) ---------- */
     .title{
       position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
       font-weight:700; letter-spacing:.02em;
-      contain: layout paint; /* 전환 성능 안정화 */
+      contain: layout paint;
     }
     .title .t{
       position:absolute; will-change: transform, opacity, filter, letter-spacing, clip-path;
       transition:
-        opacity       var(--title-dur) var(--easing),
-        transform     var(--title-dur) var(--easing),
-        filter        var(--title-dur) var(--easing),
+        opacity        var(--title-dur) var(--easing),
+        transform      var(--title-dur) var(--easing),
+        filter         var(--title-dur) var(--easing),
         letter-spacing var(--title-dur) var(--easing),
-        clip-path     var(--title-dur) var(--easing);
+        clip-path      var(--title-dur) var(--easing);
     }
 
-    /* 기본(접힘): 세로 제목 보임, 가로 제목은 왼쪽에서 살짝 숨김(마스크) */
+    /* 기본(접힘): 세로 제목 보임, 가로 제목은 왼쪽에서 살짝 숨김 */
     li:not([data-active="true"]) .title .t-v{
       opacity:1; transform:translateY(0) scale(1); filter:none;
     }
     li:not([data-active="true"]) .title .t-h{
       opacity:0;
-      /* 왼쪽에서 들어올 준비: 약간 기울고 간격 넓힘 + 부분 마스크 */
-      transform: translateX(-14px) skewX(-3deg);
-      letter-spacing:.06em;
+      transform: translateX(-12px) skewX(-2deg);
+      letter-spacing:.05em;
       clip-path: inset(0 35% 0 0 round 2px);
-      filter: blur(.25px);
+      filter: blur(.2px);
     }
 
-    /* 활성(hover/click): 가로 제목이 부드럽게 유입, 세로 제목은 상단으로 얕게 사라짐 */
+    /* 활성(hover/click): 가로 제목 유입, 세로 제목은 위로 사라짐 */
     li[data-active="true"] .title .t-v{
-      opacity:0; transform:translateY(-8px) scale(.985);
-      filter: blur(.2px);
-      transition-delay: 0s; /* 먼저 빠지기 */
+      opacity:0; transform:translateY(-6px) scale(.985);
+      filter: blur(.18px);
+      transition-delay: 0s;
     }
     li[data-active="true"] .title .t-h{
       opacity:1;
       transform: translateX(0) skewX(0deg);
-      letter-spacing: .01em;              /* 타이핑 후 안정되는 느낌 */
-      clip-path: inset(0 0 0 0 round 2px);/* 마스크 열림 */
+      letter-spacing: .01em;
+      clip-path: inset(0 0 0 0 round 2px);
       filter: none;
-      transition-delay: var(--title-delay-in); /* 세로가 물러난 뒤 살짝 늦게 등장 */
+      transition-delay: var(--title-delay-in);
     }
 
     /* 세로 제목 배치 (책등 느낌) */
@@ -169,7 +179,6 @@
     }
     html{color-scheme:dark}
     :where(.fluid){
-      /* pow() 미지원 브라우저는 아래 clamp 폴백 사용 */
       --fluid-min: calc(var(--font-size-min) * pow(var(--font-ratio-min), var(--font-level, 0)));
       --fluid-max: calc(var(--font-size-max) * pow(var(--font-ratio-max), var(--font-level, 0)));
       --fluid-preferred: calc((var(--fluid-max) - var(--fluid-min)) / (var(--font-width-max) - var(--font-width-min)));
@@ -182,7 +191,6 @@
     }
     *,*:before,*:after{box-sizing:border-box}
     body{display:grid; place-items:center; min-height:100vh}
-    /* 눈금/곰 제거 */
     .bear-link{display:none !important}
   }
 
@@ -234,7 +242,6 @@
         </h3>
         <p>Use noise and filters to craft flames, stickers, and more — shaders on a budget.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-      
         <img src="https://picsum.photos/720/720?random=19" alt="" />
       </article>
     </li>
@@ -245,7 +252,7 @@
           <span class="t t-v" aria-hidden="true">Scroll Animation</span>
         </h3>
         <p>Guide users with tasteful, performance-first scroll effects.</p>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>  
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>
         <img src="https://picsum.photos/720/720?random=42" alt="" />
       </article>
     </li>
@@ -257,7 +264,6 @@
         </h3>
         <p>Tame the pixel playground with performance-driven patterns.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-
         <img src="https://picsum.photos/720/720?random=128" alt="" />
       </article>
     </li>
@@ -269,7 +275,6 @@
         </h3>
         <p>Sometimes a rethink beats adding another library.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
- 
         <img src="https://picsum.photos/720/720?random=56" alt="" />
       </article>
     </li>
@@ -281,49 +286,71 @@
         </h3>
         <p>Time isn’t just easing — treat it as a core design material.</p>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
-      
         <img src="https://picsum.photos/720/720?random=39" alt="" />
       </article>
     </li>
   </ul>
 
   <script>
-  /* ===== 카드 확장/접힘 (hover/click/focus) — 초기 전부 접힘 ===== */
+  /* ===== 카드 확장/접힘 — 빠른 반응 버전 ===== */
   (() => {
     const list = document.querySelector('ul');
     if (!list) return;
-    const items = list.querySelectorAll('li');
+    const items = Array.from(list.querySelectorAll('li'));
+    let active = -1;
+    let raf = 0;
 
-    function activate(index){
-      items.forEach((li,i)=> li.dataset.active = (i===index).toString());
-      const cols = [...items].map((_,i)=> i===index ? '10fr' : '1fr').join(' ');
-      list.style.gridTemplateColumns = cols;
-    }
-    function collapse(){
-      items.forEach(li=> li.dataset.active = 'false');
+    const setCols = (idx) => {
+      list.style.gridTemplateColumns = items.map((_, i) => (i === idx ? '10fr' : '1fr')).join(' ');
+    };
+
+    const applyActive = (idx) => {
+      if (idx === active) return;              // 중복 방지
+      active = idx;
+      items.forEach((li, i) => (li.dataset.active = (i === active).toString()));
+      setCols(active);
+    };
+
+    const collapse = () => {
+      if (active === -1) return;
+      active = -1;
+      items.forEach((li) => (li.dataset.active = 'false'));
       list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
-    }
-    function setFromEvent(e){
-      const li = e.target.closest('li');
-      if (!li || !list.contains(li)) { collapse(); return; }
-      activate([...items].indexOf(li));
-    }
+    };
 
-    list.addEventListener('pointermove', setFromEvent, {passive:true});
-    list.addEventListener('click', setFromEvent);
-    list.addEventListener('focusin', setFromEvent, true);
+    const schedule = (idx) => {
+      if (idx === active) return;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => applyActive(idx));
+    };
+
+    // ★ pointerenter 로 즉시 반응
+    items.forEach((li, i) => {
+      li.addEventListener('pointerenter', () => schedule(i), { passive: true });
+      li.addEventListener('click', () => applyActive(i));
+      li.addEventListener('focusin', () => applyActive(i));
+    });
+
+    // 컨테이너에서만 접힘 처리 (갭 위에서 흔들리지 않음)
     list.addEventListener('pointerleave', collapse);
-    list.addEventListener('focusout', (e)=> { if (!list.contains(e.relatedTarget)) collapse(); });
+    list.addEventListener('focusout', (e) => {
+      if (!list.contains(e.relatedTarget)) collapse();
+    });
 
+    // 초기 접힘
     collapse();
+  })();
 
-    // article width 동기화
-    function resync(){
-      const w = Math.max(...[...items].map(i=> i.offsetWidth || 0), 280);
-      list.style.setProperty('--article-width', w);
-    }
-    addEventListener('resize', resync);
-    resync();
+  /* ===== 이미지 URL을 CSS 변수(--img)로 넣어서 블러 배경에 재사용 ===== */
+  (() => {
+    const arts = document.querySelectorAll('article');
+    arts.forEach((a) => {
+      const img = a.querySelector('img');
+      if (!img) return;
+      const apply = () => a.style.setProperty('--img', `url("${img.currentSrc || img.src}")`);
+      if (img.complete) apply();
+      else img.addEventListener('load', apply, { once: true });
+    });
   })();
 
   /* ===== 상단 제목: 첫 방문 1회만 타이핑 ===== */
@@ -335,7 +362,7 @@
     const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
     function show(){ h1.classList.add('show'); }
-    function typeOnce(speed = 38){
+    function typeOnce(speed = 34){
       h1.textContent = '';
       show();
       let i = 0;
@@ -361,12 +388,12 @@
 
     let W=0, H=0, DPR=1, pts=[], last=0, raf=0;
     const OPT = {
-      density: 0.00007,
-      min: 70, max: 160,
-      r: [0.7, 2.4],
-      v: [3, 12],
-      a: [0.05, 0.18],
-      hz: [.10, .25],
+      density: 0.00006,           /* 살짝 낮춰 성능 확보 */
+      min: 60, max: 140,
+      r: [0.7, 2.2],
+      v: [3, 11],
+      a: [0.05, 0.16],
+      hz: [.10, .24],
       blur: 6
     };
     const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -405,7 +432,7 @@
         p.ph += p.f * dt;
         const tw = .5 + .5*Math.sin(p.ph);
         const al = p.alpha * (.7 + .3*tw);
-        ctx.shadowColor = `hsla(${p.h} ${p.s}% ${p.l}% / ${al*1.3})`;
+        ctx.shadowColor = `hsla(${p.h} ${p.s}% ${p.l}% / ${al*1.2})`;
         ctx.shadowBlur  = OPT.blur * DPR;
         ctx.fillStyle   = `hsla(${p.h} ${p.s}% ${p.l}% / ${al})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
