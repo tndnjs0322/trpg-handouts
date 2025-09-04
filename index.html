@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>the craft of ui</title>
 
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-
 <style>
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Pretendard';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');font-weight:600;font-style:normal;font-display:swap}
@@ -22,7 +22,7 @@
   --title-dur:.52s;
   --title-delay-in:.06s;
 
-  /* ▶ 펼쳤을 때 중간 폭 */
+  /* 펼침 폭(중간) */
   --active-fr: 8;
   --inactive-fr: 1;
   --expanded-min: 320px;
@@ -33,7 +33,7 @@
   --spine-gloss: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 42%);
   --spine-shadow: linear-gradient(90deg, rgba(0,0,0,.26), rgba(0,0,0,0) 50%);
 
-  /* 이미지 톤 살짝 통일 */
+  /* 이미지 톤 */
   --tint: hsla(198, 38%, 48%, .10);
 }
 
@@ -54,13 +54,12 @@ body>p{
 }
 @media (max-width:768px){ body>p{ text-align:center } }
 
-/* 리스트(초기 모두 접힘) */
+/* 리스트 */
 ul{
   display:grid; 
   grid-template-columns:repeat(7,1fr);
   gap:var(--gap); list-style:none; justify-content:center; padding:0; margin:0;
   height:clamp(300px,40dvh,474px);
-  /* ▶ 컨테이너 폭: 너무 크지 않게 */
   width: clamp(820px, 86vw, 1040px);
   max-width: 100%;
   transition:grid-template-columns var(--speed) var(--easing);
@@ -71,7 +70,7 @@ li{
   contain:layout paint;
   z-index:0;
 }
-li[data-active="true"]{ z-index:1; } /* 겹침 방지용 레이어만 살짝 위 */
+li[data-active="true"]{ z-index:1; }
 article{
   position:absolute; inset:0; width:100%; height:100%;
   display:flex; flex-direction:column; justify-content:flex-end; gap:.8rem;
@@ -80,7 +79,7 @@ article{
   overflow:hidden;
 }
 
-/* 뒤 블러 배경 + 얕은 틴트 */
+/* 뒤 블러 배경 + 틴트 */
 article::before{
   content:""; position:absolute; inset:0; z-index:0;
   background:
@@ -92,14 +91,14 @@ article::before{
   opacity:.9;
 }
 
-/* 스크림(이미지 위, 텍스트 아래) – 펼침 때 활성 */
+/* 스크림(펼침때 가독성) */
 .scrim{
   position:absolute; inset:0; z-index:1;
   background: linear-gradient(to top, rgba(0,0,0,.40), rgba(0,0,0,0) 55%);
   opacity:0; transition: opacity var(--speed) var(--easing);
 }
 
-/* 스파인(접힘 때만 표시) */
+/* 스파인(접힘때 표시) */
 article::after{
   content:""; position:absolute; top:0; left:0; height:100%; width:var(--spine-w);
   border-top-left-radius: var(--spine-r); border-bottom-left-radius: var(--spine-r);
@@ -117,18 +116,18 @@ article::after{
   z-index:3; pointer-events:none;
 }
 
-/* 본 이미지: 펼치면 꽉 차게 */
+/* 본 이미지 */
 article img{
   position:absolute; inset:0; width:100%; height:100%;
   object-fit: cover;
   z-index:0; pointer-events:none; opacity:1; transition:opacity var(--speed) var(--easing);
 }
 
-/* 텍스트 레이어 */
+/* 텍스트 */
 article p{ margin:0; font-size:13px; line-height:1.28; text-wrap:balance; position:relative; z-index:2; opacity:0; transition:opacity calc(var(--speed)*1.05) var(--easing) }
 article svg{ width:18px; height:18px; fill:none; position:relative; z-index:2 }
 
-/* 접힘: 이미지/텍스트/스크림 숨기고 스파인만 */
+/* 접힘/펼침 상태 */
 li:not([data-active="true"]) article img{ opacity:0 }
 li:not([data-active="true"]) .scrim{ opacity:0 }
 li:not([data-active="true"]) article::after{ opacity:1 }
@@ -174,8 +173,63 @@ li[data-active="true"] .title .t-h{
   font-size:1rem; font-weight:700; text-transform:uppercase; transform-origin:left center;
 }
 
+/* H1: 쉬ーン(무지갯빛) 1회 */
+h1.fluid.sheen {
+  background-image: linear-gradient(90deg,#7ee8fa,#6aa4ff,#b08ad6,#8cb9ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% 100%;
+  animation: h1-sheen 1300ms cubic-bezier(.22,.8,.2,1) 120ms both;
+}
+@keyframes h1-sheen {
+  0% { background-position: 0% 50% }
+  100% { background-position: 100% 50% }
+}
+
+/* H1: 미세 글리치(아주 가끔) */
+h1.fluid { position: relative; }
+h1.fluid.glitch { animation: h1-jitter 120ms steps(2,end) 1; }
+@keyframes h1-jitter {
+  0%   { transform: translate3d(0,0,0) }
+  50%  { transform: translate3d(1px,-1px,0) skewX(.6deg) }
+  100% { transform: translate3d(0,0,0) }
+}
+h1.fluid.glitch::before,
+h1.fluid.glitch::after{
+  content: attr(data-text);
+  position:absolute; inset:0; pointer-events:none; opacity:.35;
+  mix-blend-mode: screen;
+}
+h1.fluid.glitch::before{
+  clip-path: inset(60% 0 25% 0);
+  transform: translateX(-1px);
+  text-shadow: 1px 0 #f0f;
+}
+h1.fluid.glitch::after{
+  clip-path: inset(30% 0 55% 0);
+  transform: translateX(1px);
+  text-shadow: -1px 0 #0ff;
+}
+
 /* 배경 캔버스 */
 #bg-dots{position:fixed; inset:0; z-index:-1; pointer-events:none}
+
+/* ===== Glitch Language (0.1%) 보조 시각효과 ===== */
+body.glitch-lang {
+  --glitch-shadow: 1px;
+}
+body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
+  position: relative;
+  text-shadow:
+    var(--glitch-shadow) 0 #f0f,
+    calc(var(--glitch-shadow) * -1) 0 #0ff;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.glitch-lang :where(h1,h2,h3,h4,h5,h6,p,li,span,a,strong,em,small){
+    text-shadow: .5px 0 #f0f, -.5px 0 #0ff;
+  }
+}
 </style>
 </head>
 <body>
@@ -276,7 +330,7 @@ li[data-active="true"] .title .t-h{
 </ul>
 
 <script>
-/* 펼침 비율: 중간 폭 + 겹침 방지 */
+/* 펼침 비율 & 상태 관리 */
 (() => {
   const list = document.querySelector('ul');
   if (!list) return;
@@ -327,7 +381,7 @@ li[data-active="true"] .title .t-h{
   collapse();
 })();
 
-/* 이미지 URL을 CSS 변수(--img)로 넣기 */
+/* 이미지 URL을 CSS 변수(--img)로 투입 */
 (() => {
   const arts = document.querySelectorAll('article');
   arts.forEach((a) => {
@@ -338,7 +392,7 @@ li[data-active="true"] .title .t-h{
   });
 })();
 
-/* 상단 제목: 첫 방문 1회만 타이핑 */
+/* 상단 H1: 첫 방문 1회 타이핑 + 쉬ーン */
 (() => {
   const h1 = document.querySelector('h1.fluid');
   if (!h1) return;
@@ -351,11 +405,28 @@ li[data-active="true"] .title .t-h{
     h1.textContent = ''; show();
     let i = 0;
     const id = setInterval(() => {
-      if (i >= text.length){ clearInterval(id); sessionStorage.setItem('__title_typed__','1'); return; }
+      if (i >= text.length){
+        clearInterval(id);
+        sessionStorage.setItem('__title_typed__','1');
+        h1.classList.add('sheen');
+        setTimeout(()=>h1.classList.remove('sheen'), 1600);
+        return;
+      }
       h1.append(text[i++]);
     }, speed);
   }
   if (reduce || seen){ h1.textContent = text; show(); } else { typeOnce(); }
+
+  // H1 가끔 글리치(1%)
+  h1.setAttribute('data-text', text);
+  const maybeGlitch = () => {
+    if (Math.random() < 0.01) {
+      h1.classList.add('glitch');
+      setTimeout(() => h1.classList.remove('glitch'), 140);
+    }
+  };
+  h1.addEventListener('pointerenter', maybeGlitch);
+  h1.addEventListener('pointermove', () => { if (Math.random() < 0.003) maybeGlitch(); });
 })();
 
 /* 배경: 은은하게 움직이는 점 */
@@ -417,6 +488,67 @@ li[data-active="true"] .title .t-h{
   }
   addEventListener('resize', resize);
   start();
+})();
+
+/* ===== 0.1% 확률 “글리치 언어” 이스터에그 =====
+   - 페이지 로드 시 0.001 (=0.1%) 확률로 발동
+   - 텍스트 일부를 글리치풍 유니코드로 치환
+   - 6초 뒤 자동 복구, 세션당 1회
+   - 테스트: URL에 ?glang=1
+*/
+(() => {
+  const force = /(?:\?|&)glang=1\b/.test(location.search);
+  const seen = sessionStorage.getItem('__glang_done__') === '1';
+  const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+  if (reduce) return;
+  if (!force && (seen || Math.random() >= 0.001)) return;
+  sessionStorage.setItem('__glang_done__', '1');
+
+  const DURATION = 6000;
+  const IGNORE_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','IFRAME','SVG','CANVAS']);
+  const replaced = [];
+
+  const ALT = {
+    A:'Λ',B:'ß',C:'ᄃ',D:'Ɗ',E:'Ξ',F:'Ғ',G:'Ǥ',H:'Ħ',I:'ɪ',J:'ʆ',
+    K:'Ҝ',L:'Ꮮ',M:'ᴍ',N:'И',O:'Ø',P:'Ƥ',Q:'Ǫ',R:'Я',S:'Ƨ',T:'Ŧ',
+    U:'Џ',V:'Ṽ',W:'Ш',X:'Ӿ',Y:'¥',Z:'Ẕ',
+    a:'ʌ',b:'ь',c:'ς',d:'ɖ',e:'ɛ',f:'ғ',g:'ɠ',h:'ђ',i:'ɨ',j:'ʝ',
+    k:'ҡ',l:'l',m:'ɯ',n:'п',o:'ø',p:'ρ',q:'φ',r:'я',s:'ᔓ',t:'ŧ',
+    u:'ս',v:'√',w:'ω',x:'ж',y:'у',z:'ž',
+    '0':'𝟘','1':'𝟙','2':'𝟚','3':'𝟛','4':'𝟜','5':'𝟝','6':'𝟞','7':'𝟟','8':'𝟠','9':'𝟡'
+  };
+  const COMB = ['\u0336','\u033f','\u0348'];
+  const maybeComb = (ch) => (Math.random() < 0.06 ? ch + COMB[(Math.random()*COMB.length)|0] : ch);
+  const glitchify = (str) => str.replace(/./g, ch => ALT[ch] ? maybeComb(ALT[ch]) : ch);
+
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const p = node.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        if (IGNORE_TAGS.has(p.tagName)) return NodeFilter.FILTER_REJECT;
+        if (p.closest('svg,[aria-hidden="true"],[hidden]')) return NodeFilter.FILTER_REJECT;
+        const v = node.nodeValue;
+        if (!v || !v.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+  let n;
+  while ((n = walker.nextNode())) {
+    const txt = n.nodeValue;
+    replaced.push({ node: n, text: txt });
+    n.nodeValue = glitchify(txt);
+  }
+  document.body.classList.add('glitch-lang');
+
+  setTimeout(() => {
+    for (const rec of replaced) if (rec.node.parentNode) rec.node.nodeValue = rec.text;
+    document.body.classList.remove('glitch-lang');
+  }, DURATION);
 })();
 </script>
 </body>
