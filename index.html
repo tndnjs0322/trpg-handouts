@@ -40,8 +40,9 @@
       --speed: .45s;          /* 카드 전개 시간 */
       --title-dur: .55s;      /* 제목 전환 시간 */
       --title-delay-in: .06s; /* 가로 제목 등장 딜레이 */
-      --cover-w: clamp(58px, calc(var(--base)*1.3), 120px); /* 접힘 커버 너비 */
-      --cover-r: 10px;        /* 접힘 커버 모서리 */
+      --book-w: clamp(62px, calc(var(--base)*1.35), 128px); /* 접힘 책 너비 */
+      --pages-w: 12px;        /* 페이지 단면 두께 */
+      --book-r: 12px;         /* 책 모서리 라운드 */
     }
 
     body{
@@ -102,55 +103,58 @@
       transform: scale(1.06);
     }
 
-    /* 🟣 접힘 커버(팩 표지) — 중앙에 작은 카드 형태 */
+    /* 📚 접힘: 책(커버+페이지 단면) — 3D 살짝 기울기 */
     article::after{
       content:"";
       position:absolute; left:50%; top:50%;
-      width:var(--cover-w); aspect-ratio: 3/4; /* 세로형 커버 비율 */
-      transform: translate(-50%, -50%) rotate(-1.2deg);
-      border-radius: var(--cover-r);
+      width:var(--book-w); height:calc(100% - 28px);
+      transform: translate(-50%, -50%) perspective(720px) rotateY(-26deg) rotate(-0.8deg);
+      transform-origin: 10% 50%;
+      border-radius: var(--book-r);
       background:
-        /* 글로시 하이라이트 */
-        linear-gradient(120deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.1) 12%, rgba(255,255,255,0) 30%),
-        /* 아래쪽 빈티지 음영 */
-        linear-gradient( to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,.22) 100%),
-        center/cover no-repeat var(--img, none);
+        /* 1) 페이지 단면(오른쪽 얇은 줄무늬) */
+        repeating-linear-gradient(to bottom, #f7f7f7 0 2px, #ececec 2px 4px) right center / var(--pages-w) 100% no-repeat,
+        /* 2) 페이지 그림자 가장자리 */
+        linear-gradient(to left, rgba(0,0,0,.22), rgba(0,0,0,0)) right center / calc(var(--pages-w) + 10px) 100% no-repeat,
+        /* 3) 글로시 하이라이트 */
+        linear-gradient(120deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.08) 14%, rgba(255,255,255,0) 36%) left top / 100% 100% no-repeat,
+        /* 4) 커버 이미지(페이지 폭 제외) */
+        var(--img, none) left center / calc(100% - var(--pages-w)) 100% no-repeat;
       box-shadow:
-        0 10px 20px rgba(0,0,0,.35),
+        0 14px 24px rgba(0,0,0,.4),
         0 0 0 1px rgba(255,255,255,.10),
         inset 0 0 0 1px rgba(255,255,255,.06);
-      filter: saturate(1.05) contrast(1.02) brightness(.98);
-      opacity:0; /* 기본은 안 보이게, 접힘 상태에서만 보임 */
-      transition: opacity var(--speed) var(--easing),
-                  transform var(--speed) var(--easing),
-                  filter var(--speed) var(--easing);
-      z-index:1;
-      pointer-events:none;
+      filter: saturate(1.03) contrast(1.02) brightness(.98);
+      opacity:0;  /* 펼침 상태에서 기본적으로 없음 */
+      transition:
+        opacity var(--speed) var(--easing),
+        transform var(--speed) var(--easing),
+        filter var(--speed) var(--easing);
+      z-index:1; pointer-events:none;
     }
 
-    /* 🟢 실제 이미지는 'contain' + 이벤트 안 가로채게 */
+    /* 🖼 실제 이미지는 'contain' + 이벤트 안 가로채게 */
     article img{
       position:absolute; inset:0; width:100%; height:100%;
-      object-fit: contain;  /* ← 안 잘림 */
+      object-fit: contain;  /* 안 잘림 */
       z-index:1;
       pointer-events: none;
       transition: opacity var(--speed) var(--easing);
       opacity:1; /* 펼침에서 보임 */
     }
 
-    /* 접힘 상태: contain 이미지는 감추고, 팩 커버 보여주기 */
+    /* 접힘 상태: 이미지는 감추고 '책 오브젝트'만 노출 */
     li:not([data-active="true"]) article img{
       opacity:0;
     }
     li:not([data-active="true"]) article::after{
       opacity:1;
-      transform: translate(-50%, -50%) rotate(-1.2deg);
     }
 
-    /* 펼침 상태: 커버는 사라지고 실제 이미지 노출 */
+    /* 펼침 상태: 책 오브젝트는 사라지고(살짝 펴지는 듯) 이미지 등장 */
     li[data-active="true"] article::after{
       opacity:0;
-      transform: translate(-50%, -50%) rotate(0deg) scale(.98);
+      transform: translate(-50%, -50%) perspective(720px) rotateY(0deg) rotate(0deg) scale(.985);
       filter: brightness(.96);
     }
 
@@ -175,7 +179,7 @@
         clip-path      var(--title-dur) var(--easing);
     }
 
-    /* 기본(접힘): 세로 제목 보임, 가로 제목은 왼쪽에서 살짝 숨김 */
+    /* 기본(접힘): 세로 제목 보임, 가로 제목은 왼쪽에서 숨김 */
     li:not([data-active="true"]) .title .t-v{
       opacity:1; transform:translateY(0) scale(1); filter:none;
     }
@@ -388,7 +392,7 @@
     collapse();
   })();
 
-  /* ===== 이미지 URL을 CSS 변수(--img)로 넣어서 블러/커버에 재사용 ===== */
+  /* ===== 이미지 URL을 CSS 변수(--img)로 넣어서 블러/책 커버에 재사용 ===== */
   (() => {
     const arts = document.querySelectorAll('article');
     arts.forEach((a) => {
