@@ -6,6 +6,9 @@
   <title>Roll20 Chat Editor • Pro (Local-only)</title>
   <meta name="description" content="Paste your Roll20 chat archive, then switch to an editor to clean it up. All processing happens locally in your browser." />
   <style>
+    /* hidden 속성 강제 적용: 이 코드가 있어야 밑에 화면이 남지 않아요 */
+    [hidden]{ display:none !important; }
+
     :root{
       --bg:#0d1a1f; --panel:#0f2127; --ink:#e9f1f3; --soft:#a9bdc3; --edge:#15373f; --accent:#5fe1e1;
       --radius:14px; --shadow:0 6px 30px rgba(0,0,0,.35);
@@ -66,7 +69,7 @@
     .sp .count{margin-left:auto; font-size:12px; color:#9cc6cd}
     .ed{padding:12px; border-top:1px solid var(--edge); background:#0f1c21}
     .row{display:flex; gap:8px; align-items:center; margin:8px 0}
-    .row input[type=text]{flex:1; padding:9px 10px; border-radius:10px; border:1px solid var(--edge); background:#0e1b20; color:var(--ink); outline:none}
+    .row input[type=text]{flex:1; padding:9px 10px; border-radius:10px; border:1px solid var(--edge); background:#0e1b20; color:#e9f1f3; outline:none}
     .row input[type=file]{flex:1}
     .preview{padding:12px; height:calc(100% - 40px); overflow:auto}
     .msg{padding:10px 12px; border-radius:10px; background:#0e1b20; border:1px solid rgba(255,255,255,.06); margin:8px 0}
@@ -204,18 +207,23 @@
       src.value = text;
       persist();
       render();
-      landing.hidden = true;
-      app.hidden = false;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 속성 토글로 확실히 전환
+      landing.setAttribute('hidden','');
+      app.removeAttribute('hidden');
+      window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
     btnToEditor.addEventListener('click', ()=> goEditorWith(landingSrc.value));
     btnSampleTop.addEventListener('click', ()=> goEditorWith(SAMPLE.trim()));
 
-    // Landing 어디서든 붙여넣기 지원
+    // Landing 어디서든 붙여넣기 지원 + 붙여넣자마자 자동 진입
     landing.addEventListener('paste', (e)=>{
       const t = e.clipboardData?.getData('text/plain');
-      if (t) { e.preventDefault(); landingSrc.value = t; }
+      if (t) {
+        e.preventDefault();
+        landingSrc.value = t;
+        goEditorWith(t); // ← 자동 진입 원치 않으면 이 줄을 주석 처리
+      }
     });
 
     // ---------- Importer Registry (단일 선언) ----------
@@ -251,9 +259,9 @@
 
     // Back to landing
     btnBack.addEventListener('click', ()=>{
-      app.hidden = true;
-      landing.hidden = false;
-      window.scrollTo({ top: 0 });
+      app.setAttribute('hidden','');
+      landing.removeAttribute('hidden');
+      window.scrollTo({ top: 0, behavior: 'auto' });
     });
 
     // Editor events
@@ -485,7 +493,10 @@
           optTime.checked  = !!(st.opts && st.opts.time);
           optDice.checked  = !!(st.opts && st.opts.dice);
           persist(); render();
-          landing.hidden = true; app.hidden = false; window.scrollTo({ top: 0 });
+          // 파일 불러오면 바로 에디터로
+          landing.setAttribute('hidden','');
+          app.removeAttribute('hidden');
+          window.scrollTo({ top: 0, behavior: 'auto' });
         }catch(err){ alert('프로젝트 파일을 읽지 못했습니다.'); }
       };
       reader.readAsText(file, 'utf-8');
@@ -519,17 +530,18 @@
             optTime.checked  = !!(st.opts && st.opts.time);
             optDice.checked  = !!(st.opts && st.opts.dice);
             render();
-            landing.hidden = true; app.hidden = false;
+            landing.setAttribute('hidden','');
+            app.removeAttribute('hidden');
             return;
           }
         }
       }catch(e){}
       // 기본: landing 보이기
-      landing.hidden = false; app.hidden = true;
+      landing.removeAttribute('hidden');
+      app.setAttribute('hidden','');
     })();
 
     // ----- Adapters (placeholder) -----
-    // 필요하면 여기에 다른 포맷 감지/파서 등록
     registerImporter({
       id: 'roll20-html-snippet',
       detect: (txt) => /<div[^>]*class=/.test(txt) && /message|by\s+\w+:/.test(txt),
