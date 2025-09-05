@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roll20 Chat Editor • Pro (Local-only)</title>
+  <meta name="description" content="Paste your Roll20 chat archive, clean it up, rename speakers, and set avatars — all locally in your browser." />
+  <style>
+    :root{
+      --bg:#0d1a1f; --panel:#0f2127; --ink:#e9f1f3; --soft:#a9bdc3; --edge:#15373f; --accent:#5fe1e1;
+      --radius:14px; --shadow:0 6px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--ink); background: radial-gradient(1200px 800px at 50% -200px, #10313a 0%, var(--bg) 70%, #071015 100%);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Pretendard, "Noto Sans KR", "Malgun Gothic", Arial, sans-serif}
+    header{position:sticky; top:0; z-index:10; backdrop-filter: blur(6px); background:rgba(16,44,52,.6); border-bottom:1px solid rgba(255,255,255,.06)}
+    .bar{max-width:1280px; margin:0 auto; padding:10px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+    .title{font-weight:800; letter-spacing:.3px}
+    .actions{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
+    .btn{padding:9px 12px; border-radius:10px; background:#102a30; border:1px solid var(--edge); color:var(--ink); text-decoration:none; font-weight:600; cursor:pointer}
+    .btn:hover{background:#11323a}
+    .btn.secondary{background:#0e1b20}
+    main{max-width:1280px; margin:16px auto; padding:0 14px 40px}
+    .grid{display:grid; grid-template-columns: minmax(280px, 1fr) minmax(260px, 1fr) 1.4fr; gap:14px}
+    .panel{background:linear-gradient(180deg, var(--panel) 0%, #0f1c21 100%); border:1px solid var(--edge); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; min-height:240px}
+    .panel h2{margin:0; padding:10px 12px; font-size:14px; background:#102a30; border-bottom:1px solid var(--edge)}
+    .panel .body{padding:12px}
+    textarea{width:100%; min-height:320px; resize:vertical; display:block; padding:12px; background:#0e1b20; color:var(--ink); border:0; outline:none; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:13px}
+    .controls{display:flex; flex-wrap:wrap; gap:10px; padding:10px 12px; border-top:1px solid var(--edge); background:#0f1c21}
+    .controls label{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--soft)}
+    .controls input[type=checkbox]{transform:translateY(1px)}
+    .hint{margin:8px 0 10px; color:var(--soft); font-size:13px}
+    .speakers{display:flex; flex-direction:column; gap:8px; padding:10px 12px; max-height:540px; overflow:auto}
+    .sp{display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; background:#0e1b20; border:1px solid rgba(255,255,255,.06); cursor:pointer}
+    .sp.active{outline:2px solid rgba(152,246,255,.35)}
+    .av{width:36px; height:36px; border-radius:50%; background:#081216; border:1px solid rgba(255,255,255,.08); overflow:hidden; display:grid; place-items:center; font-weight:800}
+    .av img{width:100%; height:100%; object-fit:cover; display:block}
+    .sp .name{font-weight:700}
+    .sp .count{margin-left:auto; font-size:12px; color:#9cc6cd}
+    .ed{padding:12px; border-top:1px solid var(--edge); background:#0f1c21}
+    .row{display:flex; gap:8px; align-items:center; margin:8px 0}
+    .row input[type=text]{flex:1; padding:9px 10px; border-radius:10px; border:1px solid var(--edge); background:#0e1b20; color:var(--ink); outline:none}
+    .row input[type=file]{flex:1}
+    .grid-right{padding:0}
+    .preview{padding:12px; height:calc(100% - 40px); overflow:auto}
+    .msg{padding:10px 12px; border-radius:10px; background:#0e1b20; border:1px solid rgba(255,255,255,.06); margin:8px 0}
+    .msg .head{display:flex; align-items:center; gap:8px; margin-bottom:6px}
+    .msg .avatar{width:28px; height:28px; border-radius:50%; overflow:hidden; background:#081216; border:1px solid rgba(255,255,255,.08); display:grid; place-items:center; font-size:12px; font-weight:800}
+    .msg .avatar img{width:100%; height:100%; object-fit:cover; display:block}
+    .speaker{font-weight:800; margin-right:4px}
+    .time{font-size:12px; color:#9cc6cd}
+    .body{white-space:pre-wrap; line-height:1.55}
+    code{padding:1px 4px; background:#0c171b; border:1px solid rgba(255,255,255,.06); border-radius:6px; font-family: inherit}
+    footer{max-width:1280px; margin:0 auto 32px; padding:0 14px}
+    .note{font-size:12px; color:#9fc8cf}
+    @media (max-width: 1100px){ .grid{grid-template-columns:1fr 1fr} }
+    @media (max-width: 800px){ .grid{grid-template-columns:1fr} .preview{height:auto; max-height:60dvh} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="title">Roll20 Chat Editor — Pro (클라이언트 전용)</div>
+      <div class="actions">
+        <button class="btn" id="btnSample">샘플</button>
+        <button class="btn" id="btnClear">초기화</button>
+        <button class="btn secondary" id="btnSaveProj">프로젝트 저장</button>
+        <label class="btn secondary" style="position:relative; overflow:hidden; cursor:pointer;">
+          프로젝트 불러오기
+          <input type="file" id="loadProj" accept=".json" style="position:absolute; inset:0; opacity:0; cursor:pointer" />
+        </label>
+        <button class="btn" id="btnExportHTML">HTML 내보내기</button>
+        <button class="btn" id="btnExportMD">Markdown 내보내기</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <!-- Paste -->
+      <section class="panel">
+        <h2>원문 붙여넣기</h2>
+        <div class="body">
+          <p class="hint">Roll20 Chat Archive를 열어 전체 복사 후 아래에 붙여넣으세요. <b>모든 처리는 브라우저 안에서만</b> 수행됩니다.</p>
+          <textarea id="src" placeholder="여기에 붙여넣기 (Ctrl/Cmd+V)"></textarea>
+        </div>
+        <div class="controls">
+          <label><input type="checkbox" id="optGroup" checked /> 같은 화자 연속 메시지 묶기</label>
+          <label><input type="checkbox" id="optTime" checked /> 시간 표시</label>
+          <label><input type="checkbox" id="optDice" checked /> 주사위 표기 강조</label>
+        </div>
+      </section>
+
+      <!-- Speakers -->
+      <section class="panel">
+        <h2>화자(프로필) 편집</h2>
+        <div class="speakers" id="speakers"></div>
+        <div class="ed" id="editor" hidden>
+          <div class="row">
+            <label style="min-width:90px">원본 이름</label>
+            <input type="text" id="spOriginal" disabled />
+          </div>
+          <div class="row">
+            <label style="min-width:90px">표시 이름</label>
+            <input type="text" id="spAlias" placeholder="예: Keeper → GM" />
+          </div>
+          <div class="row">
+            <label style="min-width:90px">아바타</label>
+            <input type="file" id="spAvatarFile" accept="image/*" />
+          </div>
+          <div class="row">
+            <label style="min-width:90px">URL</label>
+            <input type="text" id="spAvatarURL" placeholder="https://example.com/avatar.png" />
+          </div>
+          <div class="row">
+            <button class="btn" id="btnApplySp">적용</button>
+            <button class="btn secondary" id="btnClearSp">아바타 제거</button>
+          </div>
+          <p class="hint">이미지를 업로드하면 데이터 URL로 저장되어 내보낸 HTML에서도 그대로 보입니다. URL을 넣으면 링크로 표시되며, 오프라인에서는 안 보일 수 있어요.</p>
+        </div>
+      </section>
+
+      <!-- Preview -->
+      <section class="panel grid-right">
+        <h2>미리보기</h2>
+        <div class="preview" id="preview" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p class="note">Tip: 너무 긴 로그는 붙여넣은 뒤 1~2초 정도 기다리면 자동 서식이 적용됩니다. 최신 브라우저 권장. 모든 데이터는 로컬 저장(LocalStorage) 또는 프로젝트 파일(JSON)로만 보관됩니다.</p>
+  </footer>
+
+  <script>
+    const $ = (s, el=document)=>el.querySelector(s);
+    const $$ = (s, el=document)=>Array.from(el.querySelectorAll(s));
+
+    // Elements
+    const src = $('#src'), preview = $('#preview');
+    const optGroup = $('#optGroup'), optTime = $('#optTime'), optDice = $('#optDice');
+    const spList = $('#speakers'), ed = $('#editor');
+    const spOriginal = $('#spOriginal'), spAlias = $('#spAlias');
+    const spAvatarFile = $('#spAvatarFile'), spAvatarURL = $('#spAvatarURL');
+
+    const btnSample = $('#btnSample'), btnClear = $('#btnClear');
+    const btnExportHTML = $('#btnExportHTML'), btnExportMD = $('#btnExportMD');
+    const btnSaveProj = $('#btnSaveProj'), loadProj = $('#loadProj');
+    const btnApplySp = $('#btnApplySp'), btnClearSp = $('#btnClearSp');
+
+    // State
+    let debounceTimer = 0;
+    let messages = [];     // parsed items
+    let grouped = [];      // grouped by speaker
+    let speakers = {};     // { 'Alice': { alias:'A', avatar:'data:'|url|'' } }
+    let activeSpeaker = null;
+
+    // ----- Event wiring -----
+    src.addEventListener('input', ()=>{ persist(); scheduleRender(); });
+    optGroup.addEventListener('change', ()=>{ persist(); render(); });
+    optTime.addEventListener('change', ()=>{ persist(); render(); });
+    optDice.addEventListener('change', ()=>{ persist(); render(); });
+
+    btnSample.addEventListener('click', ()=>{ src.value = SAMPLE.trim(); persist(); render(); });
+    btnClear.addEventListener('click', ()=>{ src.value=''; speakers={}; activeSpeaker=null; persist(); render(); });
+
+    btnExportHTML.addEventListener('click', exportHTML);
+    btnExportMD.addEventListener('click', exportMD);
+
+    btnSaveProj.addEventListener('click', saveProject);
+    loadProj.addEventListener('change', loadProject);
+
+    btnApplySp.addEventListener('click', applySpeakerEdits);
+    btnClearSp.addEventListener('click', ()=>{ if(!activeSpeaker) return; speakers[activeSpeaker].avatar=''; persist(); render(); openEditor(activeSpeaker); });
+
+    spAvatarFile.addEventListener('change', handleAvatarFile);
+
+    function scheduleRender(){
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(render, 150);
+    }
+
+    // ----- Parsing & rendering -----
+    function render(){
+      // Parse
+      const text = src.value || '';
+      const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      messages = [];
+      for(const line of lines){
+        // remove quick HTML tags
+        const clean = line.replace(/<[^>]*>/g, '').trim();
+        let m = clean.match(/^(.{6,40}?)\s+-\s+([^:]+?):\s*(.+)$/); // TIMESTAMP - SPEAKER: body
+        if(m){ messages.push({t:m[1].trim(), s:m[2].trim(), b:m[3], sys:false}); continue; }
+        m = clean.match(/^([^:]{1,40}):\s*(.+)$/); // SPEAKER: body
+        if(m){ messages.push({t:'', s:m[1].trim(), b:m[2], sys:false}); continue; }
+        messages.push({t:'', s:'', b:clean, sys:true}); // system
+      }
+
+      // Speakers map
+      const seen = new Map();
+      for(const msg of messages){
+        if(msg.sys || !msg.s) continue;
+        if(!speakers[msg.s]) speakers[msg.s] = { alias:'', avatar:'' };
+        seen.set(msg.s, (seen.get(msg.s)||0)+1);
+      }
+
+      // Group
+      grouped = [];
+      if(optGroup.checked){
+        let cur = null;
+        for(const m of messages){
+          if(m.sys){ grouped.push(m); cur=null; continue; }
+          if(cur && cur.s===m.s && (!!cur.t === !!m.t)){
+            cur.items.push(m);
+          }else{
+            cur = {t:m.t, s:m.s, items:[m]};
+            grouped.push(cur);
+          }
+        }
+      }else{
+        for(const m of messages){
+          grouped.push(m.sys ? m : {t:m.t, s:m.s, items:[m]});
+        }
+      }
+
+      // Render preview
+      preview.innerHTML = '';
+      for(const g of grouped){
+        const wrap = document.createElement('div');
+        if(g.sys){
+          wrap.className = 'msg sys';
+          wrap.textContent = g.b;
+        }else{
+          wrap.className = 'msg';
+          const head = document.createElement('div'); head.className='head';
+          const sp = speakers[g.s] || {alias:'', avatar:''};
+          const disp = sp.alias ? sp.alias : g.s;
+          const av = document.createElement('div'); av.className='avatar';
+          if(sp.avatar){
+            const img = document.createElement('img'); img.src = sp.avatar; av.appendChild(img);
+          }else{
+            av.textContent = initials(disp);
+          }
+          const name = document.createElement('span'); name.className='speaker'; name.textContent = disp;
+          const time = document.createElement('span'); time.className='time'; time.textContent = (optTime.checked && g.t) ? g.t : '';
+          head.appendChild(av); head.appendChild(name); if(time.textContent) head.appendChild(time);
+          wrap.appendChild(head);
+          for(const it of g.items){
+            const p = document.createElement('div'); p.className='body'; p.innerHTML = stylize(escapeHTML(it.b)); wrap.appendChild(p);
+          }
+        }
+        preview.appendChild(wrap);
+      }
+
+      // Render speakers list
+      spList.innerHTML = '';
+      const entries = [...seen.entries()].sort((a,b)=> b[1]-a[1]);
+      for(const [name,count] of entries){
+        const el = document.createElement('div'); el.className='sp' + (activeSpeaker===name ? ' active' : '');
+        const a = speakers[name];
+        const icon = document.createElement('div'); icon.className='av';
+        if(a.avatar){ const img = document.createElement('img'); img.src = a.avatar; icon.appendChild(img); }
+        else { icon.textContent = initials(a.alias||name); }
+        const nm = document.createElement('div'); nm.className='name'; nm.textContent = a.alias || name;
+        const ct = document.createElement('div'); ct.className='count'; ct.textContent = count;
+        el.appendChild(icon); el.appendChild(nm); el.appendChild(ct);
+        el.addEventListener('click', ()=> openEditor(name));
+        spList.appendChild(el);
+      }
+
+      persist();
+    }
+
+    function stylize(s){
+      if(optDice.checked){
+        s = s.replace(/\b(\d*d\d+([+-]\d+)?)\b/gi, '<code>$1</code>');
+      }
+      s = s.replace(/\b(Nat\s*20|Critical|Fail|Fumble)\b/gi, '<code>$1</code>');
+      return s;
+    }
+
+    function escapeHTML(s){
+      return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+
+    function initials(name){
+      const parts = name.split(/\s+/).filter(Boolean);
+      const first = parts[0] ? parts[0][0] : '?';
+      const last = parts[1] ? parts[1][0] : '';
+      return (first + last).toUpperCase();
+    }
+
+    // ----- Speaker editor -----
+    function openEditor(name){
+      activeSpeaker = name;
+      const data = speakers[name] || {alias:'', avatar:''};
+      spOriginal.value = name;
+      spAlias.value = data.alias || '';
+      spAvatarFile.value = '';
+      spAvatarURL.value = data.avatar && !data.avatar.startsWith('data:') ? data.avatar : '';
+      ed.hidden = false;
+      // highlight selection
+      $$('.sp').forEach(el=> el.classList.toggle('active', el.querySelector('.name').textContent === (data.alias||name)));
+    }
+
+    function applySpeakerEdits(){
+      if(!activeSpeaker) return;
+      const alias = spAlias.value.trim();
+      const url = spAvatarURL.value.trim();
+      if(alias !== speakers[activeSpeaker].alias) speakers[activeSpeaker].alias = alias;
+      if(url){ speakers[activeSpeaker].avatar = url; }
+      // if file was chosen, handleAvatarFile already saved dataURL
+      persist(); render(); openEditor(activeSpeaker);
+    }
+
+    function handleAvatarFile(e){
+      const file = e.target.files && e.target.files[0];
+      if(!file || !activeSpeaker) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        speakers[activeSpeaker].avatar = reader.result; // data URL
+        persist(); render(); openEditor(activeSpeaker);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ----- Export / Import -----
+    function exportHTML(){
+      const css = `
+        .msg{padding:10px 12px;border-radius:10px;background:#0e1b20;border:1px solid rgba(255,255,255,.06);margin:8px 0;color:#e9f1f3;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Noto Sans KR,Malgun Gothic,Arial,sans-serif}
+        .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+        .avatar{width:28px;height:28px;border-radius:50%;overflow:hidden;background:#081216;border:1px solid rgba(255,255,255,.08);display:grid;place-items:center;font-size:12px;font-weight:800}
+        .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+        .speaker{font-weight:800;margin-right:4px}
+        .time{font-size:12px;color:#9cc6cd}
+        .body{white-space:pre-wrap;line-height:1.55}
+        code{padding:1px 4px;background:#0c171b;border:1px solid rgba(255,255,255,.06);border-radius:6px;font-family:inherit}
+      `.trim();
+      const html = `<!DOCTYPE html><meta charset="utf-8"><style>${css}</style>` + preview.innerHTML;
+      const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+      downloadBlob(blob, 'roll20-export.html');
+    }
+
+    function exportMD(){
+      const blocks = [];
+      $$('.msg', preview).forEach(div=>{
+        if(div.classList.contains('sys')){
+          blocks.push(`*${div.textContent.trim()}*`);
+        }else{
+          const who = div.querySelector('.speaker').textContent.trim();
+          const timeEl = div.querySelector('.time');
+          const timeStr = timeEl && timeEl.textContent ? ` (${timeEl.textContent.trim()})` : '';
+          const bodies = $$('.body', div).map(b=> b.textContent);
+          bodies.forEach((t,i)=> blocks.push(`${who}${i===0?timeStr:''}: ${t}`));
+        }
+      });
+      const blob = new Blob([blocks.join('\n')], {type:'text/markdown;charset=utf-8'});
+      downloadBlob(blob, 'roll20-export.md');
+    }
+
+    function saveProject(){
+      const state = { text: src.value || '', speakers, opts: { group: optGroup.checked, time: optTime.checked, dice: optDice.checked } };
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json;charset=utf-8'});
+      downloadBlob(blob, 'roll20-project.json');
+    }
+
+    function loadProject(e){
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const st = JSON.parse(reader.result);
+          src.value = st.text || '';
+          speakers = st.speakers || {};
+          optGroup.checked = !!(st.opts && st.opts.group);
+          optTime.checked = !!(st.opts && st.opts.time);
+          optDice.checked = !!(st.opts && st.opts.dice);
+          persist(); render();
+        }catch(err){ alert('프로젝트 파일을 읽지 못했습니다.'); }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function downloadBlob(blob, filename){
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    }
+
+    // ----- Persistence -----
+    function persist(){
+      const state = { text: src.value || '', speakers, opts: { group: optGroup.checked, time: optTime.checked, dice: optDice.checked } };
+      try{ localStorage.setItem('roll20_pro_state', JSON.stringify(state)); }catch(e){}
+    }
+    (function restore(){
+      try{
+        const s = localStorage.getItem('roll20_pro_state');
+        if(s){ const st = JSON.parse(s); src.value = st.text || ''; speakers = st.speakers || {}; optGroup.checked = !!(st.opts && st.opts.group); optTime.checked = !!(st.opts && st.opts.time); optDice.checked = !!(st.opts && st.opts.dice); }
+      }catch(e){}
+      render();
+    })();
+
+    // Sample
+    const SAMPLE = `Sep 03, 2025 10:03 PM - Keeper: 세션 시작! 모두 접속 확인해주세요.
+Alice: 안녕하세요!
+Bob: 굴림합니다 1d6+2
+Keeper: 결과는 4입니다.
+Sep 03, 2025 10:12 PM - Alice: 조심스럽게 문을 엽니다.
+Sep 03, 2025 10:12 PM - Alice: Listen 체크 (d100)
+Bob: 야외에서 이상한 소리가...
+System: ———— Scene Break ————
+Keeper: 계속 진행하죠. Nat 20!`;
+  </script>
+</body>
+</html>
