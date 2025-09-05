@@ -407,7 +407,7 @@ li[data-active="true"] article svg{
       <img src="https://picsum.photos/1200/800?random=56" alt="" />
     </article>
   </li>
-  <li>
+  <li<li data-link="roll20/" role="link" tabindex="0">
     <article>
       <div class="scrim" aria-hidden="true"></div>
       <h3 class="title" aria-label="Mastering Time">
@@ -462,11 +462,21 @@ li[data-active="true"] article svg{
     raf = requestAnimationFrame(() => applyActive(idx));
   };
 
-  items.forEach((li, i) => {
-    li.addEventListener('pointerenter', () => schedule(i), { passive: true });
-    li.addEventListener('click', () => applyActive(i));
-    li.addEventListener('focusin', () => applyActive(i));
+items.forEach((li, i) => {
+  li.addEventListener('pointerenter', () => schedule(i), { passive: true });
+  li.addEventListener('click', () => {
+    const url = li.dataset.link;
+    if (url) { location.href = url; }   // ← 카드 클릭 즉시 이동
+    else { applyActive(i); }            // 링크 없는 카드는 기존처럼 펼치기
   });
+  li.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const url = li.dataset.link;
+      if (url) {window.open(url, '_blank', 'noopener');} else { applyActive(i); }
+    }
+  });
+  li.addEventListener('focusin', () => applyActive(i));
+});
   list.addEventListener('pointerleave', collapse);
   list.addEventListener('focusout', (e) => { if (!list.contains(e.relatedTarget)) collapse(); });
 
