@@ -12,8 +12,11 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; color:var(--ink); background: radial-gradient(1200px 800px at 50% -200px, #10313a 0%, var(--bg) 70%, #071015 100%);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Pretendard, "Noto Sans KR", "Malgun Gothic", Arial, sans-serif}
+    body{
+      margin:0; color:var(--ink);
+      background: radial-gradient(1200px 800px at 50% -200px, #10313a 0%, var(--bg) 70%, #071015 100%);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Pretendard, "Noto Sans KR", "Malgun Gothic", Arial, sans-serif
+    }
     a{color:inherit}
     .container{max-width:960px; margin:0 auto; padding:18px 14px 40px}
 
@@ -22,15 +25,24 @@
     .hero{padding:32px 0}
     .hero h1{margin:0 0 10px; font-size:clamp(26px,5vw,36px)}
     .hero p{margin:2px 0; color:var(--soft)}
-    .panel{background:linear-gradient(180deg, var(--panel) 0%, #0f1c21 100%); border:1px solid var(--edge); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+    .panel{
+      background:linear-gradient(180deg, var(--panel) 0%, #0f1c21 100%);
+      border:1px solid var(--edge); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden
+    }
     .panel h2{margin:0; padding:10px 12px; font-size:14px; background:#102a30; border-bottom:1px solid var(--edge)}
     .panel .body{padding:12px}
-    textarea{width:100%; min-height:240px; resize:vertical; display:block; padding:12px; background:#0e1b20; color:var(--ink); border:0; outline:none; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:13px}
+    textarea{
+      width:100%; min-height:240px; resize:vertical; display:block; padding:12px;
+      background:#0e1b20; color:var(--ink); border:0; outline:none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:13px
+    }
     .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
-    .btn{padding:9px 12px; border-radius:10px; background:#102a30; border:1px solid var(--edge); color:var(--ink); text-decoration:none; font-weight:600; cursor:pointer}
+    .btn{
+      padding:9px 12px; border-radius:10px; background:#102a30; border:1px solid var(--edge);
+      color:var(--ink); text-decoration:none; font-weight:600; cursor:pointer
+    }
     .btn:hover{background:#11323a}
     .note{font-size:12px; color:#9fc8cf}
-
     .list{margin:10px 0; padding-left:18px; color:var(--soft)}
     .list li{margin:6px 0}
 
@@ -89,19 +101,18 @@
             <button class="btn" id="btnSample">샘플 데이터 편집해보기</button>
           </div>
           <ul class="list">
-            <li>Roll20의 채팅 기록 페이지로 이동합니다 (<code>https://app.roll20.net/campaigns/chatarchive/숫자</code>).</li>
-            <li>(선택) <b>Show on One Page</b> 버튼으로 전체 로그를 표시합니다.</li>
-            <li><b>Ctrl+A</b> → 마우스 오른쪽 버튼 → <b>복사</b>로 <em>채팅 내용만</em> 복사합니다.</li>
-            <li>위 입력란에 붙여넣고, <b>편집 시작</b>을 누르면 에디터가 열립니다.</li>
+            <li>Roll20의 채팅 기록 페이지 (<code>https://app.roll20.net/campaigns/chatarchive/숫자</code>)에서</li>
+            <li>(선택) <b>Show on One Page</b> → <b>Ctrl+A</b> → <b>복사</b></li>
+            <li>위 입력란에 붙여넣고 <b>편집 시작</b>을 누르면 에디터가 열립니다.</li>
           </ul>
-          <p class="note">⚠️ 확장 프로그램이 변환한 채팅 로그는 예상치 못한 결과가 나올 수 있습니다. 가능하면 끄고 복사해주세요.</p>
+          <p class="note">⚠️ 확장 프로그램이 변환한 로그는 예외가 생길 수 있어요. 가능하면 끄고 복사해 주세요.</p>
         </div>
       </div>
 
       <div class="panel" style="margin-top:16px">
         <h2>공지사항</h2>
         <div class="body">
-          <p class="note">오류/요청은 언제든 알려주세요. 동작은 안내된 흐름을 따릅니다.</p>
+          <p class="note">오류/요청은 언제든 알려주세요. 모든 처리는 브라우저 안에서만 수행됩니다.</p>
         </div>
       </div>
     </div>
@@ -167,7 +178,7 @@
               <button class="btn" id="btnApplySp">적용</button>
               <button class="btn" id="btnClearSp">아바타 제거</button>
             </div>
-            <p class="note">이미지를 업로드하면 데이터 URL로 저장되어 내보낸 HTML에서도 그대로 보입니다. URL을 넣으면 링크로 표시되며, 오프라인에서는 안 보일 수 있어요.</p>
+            <p class="note">이미지 업로드 시 데이터 URL로 저장되어 내보낸 HTML에서도 그대로 보입니다. URL은 링크로 쓰이며 오프라인에선 표시되지 않을 수 있어요.</p>
           </div>
         </section>
 
@@ -201,11 +212,19 @@
     btnToEditor.addEventListener('click', ()=> goEditorWith(landingSrc.value));
     btnSampleTop.addEventListener('click', ()=> goEditorWith(SAMPLE.trim()));
 
-    // Paste anywhere on landing
+    // Landing 어디서든 붙여넣기 지원
     landing.addEventListener('paste', (e)=>{
       const t = e.clipboardData?.getData('text/plain');
       if (t) { e.preventDefault(); landingSrc.value = t; }
     });
+
+    // ---------- Importer Registry (단일 선언) ----------
+    const IMPORTERS = [];
+    function registerImporter({ id, detect, parse }) { IMPORTERS.push({ id, detect, parse }); }
+    function parseWithImporters(rawText) {
+      for (const imp of IMPORTERS) { try { if (imp.detect(rawText)) return imp.parse(rawText); } catch (e) {} }
+      return null;
+    }
 
     // ---------- Pro Editor 로직 ----------
     const $ = (s, el=document)=>el.querySelector(s);
@@ -252,7 +271,11 @@
     loadProj.addEventListener('change', loadProject);
 
     btnApplySp.addEventListener('click', applySpeakerEdits);
-    btnClearSp.addEventListener('click', ()=>{ if(!activeSpeaker) return; speakers[activeSpeaker].avatar=''; persist(); render(); openEditor(activeSpeaker); });
+    btnClearSp.addEventListener('click', ()=>{
+      if(!activeSpeaker) return;
+      speakers[activeSpeaker].avatar='';
+      persist(); render(); openEditor(activeSpeaker);
+    });
 
     spAvatarFile.addEventListener('change', handleAvatarFile);
 
@@ -272,13 +295,13 @@
         const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
         messages = [];
         for(const line of lines){
-          // remove quick HTML tags
+          // 빠른 태그 제거
           const clean = line.replace(/<[^>]*>/g, '').trim();
           let m = clean.match(/^(.{6,40}?)\s+-\s+([^:]+?):\s*(.+)$/); // TIMESTAMP - SPEAKER: body
           if(m){ messages.push({t:m[1].trim(), s:m[2].trim(), b:m[3], sys:false}); continue; }
           m = clean.match(/^([^:]{1,40}):\s*(.+)$/); // SPEAKER: body
           if(m){ messages.push({t:'', s:m[1].trim(), b:m[2], sys:false}); continue; }
-          messages.push({t:'', s:'', b:clean, sys:true}); // system
+          messages.push({t:'', s:'', b:clean, sys:true}); // system (구분선/공지 등)
         }
       }
 
@@ -357,14 +380,6 @@
       persist();
     }
 
-    // ----- Importer registry (future adapters) -----
-    const IMPORTERS = [];
-    function registerImporter({ id, detect, parse }) { IMPORTERS.push({ id, detect, parse }); }
-    function parseWithImporters(rawText) {
-      for (const imp of IMPORTERS) { try { if (imp.detect(rawText)) return imp.parse(rawText); } catch {} }
-      return null;
-    }
-
     function stylize(s){
       if(optDice.checked){
         s = s.replace(/\b(\d*d\d+([+-]\d+)?)\b/gi, '<code>$1</code>');
@@ -393,7 +408,6 @@
       spAvatarFile.value = '';
       spAvatarURL.value = data.avatar && !data.avatar.startsWith('data:') ? data.avatar : '';
       ed.hidden = false;
-      // highlight selection
       $$('.sp').forEach(el=> el.classList.toggle('active', el.querySelector('.name').textContent === (data.alias||name)));
     }
 
@@ -403,7 +417,7 @@
       const url = spAvatarURL.value.trim();
       if(alias !== speakers[activeSpeaker].alias) speakers[activeSpeaker].alias = alias;
       if(url){ speakers[activeSpeaker].avatar = url; }
-      // if file was chosen, handleAvatarFile already saved dataURL
+      // 파일 업로드는 handleAvatarFile에서 dataURL 저장 완료
       persist(); render(); openEditor(activeSpeaker);
     }
 
@@ -471,7 +485,6 @@
           optTime.checked  = !!(st.opts && st.opts.time);
           optDice.checked  = !!(st.opts && st.opts.dice);
           persist(); render();
-          // show editor if loaded from landing
           landing.hidden = true; app.hidden = false; window.scrollTo({ top: 0 });
         }catch(err){ alert('프로젝트 파일을 읽지 못했습니다.'); }
       };
@@ -492,6 +505,7 @@
       const state = { text: src.value || '', speakers, opts: { group: optGroup.checked, time: optTime.checked, dice: optDice.checked } };
       try{ localStorage.setItem('roll20_pro_state', JSON.stringify(state)); }catch(e){}
     }
+
     (function restore(){
       try{
         const s = localStorage.getItem('roll20_pro_state');
@@ -515,21 +529,14 @@
     })();
 
     // ----- Adapters (placeholder) -----
-    // 필요 시 외부 포맷 감지/파싱을 여기에 추가할 수 있습니다.
-    const IMPORTERS = [];
-    function registerImporter({ id, detect, parse }) { IMPORTERS.push({ id, detect, parse }); }
-    function parseWithImporters(rawText) {
-      for (const imp of IMPORTERS) { try { if (imp.detect(rawText)) return imp.parse(rawText); } catch {} }
-      return null;
-    }
-
+    // 필요하면 여기에 다른 포맷 감지/파서 등록
     registerImporter({
       id: 'roll20-html-snippet',
       detect: (txt) => /<div[^>]*class=/.test(txt) && /message|by\s+\w+:/.test(txt),
-      parse: (txt) => null // 기본 파서 사용
+      parse:  () => null // 기본 파서 사용
     });
 
-    // Sample text
+    // 샘플 텍스트
     const SAMPLE = `Sep 03, 2025 10:03 PM - Keeper: 세션 시작! 모두 접속 확인해주세요.
 Alice: 안녕하세요!
 Bob: 굴림합니다 1d6+2
