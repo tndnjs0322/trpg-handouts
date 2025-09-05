@@ -465,10 +465,13 @@ li[data-active="true"] article svg{
 items.forEach((li, i) => {
   li.addEventListener('pointerenter', () => schedule(i), { passive: true });
   li.addEventListener('click', () => {
-    const url = li.dataset.link;
-    if (url) { location.href = url; }   // ← 카드 클릭 즉시 이동
-    else { applyActive(i); }            // 링크 없는 카드는 기존처럼 펼치기
-  });
+  const url = li.dataset.link;
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer'); // 새 탭으로 열기
+  } else {
+    applyActive(i);
+  }
+});
   li.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const url = li.dataset.link;
