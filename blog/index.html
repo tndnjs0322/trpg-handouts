@@ -46,7 +46,7 @@
   pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
 </style>
 
-<!-- 2) Library Theme (서가/책 카드/종이 질감) -->
+<!-- 2) Library Theme (서가/책 카드/종이 질감 + 3D pull-out) -->
 <style>
 :root{
   --shelf-wood: linear-gradient(90deg,#6b4f2b 0%,#7c5a31 25%,#6f4f2a 50%,#7a5730 75%,#6b4f2b 100%);
@@ -60,8 +60,12 @@
   --book-radius: 10px;
   --book-border: 2px;
   --book-depth: 16px;
-  --book-tilt: .8deg;
+  --book-tilt: .6deg;
   --min-card: 192px;
+
+  --spine-w: clamp(14px, 3.2cqi, 22px);
+  --thickness: 12px;
+  --ease: cubic-bezier(.22,.8,.2,1);
 }
 body{ background:var(--bg); color:var(--ink) }
 
@@ -92,10 +96,13 @@ body{ background:var(--bg); color:var(--ink) }
   padding:6px 10px; border-radius:8px;
 }
 
-/* === 책 카드 === */
+/* === 책 카드 (표지/스파인/페이지단면) === */
 a.book{ display:block; text-decoration:none; color:inherit; }
-.book article{
-  --cover-tone: color-mix(in oklab, var(--avarage-color, #8895a7) 85%, black 15%);
+.book figure{ margin:0; position:relative; aspect-ratio: 257/364; border-radius: calc(var(--book-radius) - var(--book-border)); overflow:hidden; }
+
+/* 프레임 */
+.book .book3d{
+  --cover-tone: color-mix(in oklab, var(--avarage-color, #8895a7) 82%, black 18%);
   border: var(--book-border) solid var(--cover-tone);
   border-radius: var(--book-radius);
   background:
@@ -105,42 +112,83 @@ a.book{ display:block; text-decoration:none; color:inherit; }
     0 0 0 1px rgba(255,255,255,.06) inset,
     0 8px var(--book-depth) rgba(0,0,0,.35),
     0 2px 10px rgba(0,0,0,.35);
+  transform-style: preserve-3d;
   transform: rotate(var(--book-tilt)) translateZ(0);
-  transition: transform .28s cubic-bezier(.22,.8,.2,1), box-shadow .28s, filter .28s, border-color .28s;
-  will-change: transform, box-shadow;
-  overflow:hidden; background-clip:padding-box;
+  transition: transform .45s var(--ease), box-shadow .45s var(--ease), filter .28s var(--ease);
+  position: relative;
+  overflow: hidden;
+  background-clip: padding-box;
 }
-.book article:hover{
-  transform: translateY(-8px) rotate(0deg);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.08) inset,
-    0 16px calc(var(--book-depth) + 4px) rgba(0,0,0,.42),
-    0 8px 26px rgba(0,0,0,.55);
-  filter: saturate(1.05);
-}
-.book figure{
-  margin:0;
-  position:relative;
-  aspect-ratio: 257 / 364;              /* 카드 높이 고정 */
-  border-radius: calc(var(--book-radius) - var(--book-border));
-  overflow:hidden;                       /* 넘친 부분 잘라내기 */
-}
+
+/* 표지 이미지: 중앙 기준 크롭 */
 .book img{
-  position:absolute; inset:0;            /* figure에 딱 붙이기 */
+  position:absolute; inset:0;
   width:100%; height:100%;
-  object-fit: cover;                     /* 꽉 채우고 필요하면 크롭 */
-  object-position: center;               /* 중앙 기준으로 크롭 */
+  object-fit: cover;
+  object-position: center;
   display:block;
 }
-.book figcaption{
-  padding:8px 10px 10px;
-  font-weight:700; font-size:14px; line-height:1.15;
-  letter-spacing:.01em;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  text-wrap:balance;
-  color:var(--ink);
-  text-shadow: 0 1px 0 rgba(0,0,0,.3);
+
+/* 책등(세로 제목) */
+.book .book3d::after{
+  content: attr(data-title);
+  position:absolute; inset:0 auto 0 0;
+  width: var(--spine-w);
+  display:flex; align-items:center; justify-content:center;
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-weight:700; font-size:12px; letter-spacing:.08em;
+  color: rgba(255,255,255,.92);
+  text-shadow: 0 1px 1px rgba(0,0,0,.6);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.55), rgba(255,255,255,.06) 35%, rgba(0,0,0,.45)),
+    color-mix(in oklab, var(--avarage-color, #8895a7) 70%, black 30%);
+  border-right: 1px solid rgba(255,255,255,.08);
+  box-shadow: inset -1px 0 0 rgba(0,0,0,.35);
+  z-index: 2;
+  transition: opacity .28s var(--ease);
 }
+
+/* 페이지 단면(우측) */
+.book .book3d::before{
+  content:"";
+  position:absolute; top:0; right:-1px; height:100%; width: var(--thickness);
+  background:
+    repeating-linear-gradient(90deg, #ffffff30 0 2px, #0000 2px 4px),
+    linear-gradient(90deg, #e7e7e7, #fafafa);
+  filter: brightness(.9);
+  box-shadow: inset 1px 0 0 rgba(0,0,0,.2);
+  transform: translateZ(-1px);
+  z-index: 1;
+  pointer-events:none;
+}
+
+/* 제목 바(책 꺼낼 때 하단에 크게 표시) */
+.book figcaption{
+  position:absolute; left:0; right:0; bottom:0;
+  padding:10px 12px 12px;
+  font-weight:800; font-size:14px; line-height:1.15; letter-spacing:.01em;
+  color:#fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  background: linear-gradient(0deg, rgba(0,0,0,.65), rgba(0,0,0,0));
+  opacity:0; transform: translateY(6px);
+  transition: opacity .28s var(--ease), transform .28s var(--ease);
+  -webkit-line-clamp: 2; display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
+}
+
+/* 서가에서 ‘쏙’ 꺼내는 3D 애니메이션 */
+.book:hover .book3d,
+.book:focus-within .book3d{
+  transform: translateY(-6px) translateZ(28px) rotateY(-12deg);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08) inset,
+    0 18px 24px rgba(0,0,0,.50),
+    0 10px 34px rgba(0,0,0,.60);
+  filter: saturate(1.05);
+}
+.book:hover .book3d::after,
+.book:focus-within .book3d::after{ opacity:0; }
+.book:hover figcaption,
+.book:focus-within figcaption{ opacity:1; transform:none; }
 
 /* === 본문(펼친 책) === */
 #viewPost.post{ background:none; border:none; padding:0; margin-top:6px }
@@ -201,31 +249,17 @@ const $=s=>document.querySelector(s);
 const d=x=>x?new Date(x).toISOString().slice(0,10):'';
 const esc = s => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-/* 이미지 폴백: 루트(/assets/...) → 서브폴더(BASE + assets/...) → 플레이스홀더 */
+/* 이미지 폴백: /assets → BASE/assets → _placeholder */
 window._coverFallback = function(ev){
   const img = ev.target;
-  // 1차: data-alt (BASE 경로)
-  if (!img.dataset.try2 && img.dataset.alt) {
-    img.dataset.try2 = '1';
-    img.src = img.dataset.alt;
-    return;
-  }
-  // 2차: data-ph1 (루트 플레이스홀더)
-  if (!img.dataset.try3 && img.dataset.ph1) {
-    img.dataset.try3 = '1';
-    img.src = img.dataset.ph1;
-    return;
-  }
-  // 3차: data-ph2 (BASE 플레이스홀더)
-  if (!img.dataset.try4 && img.dataset.ph2) {
-    img.dataset.try4 = '1';
-    img.src = img.dataset.ph2;
-  }
+  if (!img.dataset.try2 && img.dataset.alt) { img.dataset.try2='1'; img.src = img.dataset.alt; return; }
+  if (!img.dataset.try3 && img.dataset.ph1) { img.dataset.try3='1'; img.src = img.dataset.ph1; return; }
+  if (!img.dataset.try4 && img.dataset.ph2) { img.dataset.try4='1'; img.src = img.dataset.ph2; }
 };
 
 /* 카드 HTML (표지 자동 추정 + 폴백) */
 function bookCardHTML(p){
-  const slug = p.slug;
+  const slug  = p.slug;
   const color = p.color || '#8e8e8e';
   const rootCover = `/assets/covers/${slug}.jpg`;
   const baseCover = `${BASE}assets/covers/${slug}.jpg`;
@@ -233,7 +267,7 @@ function bookCardHTML(p){
   const phBase    = `${BASE}assets/covers/_placeholder.jpg`;
   return `
     <a class="book" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
-      <article style="--avarage-color:${color}">
+      <article class="book3d" style="--avarage-color:${color}" data-title="${esc(p.title)}">
         <figure>
           <img src="${esc(rootCover)}"
                data-alt="${esc(baseCover)}"
@@ -304,7 +338,7 @@ async function renderPost(slug){
     const r = await fetch(url, {cache:'no-cache'});
     if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
     const md = await r.text();
-    const body = md.replace(/^---[\s\S]*?---\s*/, ''); // front-matter 제거
+    const body = md.replace(/^---[\s\S]*?---\s*/, '');
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
     document.title = m.title+' - 보관된 도서';
