@@ -3,11 +3,7 @@
 <head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Blog</title>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
-<style>
-  /* --- Single-tab bounce: 메인 변경 없이 새 탭을 자동 정리 --- */
+   /* --- Single-tab bounce: 메인 변경 없이 새 탭을 자동 정리 --- */
 (() => {
   const params = new URLSearchParams(location.search);
   const noBounce = params.has('nobounce'); // 필요시 ?nobounce 로 무력화
@@ -30,6 +26,10 @@
     }, 800);
   }
 })();
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<style>
   :root{--line:#1e2732;--panel:#10171e;--text:#e7edf3;--muted:#a8b3bf}
   *{box-sizing:border-box} body{margin:0;background:#0d141b;color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
   main{max-width:1040px;margin:28px auto;padding:0 16px}
