@@ -64,8 +64,13 @@
 </main>
 
 <script>
-const DATA_URL='./data/posts.json';
-const POSTS_DIR='./posts/';
+// 현재 문서 디렉터리 기준 경로 계산 ( /blog 또는 /repo/blog/ 모두 대응 )
+const BASE = location.pathname.endsWith('/')
+  ? location.pathname
+  : location.pathname.replace(/[^/]+$/, '/');
+
+const DATA_URL = BASE + 'data/posts.json';
+const POSTS_DIR = BASE + 'posts/';
 let ALL=[];
 
 const $=s=>document.querySelector(s);
