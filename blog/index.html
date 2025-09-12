@@ -1,50 +1,163 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>보관된 도서</title>
-<script>
-  (() => {
-    const params = new URLSearchParams(location.search);
-    const noBounce = params.has('nobounce'); // ?nobounce 로 무력화
 
-    if (window.opener && !window.opener.closed && !noBounce) {
-      try {
-        window.opener.location.assign(location.pathname + location.search + location.hash);
-      } catch (e) {}
-      window.close();
-      setTimeout(() => {
-        document.body.innerHTML =
-          '<main style="padding:24px;font:15px/1.6 system-ui">' +
-          '<p>이 탭은 자동으로 닫히도록 되어 있어요. 창을 닫고 이전 탭에서 계속 이용해 주세요.</p>' +
-          '<p><a href="../">홈으로 가기</a></p>' +
-          '</main>';
-      }, 800);
-    }
-  })();
-  </script>
+<!-- (옵션) 팝업로딩 탭 되돌리기 스크립트 -->
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const noBounce = params.has('nobounce');
+  if (window.opener && !window.opener.closed && !noBounce) {
+    try { window.opener.location.assign(location.pathname + location.search + location.hash); } catch {}
+    window.close();
+    setTimeout(() => {
+      document.body.innerHTML =
+        '<main style="padding:24px;font:15px/1.6 system-ui">' +
+        '<p>이 탭은 자동으로 닫히도록 되어 있어요. 창을 닫고 이전 탭에서 계속 이용해 주세요.</p>' +
+        '<p><a href="../">홈으로 가기</a></p>' +
+        '</main>';
+    }, 800);
+  }
+})();
+</script>
+
+<!-- MD 파서 & 코드 하이라이트 -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+
+<!-- 1) 기본(공통) 스타일 -->
 <style>
   :root{--line:#1e2732;--panel:#10171e;--text:#e7edf3;--muted:#a8b3bf}
-  *{box-sizing:border-box} body{margin:0;background:#0d141b;color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  main{max-width:1040px;margin:28px auto;padding:0 16px}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0d141b;color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  main{max-width:1120px;margin:28px auto;padding:0 16px}
   header{display:flex;gap:8px;align-items:center;margin-bottom:12px}
   a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
-  .cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-  .cat{display:flex;justify-content:space-between;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
-  .cat em{color:var(--muted);font-style:normal;font-size:12px}
-  .list{display:grid;gap:12px}
-  .item{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
-  .item .m{color:var(--muted);font-size:12px;margin-top:4px}
+  .hidden{display:none}
+
+  /* 포스트 뷰 공통 */
   .post{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
   .post .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
   .post img{max-width:100%;border-radius:10px}
   pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
-  .hidden{display:none}
+</style>
+
+<!-- 2) Library Theme (서가/책 카드) -->
+<style>
+:root{
+  --shelf-wood: linear-gradient(90deg,#6b4f2b 0%,#7c5a31 25%,#6f4f2a 50%,#7a5730 75%,#6b4f2b 100%);
+  --shelf-edge: rgba(0,0,0,.28);
+  --bg: #0d141b;
+  --ink: #e7edf3;
+  --muted: #a8b3bf;
+  --line: #1e2732;
+  --panel:#10171e;
+
+  --book-radius: 10px;
+  --book-border: 2px;
+  --book-depth: 16px;
+  --book-tilt: .8deg;
+  --min-card: 192px;
+}
+body{ background:var(--bg); color:var(--ink) }
+
+#viewList section{
+  position:relative;
+  margin:42px 0 64px;
+  padding:0 4px 36px;
+  display:grid; gap:16px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--min-card), 1fr));
+  perspective: 2000px;
+}
+#viewList section::after{
+  content:""; position:absolute; left:-32px; right:-32px; bottom:0;
+  height:26px; border-radius:8px;
+  background:
+    linear-gradient(0deg, rgba(0,0,0,.35), transparent 65%),
+    var(--shelf-wood);
+  box-shadow: 0 -1px 0 var(--shelf-edge) inset, 0 10px 18px rgba(0,0,0,.35);
+}
+#viewList section>header{ grid-column:1/-1; margin-bottom:8px }
+#viewList section>header h1{
+  display:inline-block; margin:0; font:700 18px/1.2 system-ui;
+  color:#ffd166; letter-spacing:.02em;
+  background: rgba(255,209,102,.08);
+  border:1px solid rgba(255,209,102,.25);
+  padding:6px 10px; border-radius:8px;
+}
+
+a.book{ display:block; text-decoration:none; color:inherit; }
+.book article{
+  --cover-tone: color-mix(in oklab, var(--avarage-color, #8895a7) 85%, black 15%);
+  border: var(--book-border) solid var(--cover-tone);
+  border-radius: var(--book-radius);
+  background:
+    radial-gradient(transparent 30%, rgba(255,255,255,.06) 100%) center/180% 180% no-repeat,
+    linear-gradient(0deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06) inset,
+    0 8px var(--book-depth) rgba(0,0,0,.35),
+    0 2px 10px rgba(0,0,0,.35);
+  transform: rotate(var(--book-tilt)) translateZ(0);
+  transition: transform .28s cubic-bezier(.22,.8,.2,1), box-shadow .28s, filter .28s, border-color .28s;
+  will-change: transform, box-shadow;
+  overflow:hidden; background-clip:padding-box;
+}
+.book article:hover{
+  transform: translateY(-8px) rotate(0deg);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08) inset,
+    0 16px calc(var(--book-depth) + 4px) rgba(0,0,0,.42),
+    0 8px 26px rgba(0,0,0,.55);
+  filter: saturate(1.05);
+}
+.book figure{ margin:0 }
+.book img{
+  display:block; width:100%;
+  aspect-ratio: 257/364; object-fit:cover;
+  border-radius: calc(var(--book-radius) - var(--book-border));
+}
+.book figcaption{
+  padding:8px 10px 10px;
+  font-weight:700; font-size:14px; line-height:1.15;
+  letter-spacing:.01em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  text-wrap:balance;
+  color:var(--ink);
+  text-shadow: 0 1px 0 rgba(0,0,0,.3);
+}
+
+/* 본문을 종이 질감으로 */
+#viewPost.post{ background:none; border:none; padding:0; margin-top:6px }
+#viewPost .paper{
+  position:relative; padding:26px 22px;
+  background:
+    radial-gradient(150% 100% at 0% 0%, rgba(0,0,0,.26), transparent 40%),
+    radial-gradient(150% 100% at 100% 0%, rgba(0,0,0,.22), transparent 42%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.04), rgba(0,0,0,.04) 1px, transparent 1px, transparent 26px),
+    linear-gradient(0deg, #0f141a, #0f161c);
+  border-radius:12px; border:1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 14px 30px rgba(0,0,0,.45);
+}
+#pTitle{ margin:0 0 6px; font-size:22px }
+#pMeta{ color:var(--muted); margin-bottom:14px }
+#pBody{ line-height:1.75; font-size:16px }
+#pBody h1,#pBody h2,#pBody h3{ margin-top:1.6em }
+#pBody img{ display:block; margin:12px auto; border-radius:10px; max-width:100% }
+#pBody blockquote{
+  margin:14px 0; padding:10px 12px;
+  border-left:4px solid #ffd16633; background:#ffd1660f; color:#ffd166;
+  border-radius:8px;
+}
+#pBody a{ color:#8ecbff }
+header a.btn, header button.btn{ background:#0b1117; border:1px solid var(--line) }
 </style>
 </head>
+
 <body>
 <main>
   <header>
@@ -53,8 +166,9 @@
     <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
   </header>
 
-  <div id="viewCats" class="cats" aria-label="카테고리 목록"></div>
-  <div id="viewList" class="list hidden" aria-label="글 목록"></div>
+  <div id="viewCats" class="cats hidden" aria-label="카테고리 목록"></div>
+  <!-- ⬇️ list 클래스 제거! -->
+  <div id="viewList" class="hidden" aria-label="글 목록"></div>
 
   <section id="viewPost" class="post hidden" aria-label="글 본문">
     <h2 id="pTitle"></h2>
@@ -64,34 +178,66 @@
 </main>
 
 <script>
-// 현재 문서 디렉터리 기준 경로 계산 ( /blog 또는 /repo/blog/ 모두 대응 )
-const BASE = location.pathname.endsWith('/')
-  ? location.pathname
-  : location.pathname.replace(/[^/]+$/, '/');
-
-const DATA_URL = BASE + 'data/posts.json';
+// BASE 경로 계산 (서브폴더 배포 대응)
+const BASE = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/, '/');
+const DATA_URL  = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
-let ALL=[];
 
+let ALL=[];
 const $=s=>document.querySelector(s);
 const d=x=>x?new Date(x).toISOString().slice(0,10):'';
 
-function renderCats(){
-  $('#title').textContent='분류 전체보기';
-  $('#viewCats').classList.remove('hidden');
-  $('#viewList').classList.add('hidden');
-  $('#viewPost').classList.add('hidden');
-  const count={}; ALL.forEach(p=>{const k=p.category||'기타'; count[k]=(count[k]||0)+1;});
-  const cats=Object.entries(count).sort((a,b)=>a[0].localeCompare(b[0],'ko'));
-  $('#viewCats').innerHTML=cats.map(([name,c])=>`<a class="cat" href="#/category/${encodeURIComponent(name)}"><span>${name}</span><em>${c}</em></a>`).join('');
+// 표지 추정/대체
+const COVER_GUESS    = slug => `${BASE}assets/covers/${slug}.jpg`;
+const COVER_FALLBACK = `${BASE}assets/covers/_placeholder.jpg`;
+const COLOR_FALLBACK = '#8e8e8e';
+
+const esc = s => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+function bookCardHTML(p){
+  const cover = p.cover || COVER_GUESS(p.slug) || COVER_FALLBACK;
+  const color = p.color || COLOR_FALLBACK;
+  return `
+    <a class="book" href="#/post/${encodeURIComponent(p.slug)}" aria-label="${esc(p.title)}">
+      <article style="--avarage-color:${color}">
+        <figure>
+          <img src="${esc(cover)}" alt="">
+          <figcaption>${esc(p.title)}</figcaption>
+        </figure>
+      </article>
+    </a>`;
 }
-function renderList(cat){
-  $('#title').textContent=cat;
+function shelfHTML(catName, posts){
+  const cards = posts.map(bookCardHTML).join('');
+  return `
+    <section>
+      <header><h1>${esc(catName)}</h1></header>
+      ${cards || '<p style="opacity:.7">이 서가에는 아직 책이 없어요.</p>'}
+    </section>`;
+}
+
+/* ========== 렌더러 ========== */
+function renderCats(){
+  $('#title').textContent = '분류 전체보기';
   $('#viewCats').classList.add('hidden');
   $('#viewList').classList.remove('hidden');
   $('#viewPost').classList.add('hidden');
-  const list=ALL.filter(p=>(p.category||'기타')===cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  $('#viewList').innerHTML=list.length?list.map(p=>`<a class="item" href="#/post/${encodeURIComponent(p.slug)}"><div class="t">${p.title}</div><div class="m">${d(p.date)} · ${p.summary||''}</div></a>`).join(''):'<p class="m">글이 없습니다.</p>';
+
+  const byCat = {};
+  ALL.forEach(p => (byCat[p.category || '기타'] ||= []).push(p));
+  const shelves = Object.entries(byCat)
+    .sort(([a],[b]) => a.localeCompare(b,'ko'))
+    .map(([cat, list]) => shelfHTML(cat, list.sort((a,b)=>new Date(b.date)-new Date(a.date))))
+    .join('');
+  $('#viewList').innerHTML = shelves;
+}
+function renderList(cat){
+  $('#title').textContent = cat;
+  $('#viewCats').classList.add('hidden');
+  $('#viewList').classList.remove('hidden');
+  $('#viewPost').classList.add('hidden');
+  const list = ALL.filter(p => (p.category||'기타') === cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $('#viewList').innerHTML = shelfHTML(cat, list);
 }
 async function renderPost(slug){
   $('#viewCats').classList.add('hidden'); $('#viewList').classList.add('hidden'); $('#viewPost').classList.remove('hidden');
@@ -100,8 +246,6 @@ async function renderPost(slug){
   $('#pBody').innerHTML='<p class="m">불러오는 중…</p>';
 
   const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
-  console.log('[BLOG] fetching:', url);   // ← 찍기
-
   try{
     const r = await fetch(url, {cache:'no-cache'});
     if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
@@ -109,12 +253,23 @@ async function renderPost(slug){
     const body = md.replace(/^---[\s\S]*?---\s*/, '');
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
-    document.title = m.title+' - Blog';
+    document.title = m.title+' - 보관된 도서';
+
+    // 종이 래퍼 1회만 삽입
+    if (!document.querySelector('#viewPost .paper')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'paper';
+      const art = $('#pBody');
+      art.parentNode.insertBefore(wrap, art);
+      wrap.appendChild(art);
+    }
   }catch(err){
     console.error(err);
     $('#pBody').innerHTML = `<p class="m">게시글을 찾을 수 없습니다.<br><small>경로: ${url}</small></p>`;
   }
 }
+
+/* ========== 라우터 ========== */
 function route(){
   const mPost=location.hash.match(/^#\/post\/(.+)$/);
   const mCat =location.hash.match(/^#\/category\/(.+)$/);
@@ -123,16 +278,15 @@ function route(){
   return renderCats();
 }
 $('#backBtn').addEventListener('click', () => {
-  // 같은 도메인에서 넘어온 경우만 뒤로가기, 아니면 홈으로
-  if (document.referrer && new URL(document.referrer).origin === location.origin) {
-    history.back();
-  } else {
-    location.assign('../');
-  }
+  if (document.referrer && new URL(document.referrer).origin === location.origin) history.back();
+  else location.assign('../');
 });
+
+/* ========== 초기화 ========== */
 (async function init(){
   try{
-    const r=await fetch(DATA_URL); const j=await r.json();
+    const r=await fetch(DATA_URL);
+    const j=await r.json();
     ALL=(j.posts||[]).map(p=>({...p,category:p.category||'기타'}));
   }catch(e){
     console.error('posts.json 로드 실패', e);
