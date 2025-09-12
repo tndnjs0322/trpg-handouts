@@ -3,3 +3,6 @@
 문단 하나.
 
 ![테스트 이미지](../assets/covers/sample.jpg)
+
+```js
+console.log('ok');
