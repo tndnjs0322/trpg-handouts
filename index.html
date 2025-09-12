@@ -422,70 +422,6 @@ li[data-active="true"] article svg{
 </ul>
 
 <script>
-/* 펼침 비율 & 상태 관리 */
-(() => {
-  const list = document.querySelector('ul');
-  if (!list) return;
-  const items = Array.from(list.querySelectorAll('li'));
-  let active = -1, raf = 0;
-
-  const css = getComputedStyle(document.documentElement);
-  const ACTIVE_FR = parseFloat(css.getPropertyValue('--active-fr')) || 8;
-  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || 1;
-  const EXPANDED_MIN = (css.getPropertyValue('--expanded-min') || '320px').trim();
-
-  const setCols = (idx) => {
-    list.style.gridTemplateColumns = items.map((_, i) =>
-      i === idx
-        ? `minmax(${EXPANDED_MIN}, ${ACTIVE_FR}fr)`
-        : `minmax(var(--spine-w), ${INACTIVE_FR}fr)`
-    ).join(' ');
-  };
-
-  const applyActive = (idx) => {
-    if (idx === active) return;
-    active = idx;
-    items.forEach((li, i) => li.dataset.active = (i === active).toString());
-    setCols(active);
-  };
-
-  const collapse = () => {
-    if (active === -1) return;
-    active = -1;
-    items.forEach((li) => li.dataset.active = 'false');
-    list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
-  };
-
-  const schedule = (idx) => {
-    if (idx === active) return;
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => applyActive(idx));
-  };
-
-items.forEach((li, i) => {
-  li.addEventListener('pointerenter', () => schedule(i), { passive: true });
-  li.addEventListener('click', () => {
-  const url = li.dataset.link;
-  if (url) {
-    window.open(url, '_blank', 'noopener,noreferrer'); // 새 탭으로 열기
-  } else {
-    applyActive(i);
-  }
-});
-  li.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      const url = li.dataset.link;
-      if (url) {window.open(url, '_blank', 'noopener');} else { applyActive(i); }
-    }
-  });
-  li.addEventListener('focusin', () => applyActive(i));
-});
-  list.addEventListener('pointerleave', collapse);
-  list.addEventListener('focusout', (e) => { if (!list.contains(e.relatedTarget)) collapse(); });
-
-  collapse();
-})();
-
 /* 이미지 URL을 CSS 변수(--img)로 투입 */
 (() => {
   const arts = document.querySelectorAll('article');
@@ -729,6 +665,80 @@ items.forEach((li, i) => {
     art.addEventListener('pointerenter', tryGlitch, { passive: true });
     art.addEventListener('click', tryGlitch);
   });
+})();
+</script>
+<script>
+/* 카드 펼침/접힘 + 링크 열기(블로그는 같은 탭) */
+(() => {
+  const list = document.querySelector('ul');
+  if (!list) return;
+  const items = Array.from(list.querySelectorAll('li'));
+  let active = -1, raf = 0;
+
+  // 레이아웃 제어(펼침 효과)
+  const css = getComputedStyle(document.documentElement);
+  const ACTIVE_FR   = parseFloat(css.getPropertyValue('--active-fr')) || 8;
+  const INACTIVE_FR = parseFloat(css.getPropertyValue('--inactive-fr')) || 1;
+  const EXPANDED_MIN= (css.getPropertyValue('--expanded-min') || '320px').trim();
+
+  const setCols = (idx) => {
+    list.style.gridTemplateColumns = items.map((_, i) =>
+      i === idx
+        ? `minmax(${EXPANDED_MIN}, ${ACTIVE_FR}fr)`
+        : `minmax(var(--spine-w), ${INACTIVE_FR}fr)`
+    ).join(' ');
+  };
+  const applyActive = (idx) => {
+    if (idx === active) return;
+    active = idx;
+    items.forEach((li, i) => li.dataset.active = (i === active).toString());
+    setCols(active);
+  };
+  const collapse = () => {
+    if (active === -1) return;
+    active = -1;
+    items.forEach(li => li.dataset.active = 'false');
+    list.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
+  };
+  const schedule = (idx) => {
+    if (idx === active) return;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => applyActive(idx));
+  };
+
+  // ✅ 공통: 카드 열기 규칙 (블로그는 같은 탭, 그 외는 새 탭)
+  function openCard(li){
+    const url = li.dataset.link;
+    if (!url) return false;
+    const target = li.dataset.target || (url.startsWith('blog/') ? '_self' : '_blank');
+    if (target === '_self') location.href = url;
+    else window.open(url, '_blank', 'noopener,noreferrer');
+    return true;
+  }
+
+  // 이벤트 바인딩
+  items.forEach((li, i) => {
+    li.addEventListener('pointerenter', () => schedule(i), { passive: true });
+
+    li.addEventListener('click', (e) => {
+      // 카드 내부에 <a>/<button>이 있으면 그 동작을 우선
+      if (e.target.closest('a,button')) return;
+      if (openCard(li)) return;   // 링크 카드면 열고 끝
+      applyActive(i);             // 아니면 펼치기
+    });
+
+    li.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (openCard(li)) return;   // ⏎으로도 같은 규칙 적용
+      applyActive(i);
+    });
+
+    li.addEventListener('focusin', () => applyActive(i));
+  });
+
+  list.addEventListener('pointerleave', collapse);
+  list.addEventListener('focusout', (e) => { if (!list.contains(e.relatedTarget)) collapse(); });
+  collapse();
 })();
 </script>
 </body>
