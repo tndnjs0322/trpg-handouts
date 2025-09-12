@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>보관된 도서</title>
 
-<!-- (옵션) 팝업로딩 탭 되돌리기 스크립트 -->
+<!-- (옵션) 팝업 로딩시 원탭으로 되돌리기 -->
 <script>
 (() => {
   const params = new URLSearchParams(location.search);
@@ -24,12 +24,12 @@
 })();
 </script>
 
-<!-- MD 파서 & 코드 하이라이트 -->
+<!-- Markdown 파서 & 코드 하이라이트 -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
 
-<!-- 1) 기본(공통) 스타일 -->
+<!-- 1) 기본 공통 스타일 -->
 <style>
   :root{--line:#1e2732;--panel:#10171e;--text:#e7edf3;--muted:#a8b3bf}
   *{box-sizing:border-box}
@@ -39,14 +39,14 @@
   a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
   .hidden{display:none}
 
-  /* 포스트 뷰 공통 */
+  /* 본문 뷰 공통 */
   .post{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
   .post .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
   .post img{max-width:100%;border-radius:10px}
   pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
 </style>
 
-<!-- 2) Library Theme (서가/책 카드) -->
+<!-- 2) Library Theme (서가/책 카드/종이 질감) -->
 <style>
 :root{
   --shelf-wood: linear-gradient(90deg,#6b4f2b 0%,#7c5a31 25%,#6f4f2a 50%,#7a5730 75%,#6b4f2b 100%);
@@ -65,6 +65,7 @@
 }
 body{ background:var(--bg); color:var(--ink) }
 
+/* === 서가(섹션) === */
 #viewList section{
   position:relative;
   margin:42px 0 64px;
@@ -81,6 +82,7 @@ body{ background:var(--bg); color:var(--ink) }
     var(--shelf-wood);
   box-shadow: 0 -1px 0 var(--shelf-edge) inset, 0 10px 18px rgba(0,0,0,.35);
 }
+/* 섹션 제목(서가 표지판) */
 #viewList section>header{ grid-column:1/-1; margin-bottom:8px }
 #viewList section>header h1{
   display:inline-block; margin:0; font:700 18px/1.2 system-ui;
@@ -90,6 +92,7 @@ body{ background:var(--bg); color:var(--ink) }
   padding:6px 10px; border-radius:8px;
 }
 
+/* === 책 카드 === */
 a.book{ display:block; text-decoration:none; color:inherit; }
 .book article{
   --cover-tone: color-mix(in oklab, var(--avarage-color, #8895a7) 85%, black 15%);
@@ -131,7 +134,7 @@ a.book{ display:block; text-decoration:none; color:inherit; }
   text-shadow: 0 1px 0 rgba(0,0,0,.3);
 }
 
-/* 본문을 종이 질감으로 */
+/* === 본문(펼친 책) === */
 #viewPost.post{ background:none; border:none; padding:0; margin-top:6px }
 #viewPost .paper{
   position:relative; padding:26px 22px;
@@ -166,10 +169,12 @@ header a.btn, header button.btn{ background:#0b1117; border:1px solid var(--line
     <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
   </header>
 
-  <div id="viewCats" class="cats hidden" aria-label="카테고리 목록"></div>
-  <!-- ⬇️ list 클래스 제거! -->
+  <!-- 카테고리(안쓰면 숨김 유지) -->
+  <div id="viewCats" class="hidden" aria-label="카테고리 목록"></div>
+  <!-- 서가/책 카드가 그려질 곳 -->
   <div id="viewList" class="hidden" aria-label="글 목록"></div>
 
+  <!-- 본문 -->
   <section id="viewPost" class="post hidden" aria-label="글 본문">
     <h2 id="pTitle"></h2>
     <div id="pMeta" class="meta"></div>
@@ -178,7 +183,7 @@ header a.btn, header button.btn{ background:#0b1117; border:1px solid var(--line
 </main>
 
 <script>
-// BASE 경로 계산 (서브폴더 배포 대응)
+/* ===== 경로/헬퍼 ===== */
 const BASE = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/, '/');
 const DATA_URL  = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
@@ -186,27 +191,55 @@ const POSTS_DIR = BASE + 'posts/';
 let ALL=[];
 const $=s=>document.querySelector(s);
 const d=x=>x?new Date(x).toISOString().slice(0,10):'';
-
-// 표지 추정/대체
-const COVER_GUESS    = slug => `${BASE}assets/covers/${slug}.jpg`;
-const COVER_FALLBACK = `${BASE}assets/covers/_placeholder.jpg`;
-const COLOR_FALLBACK = '#8e8e8e';
-
 const esc = s => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
+/* 이미지 폴백: 루트(/assets/...) → 서브폴더(BASE + assets/...) → 플레이스홀더 */
+window._coverFallback = function(ev){
+  const img = ev.target;
+  // 1차: data-alt (BASE 경로)
+  if (!img.dataset.try2 && img.dataset.alt) {
+    img.dataset.try2 = '1';
+    img.src = img.dataset.alt;
+    return;
+  }
+  // 2차: data-ph1 (루트 플레이스홀더)
+  if (!img.dataset.try3 && img.dataset.ph1) {
+    img.dataset.try3 = '1';
+    img.src = img.dataset.ph1;
+    return;
+  }
+  // 3차: data-ph2 (BASE 플레이스홀더)
+  if (!img.dataset.try4 && img.dataset.ph2) {
+    img.dataset.try4 = '1';
+    img.src = img.dataset.ph2;
+  }
+};
+
+/* 카드 HTML (표지 자동 추정 + 폴백) */
 function bookCardHTML(p){
-  const cover = p.cover || COVER_GUESS(p.slug) || COVER_FALLBACK;
-  const color = p.color || COLOR_FALLBACK;
+  const slug = p.slug;
+  const color = p.color || '#8e8e8e';
+  const rootCover = `/assets/covers/${slug}.jpg`;
+  const baseCover = `${BASE}assets/covers/${slug}.jpg`;
+  const phRoot    = `/assets/covers/_placeholder.jpg`;
+  const phBase    = `${BASE}assets/covers/_placeholder.jpg`;
   return `
-    <a class="book" href="#/post/${encodeURIComponent(p.slug)}" aria-label="${esc(p.title)}">
+    <a class="book" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
       <article style="--avarage-color:${color}">
         <figure>
-          <img src="${esc(cover)}" alt="">
+          <img src="${esc(rootCover)}"
+               data-alt="${esc(baseCover)}"
+               data-ph1="${esc(phRoot)}"
+               data-ph2="${esc(phBase)}"
+               onerror="window._coverFallback && window._coverFallback(event)"
+               alt="">
           <figcaption>${esc(p.title)}</figcaption>
         </figure>
       </article>
     </a>`;
 }
+
+/* 서가(섹션) HTML */
 function shelfHTML(catName, posts){
   const cards = posts.map(bookCardHTML).join('');
   return `
@@ -216,7 +249,7 @@ function shelfHTML(catName, posts){
     </section>`;
 }
 
-/* ========== 렌더러 ========== */
+/* ===== 렌더러 ===== */
 function renderCats(){
   $('#title').textContent = '분류 전체보기';
   $('#viewCats').classList.add('hidden');
@@ -225,24 +258,37 @@ function renderCats(){
 
   const byCat = {};
   ALL.forEach(p => (byCat[p.category || '기타'] ||= []).push(p));
+
   const shelves = Object.entries(byCat)
     .sort(([a],[b]) => a.localeCompare(b,'ko'))
     .map(([cat, list]) => shelfHTML(cat, list.sort((a,b)=>new Date(b.date)-new Date(a.date))))
     .join('');
+
   $('#viewList').innerHTML = shelves;
 }
+
 function renderList(cat){
   $('#title').textContent = cat;
   $('#viewCats').classList.add('hidden');
   $('#viewList').classList.remove('hidden');
   $('#viewPost').classList.add('hidden');
-  const list = ALL.filter(p => (p.category||'기타') === cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const list = ALL
+    .filter(p => (p.category||'기타') === cat)
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+
   $('#viewList').innerHTML = shelfHTML(cat, list);
 }
+
 async function renderPost(slug){
-  $('#viewCats').classList.add('hidden'); $('#viewList').classList.add('hidden'); $('#viewPost').classList.remove('hidden');
+  $('#viewCats').classList.add('hidden');
+  $('#viewList').classList.add('hidden');
+  $('#viewPost').classList.remove('hidden');
+
   const m=ALL.find(p=>p.slug===slug)||{title:slug};
-  $('#title').textContent=m.category||''; $('#pTitle').textContent=m.title; $('#pMeta').textContent=[m.category,d(m.date)].filter(Boolean).join(' · ');
+  $('#title').textContent=m.category||'';
+  $('#pTitle').textContent=m.title||slug;
+  $('#pMeta').textContent=[m.category,d(m.date)].filter(Boolean).join(' · ');
   $('#pBody').innerHTML='<p class="m">불러오는 중…</p>';
 
   const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
@@ -250,7 +296,7 @@ async function renderPost(slug){
     const r = await fetch(url, {cache:'no-cache'});
     if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
     const md = await r.text();
-    const body = md.replace(/^---[\s\S]*?---\s*/, '');
+    const body = md.replace(/^---[\s\S]*?---\s*/, ''); // front-matter 제거
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
     document.title = m.title+' - 보관된 도서';
@@ -269,7 +315,7 @@ async function renderPost(slug){
   }
 }
 
-/* ========== 라우터 ========== */
+/* ===== 라우터 ===== */
 function route(){
   const mPost=location.hash.match(/^#\/post\/(.+)$/);
   const mCat =location.hash.match(/^#\/category\/(.+)$/);
@@ -282,17 +328,18 @@ $('#backBtn').addEventListener('click', () => {
   else location.assign('../');
 });
 
-/* ========== 초기화 ========== */
+/* ===== 초기화 ===== */
 (async function init(){
   try{
-    const r=await fetch(DATA_URL);
+    const r=await fetch(DATA_URL,{cache:'no-cache'});
     const j=await r.json();
     ALL=(j.posts||[]).map(p=>({...p,category:p.category||'기타'}));
   }catch(e){
     console.error('posts.json 로드 실패', e);
     ALL=[];
   }
-  route(); addEventListener('hashchange',route);
+  route();
+  addEventListener('hashchange',route);
 })();
 </script>
 </body>
