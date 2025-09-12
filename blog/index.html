@@ -113,8 +113,14 @@ function route(){
   if(mCat)  return renderList(decodeURIComponent(mCat[1]));
   return renderCats();
 }
-$('#backBtn').addEventListener('click',()=>history.back());
-
+$('#backBtn').addEventListener('click', () => {
+  // 같은 도메인에서 넘어온 경우만 뒤로가기, 아니면 홈으로
+  if (document.referrer && new URL(document.referrer).origin === location.origin) {
+    history.back();
+  } else {
+    location.assign('../');
+  }
+});
 (async function init(){
   try{
     const r=await fetch(DATA_URL); const j=await r.json();
