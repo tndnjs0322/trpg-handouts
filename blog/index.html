@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Blog</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<style>
+  :root{--line:#1e2732;--panel:#10171e;--text:#e7edf3;--muted:#a8b3bf}
+  *{box-sizing:border-box} body{margin:0;background:#0d141b;color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  main{max-width:1040px;margin:28px auto;padding:0 16px}
+  header{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+  a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
+  .cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .cat{display:flex;justify-content:space-between;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
+  .cat em{color:var(--muted);font-style:normal;font-size:12px}
+  .list{display:grid;gap:12px}
+  .item{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
+  .item .m{color:var(--muted);font-size:12px;margin-top:4px}
+  .post{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .post .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
+  .post img{max-width:100%;border-radius:10px}
+  pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a class="btn" href="../">← 홈</a>
+    <button id="backBtn" class="btn" type="button" aria-label="뒤로 가기">뒤로</button>
+    <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
+  </header>
+
+  <div id="viewCats" class="cats" aria-label="카테고리 목록"></div>
+  <div id="viewList" class="list hidden" aria-label="글 목록"></div>
+
+  <section id="viewPost" class="post hidden" aria-label="글 본문">
+    <h2 id="pTitle"></h2>
+    <div id="pMeta" class="meta"></div>
+    <article id="pBody"></article>
+  </section>
+</main>
+
+<script>
+const DATA_URL='./data/posts.json';
+const POSTS_DIR='./posts/';
+let ALL=[];
+
+const $=s=>document.querySelector(s);
+const d=x=>x?new Date(x).toISOString().slice(0,10):'';
+
+function renderCats(){
+  $('#title').textContent='분류 전체보기';
+  $('#viewCats').classList.remove('hidden');
+  $('#viewList').classList.add('hidden');
+  $('#viewPost').classList.add('hidden');
+  const count={}; ALL.forEach(p=>{const k=p.category||'기타'; count[k]=(count[k]||0)+1;});
+  const cats=Object.entries(count).sort((a,b)=>a[0].localeCompare(b[0],'ko'));
+  $('#viewCats').innerHTML=cats.map(([name,c])=>`<a class="cat" href="#/category/${encodeURIComponent(name)}"><span>${name}</span><em>${c}</em></a>`).join('');
+}
+function renderList(cat){
+  $('#title').textContent=cat;
+  $('#viewCats').classList.add('hidden');
+  $('#viewList').classList.remove('hidden');
+  $('#viewPost').classList.add('hidden');
+  const list=ALL.filter(p=>(p.category||'기타')===cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $('#viewList').innerHTML=list.length?list.map(p=>`<a class="item" href="#/post/${encodeURIComponent(p.slug)}"><div class="t">${p.title}</div><div class="m">${d(p.date)} · ${p.summary||''}</div></a>`).join(''):'<p class="m">글이 없습니다.</p>';
+}
+async function renderPost(slug){
+  $('#viewCats').classList.add('hidden'); $('#viewList').classList.add('hidden'); $('#viewPost').classList.remove('hidden');
+  const m=ALL.find(p=>p.slug===slug)||{title:slug};
+  $('#title').textContent=m.category||''; $('#pTitle').textContent=m.title; $('#pMeta').textContent=[m.category,d(m.date)].filter(Boolean).join(' · ');
+  $('#pBody').innerHTML='<p class="m">불러오는 중…</p>';
+  try{
+    const r=await fetch(POSTS_DIR+encodeURIComponent(slug)+'.md',{cache:'no-cache'});
+    if(!r.ok) throw 0;
+    const md=await r.text();
+    const body=md.replace(/^---[\s\S]*?---\s*/, ''); // front matter 제거(있다면)
+    $('#pBody').innerHTML=marked.parse(body,{mangle:false,headerIds:true});
+    $('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
+    document.title=m.title+' - Blog';
+  }catch{ $('#pBody').innerHTML='<p class="m">게시글을 찾을 수 없습니다.</p>'; }
+}
+function route(){
+  const mPost=location.hash.match(/^#\/post\/(.+)$/);
+  const mCat =location.hash.match(/^#\/category\/(.+)$/);
+  if(mPost) return renderPost(decodeURIComponent(mPost[1]));
+  if(mCat)  return renderList(decodeURIComponent(mCat[1]));
+  return renderCats();
+}
+$('#backBtn').addEventListener('click',()=>history.back());
+
+(async function init(){
+  try{
+    const r=await fetch(DATA_URL); const j=await r.json();
+    ALL=(j.posts||[]).map(p=>({...p,category:p.category||'기타'}));
+  }catch(e){
+    console.error('posts.json 로드 실패', e);
+    ALL=[];
+  }
+  route(); addEventListener('hashchange',route);
+})();
+</script>
+</body>
+</html>
