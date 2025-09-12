@@ -1,0 +1,11 @@
+# 예식시 강력계정1 (완결)
+
+이건 **샘플 본문**입니다. `/assets` 폴더의 이미지를 이렇게 사용할 수 있어요:
+
+![샘플 커버](/assets/covers/sample.jpg)
+
+코드 블록도 지원합니다.
+
+```js
+console.log('hello blog');
+```
