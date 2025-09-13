@@ -14,149 +14,185 @@
 :root{
   --bg:#0d141b; --ink:#e7edf3; --muted:#a8b3bf; --line:#1e2732; --panel:#10171e;
   --min-card:192px;
-  --book-w:210px;      /* 책 폭 */
-  --book-h:300px;      /* 책 높이 */
-  --book-radius:14px;  /* 모서리 */
-  --spine-w:44px;      /* 책등 폭 */
-  --depth:16px;        /* 그림자 깊이 */
+
+  /* 책 카드 */
+  --book-w: 220px;
+  --book-r: 14px;
+  --book-border: 2px;
+  --spine-w: 52px;
+
+  /* 3D */
+  --tilt: .5deg;
+  --depth: 18px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0; background:var(--bg); color:var(--ink);
   font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  -webkit-font-smoothing:antialiased;
 }
 main{max-width:1120px;margin:28px auto;padding:0 16px}
 header.page{display:flex;gap:8px;align-items:center;margin-bottom:16px}
 .btn{border:1px solid var(--line);background:#0b1117;color:var(--ink);padding:8px 10px;border-radius:10px;text-decoration:none}
 .hidden{display:none}
 
-/* ===== 목록(카테고리→그리드) ===== */
-#viewList .group{margin:24px 0}
-#viewList .group>.ghead{
-  display:inline-block;margin:0 0 8px;font:700 16px/1.2 system-ui;
-  color:#ffd166;letter-spacing:.02em;background:rgba(255,209,102,.08);
-  border:1px solid rgba(255,209,102,.25);padding:6px 10px;border-radius:8px;
+/* ========== 그룹(카테고리) + 그리드 ========== */
+#viewList .group{margin:22px 0}
+#viewList .ghead{
+  display:inline-block; margin:0 0 10px; font:700 16px/1.2 system-ui;
+  color:#ffd166; letter-spacing:.02em;
+  background:rgba(255,209,102,.08); border:1px solid rgba(255,209,102,.25);
+  padding:6px 10px; border-radius:8px;
 }
-#viewList .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(var(--min-card),1fr))}
+#viewList .grid{
+  display:grid; gap:16px;
+  grid-template-columns:repeat(auto-fill,minmax(var(--min-card),1fr));
+}
 
-/* ===== 카드 앵커 ===== */
-a.book{display:block;text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent}
+/* ========== 카드 공통 ========== */
+a.book{ display:block; text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent; }
+.book article{
+  position:relative; border-radius:var(--book-r);
+  border:var(--book-border) solid color-mix(in oklab, var(--avarage-color,#8aa0b4) 70%, black 30%);
+  background:linear-gradient(0deg,rgba(255,255,255,.06),transparent);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06) inset,
+    0 8px var(--depth) rgba(0,0,0,.35),
+    0 2px 12px rgba(0,0,0,.35);
+  transform:rotate(var(--tilt));
+  transition:transform .28s cubic-bezier(.22,.8,.2,1), box-shadow .28s, filter .28s;
+  overflow:hidden;
+}
+a.book:is(:hover,:focus-visible) article{
+  transform:translateY(-6px) rotate(0deg);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08) inset,
+    0 16px calc(var(--depth)+6px) rgba(0,0,0,.42),
+    0 10px 28px rgba(0,0,0,.55);
+  filter:saturate(1.05);
+}
 
-/* ===== 3D 책 ===== */
+/* ========== 3D Book ========== */
+.book figure{
+  margin:0; position:relative; width:100%;
+  aspect-ratio: 257/364;  /* 카드 비율 고정 */
+  border-radius:calc(var(--book-r) - var(--book-border));
+  overflow:hidden;
+  perspective: 1200px;
+}
 .book3d{
-  --cover:url("/assets/covers/_placeholder.jpg");
-  position:relative;width:var(--book-w);height:var(--book-h);margin:auto;
-  perspective:1200px; transform-style:preserve-3d;
-  filter:saturate(1);
+  position:absolute; inset:0;
+  transform-style:preserve-3d;
 }
+
+/* 공통 레이어 */
 .book3d .layer{
   position:absolute; inset:0; width:100%; height:100%;
-  transform-origin:left center; transform-style:preserve-3d;
-  border-radius:var(--book-radius); transition:transform .55s ease, box-shadow .35s ease, filter .35s ease;
-  will-change:transform, box-shadow;
-}
-/* 공통 그림자/테두리 */
-.book3d .layer::before{
-  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-  box-shadow:0 0 0 1px rgba(255,255,255,.06) inset, 0 8px var(--depth) rgba(0,0,0,.35), 0 2px 12px rgba(0,0,0,.35);
+  transform-origin: left center;
+  transition: transform .55s ease, box-shadow .35s ease;
+  border-radius:calc(var(--book-r) - var(--book-border));
+  backface-visibility: hidden; /* 뒤면 비치는 느낌 방지 */
 }
 
-/* 뒤표지 */
-.book3d .back{
-  background:
-    linear-gradient(0deg,rgba(255,255,255,.04),transparent),
-    radial-gradient(140% 100% at 110% 10%,rgba(255,255,255,.06),transparent 50%),
-    #1a2330;
-  border-left:1px solid rgba(255,255,255,.08);
-  transform:rotateY(0deg);
-}
-
-/* 종이 페이지(양면 느낌을 위해 톤 다르게) */
-.book3d .page{ background:#fff; }
-.book3d .p1{ background:#fdfdfd }
-.book3d .p2{ background:#fafafa }
-.book3d .p3{ background:#f7f7f7 }
-.book3d .p4{ background:#f5f5f5 }
-.book3d .p5{ background:#f2f2f2 }
-.book3d .p6{ background:#efefef }
-/* 종이 질감 */
-.book3d .page::after{
-  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-  background:
-    linear-gradient(90deg,rgba(0,0,0,.08),transparent 20%, transparent 80%, rgba(0,0,0,.08)),
-    repeating-linear-gradient(0deg, rgba(0,0,0,.03), rgba(0,0,0,.03) 1px, transparent 1px, transparent 26px);
-  mix-blend-mode:multiply; opacity:.25;
-}
-
-/* 앞표지(이미지) */
+/* 표지 / 뒷표지 */
 .book3d .front{
   background:
-    linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,0) 38%),
+    linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.15)),
     var(--cover) center/cover no-repeat;
-  border-left:1px solid rgba(255,255,255,.12);
-  transform:rotateY(0deg);
+}
+.book3d .back{
+  background: linear-gradient(180deg,#0f1a24,#0a1320);
+  box-shadow: inset 1px 0 0 rgba(255,255,255,.06);
 }
 
-/* 책등 */
+/* 종이 페이지 */
+.book3d .page{
+  background: linear-gradient(180deg,#fff,#fafafa);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.06),
+    0 .6rem 1.6rem rgba(0,0,0,.15);
+}
+
+/* 닫힌 기본 각도(살짝 책 두께 느낌) */
+.book3d .front  { transform: rotateY( 0deg); }
+.book3d .page1  { transform: rotateY( -2deg); }
+.book3d .page2  { transform: rotateY( -1deg); }
+.book3d .page3  { transform: rotateY( -0.5deg); }
+.book3d .page4  { transform: rotateY( -0.2deg); }
+.book3d .page5  { transform: rotateY( -0.1deg); }
+.book3d .page6  { transform: rotateY( -0.05deg); }
+.book3d .back   { transform: rotateY( -0.0deg); }
+
+/* 펼쳐질 때 (hover/focus) */
+a.book:is(:hover,:focus-visible) .book3d .front { transform: rotateY(-160deg) }
+a.book:is(:hover,:focus-visible) .book3d .page1 { transform: rotateY(-150deg) }
+a.book:is(:hover,:focus-visible) .book3d .page2 { transform: rotateY( -30deg) }
+a.book:is(:hover,:focus-visible) .book3d .page3 { transform: rotateY(-140deg) }
+a.book:is(:hover,:focus-visible) .book3d .page4 { transform: rotateY( -40deg) }
+a.book:is(:hover,:focus-visible) .book3d .page5 { transform: rotateY(-130deg) }
+a.book:is(:hover,:focus-visible) .book3d .page6 { transform: rotateY( -50deg) }
+a.book:is(:hover,:focus-visible) .book3d .back  { transform: rotateY( -20deg) }
+
+/* ========== 책등(스파인) & 라벨(닫힘에서만 보이기) ========== */
 .book3d .spine{
-  position:absolute; top:0; left:0; bottom:0; width:var(--spine-w); z-index:9;
-  border-top-left-radius:var(--book-radius); border-bottom-left-radius:var(--book-radius);
-  background:
-    linear-gradient(90deg, rgba(0,0,0,.55), rgba(255,255,255,.14) 45%, rgba(0,0,0,.45)),
-    color-mix(in oklab, #6f849d 70%, black 30%);
-  box-shadow: inset -1px 0 rgba(255,255,255,.18), inset 10px 0 22px rgba(0,0,0,.35);
+  position:absolute; inset:0 auto 0 0; width:var(--spine-w); z-index:3;
   display:flex; align-items:center; justify-content:center;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.55), rgba(255,255,255,.12) 46%, rgba(0,0,0,.35)),
+    color-mix(in oklab, var(--avarage-color,#7a90a7) 70%, black 30%);
+  border-right:1px solid rgba(255,255,255,.18);
+  box-shadow: inset 2px 0 8px rgba(0,0,0,.45);
+  border-top-left-radius: calc(var(--book-r) - var(--book-border));
+  border-bottom-left-radius: calc(var(--book-r) - var(--book-border));
 }
 .spine .t{
   writing-mode:vertical-rl; text-orientation:mixed;
-  max-height:86%; padding:10px 0; color:#f6f9fc; font-weight:800; letter-spacing:.06em; line-height:1.05; font-size:13px;
-  text-shadow:0 .5px 0 rgba(0,0,0,.55); overflow:hidden;
+  max-height:86%; padding-block:10px;
+  font-weight:800; letter-spacing:.06em; line-height:1.05; font-size:13px;
+  color:#f4f7fa; text-shadow:0 .5px 0 rgba(0,0,0,.55);
+  overflow:hidden;
 }
 
-/* 리본 */
-.book3d .ribbon{
-  position:absolute; top:10px; right:12px; width:18px; height:34px; z-index:10;
-  background:linear-gradient(0deg,#ff7d7d,#e63545); clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
-  filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));
-}
-.book3d .ribbon::after{
-  content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent,rgba(255,255,255,.45) 55%,transparent 60%); mix-blend-mode:screen; opacity:.8;
-}
-
-/* 하단 캡션(글라스 라벨) */
+/* 하단 글라스 라벨 */
 .book3d .label{
-  position:absolute; left:calc(var(--spine-w) + 10px); right:12px; bottom:12px; z-index:10;
-  padding:10px 12px; border-radius:12px;
-  background:linear-gradient(180deg,rgba(12,16,20,.72),rgba(12,16,20,.46)); backdrop-filter:blur(6px) saturate(1.12);
-  border:1px solid rgba(255,255,255,.10); box-shadow:0 2px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  position:absolute; left:calc(var(--spine-w) + 8px); right:12px; bottom:12px; z-index:3;
+  padding:9px 12px; border-radius:11px;
+  background: linear-gradient(180deg, rgba(12,16,20,.72), rgba(12,16,20,.42));
+  backdrop-filter: blur(6px) saturate(1.1);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow: 0 2px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
   color:#fff; font-weight:800; font-size:14px; line-height:1.2; letter-spacing:.01em;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  transform:translateY(0); transition:transform .25s ease, box-shadow .25s ease;
+  transform:translateY(0);
 }
-a.book:is(:hover,:focus-visible) .book3d .label{ transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08) }
 
-/* ====== 펼침 애니 (hover/focus/open 클래스 공통) ====== */
-a.book:is(:hover,:focus-visible) .book3d,
-.book3d.open{ filter:saturate(1.05) }
-a.book:is(:hover,:focus-visible) .book3d .front,
-.book3d.open .front{ transform:rotateY(-160deg) translateZ(0.01px) }
-a.book:is(:hover,:focus-visible) .book3d .p1,
-.book3d.open .p1{ transform:rotateY(-150deg) }
-a.book:is(:hover,:focus-visible) .book3d .p2,
-.book3d.open .p2{ transform:rotateY(-30deg) }
-a.book:is(:hover,:focus-visible) .book3d .p3,
-.book3d.open .p3{ transform:rotateY(-140deg) }
-a.book:is(:hover,:focus-visible) .book3d .p4,
-.book3d.open .p4{ transform:rotateY(-40deg) }
-a.book:is(:hover,:focus-visible) .book3d .p5,
-.book3d.open .p5{ transform:rotateY(-130deg) }
-a.book:is(:hover,:focus-visible) .book3d .p6,
-.book3d.open .p6{ transform:rotateY(-50deg) }
-a.book:is(:hover,:focus-visible) .book3d .back,
-.book3d.open .back{ transform:rotateY(-20deg) }
+/* 닫힘에서만 보이게 */
+.book3d .spine, .book3d .label{
+  opacity:1; transition:opacity .28s ease, transform .45s cubic-bezier(.22,.8,.2,1);
+}
+a.book:is(:hover,:focus-visible) .book3d .spine,
+a.book:is(:hover,:focus-visible) .book3d .label,
+.book3d.open .spine, .book3d.open .label{
+  opacity:0; pointer-events:none;
+  transform: translateX(-8px);
+}
 
-/* ===== 본문(글 보기) ===== */
+/* 북마크 리본(살짝 더 선명) */
+.book3d .ribbon{
+  position:absolute; top:10px; right:12px; width:18px; height:32px; z-index:4;
+  background: linear-gradient(0deg,#e63746,#ff7b7b);
+  clip-path: polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.45));
+}
+a.book:is(:hover,:focus-visible) .book3d .ribbon{ animation:ribbon-pop .8s ease }
+@keyframes ribbon-pop{
+  0%{ transform:translateY(0) rotate(0) scale(1) }
+  40%{ transform:translateY(-2px) rotate(-8deg) scale(1.08) }
+  100%{ transform:translateY(0) rotate(0) scale(1) }
+}
+
+/* ========== 본문 ========== */
 #viewPost.post{padding:0;border:none;background:none;margin-top:8px}
 #viewPost .paper{
   position:relative; padding:26px 22px;
@@ -175,6 +211,9 @@ a.book:is(:hover,:focus-visible) .book3d .back,
 #pBody img{display:block; margin:12px auto; border-radius:10px; max-width:100%}
 #pBody blockquote{margin:14px 0; padding:10px 12px; border-left:4px solid #ffd16633; background:#ffd1660f; color:#ffd166; border-radius:8px}
 #pBody a{color:#8ecbff}
+
+/* 미리불러오기 이미지 숨김 */
+.preload{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
 </style>
 </head>
 
@@ -196,76 +235,93 @@ a.book:is(:hover,:focus-visible) .book3d .back,
 </main>
 
 <script>
-/* ===== 경로/데이터 ===== */
+/* ===== 경로 & 데이터 ===== */
 const BASE = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/, '/');
 const DATA_URL  = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
-const $=s=>document.querySelector(s);
-const d=x=>x?new Date(x).toISOString().slice(0,10):'';
-const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-/* ===== 커버 자동 탐색: jpg → png → webp (루트 → BASE) ===== */
+const $ = s => document.querySelector(s);
+const d = x => x ? new Date(x).toISOString().slice(0,10) : '';
+const esc = s => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* 커버 후보 만들기 (jpg → png → webp, / 와 BASE 둘 다) */
 function coverCandidates(slug, cover){
-  if (cover) return [cover, `/assets/covers/_placeholder.jpg`, `${BASE}assets/covers/_placeholder.jpg`];
+  if (cover) {
+    return [cover, `/assets/covers/_placeholder.jpg`, `${BASE}assets/covers/_placeholder.jpg`];
+  }
   return [
-    `/assets/covers/${slug}.jpg`, `${BASE}assets/covers/${slug}.jpg`,
-    `/assets/covers/${slug}.png`, `${BASE}assets/covers/${slug}.png`,
+    `/assets/covers/${slug}.jpg`,  `${BASE}assets/covers/${slug}.jpg`,
+    `/assets/covers/${slug}.png`,  `${BASE}assets/covers/${slug}.png`,
     `/assets/covers/${slug}.webp`, `${BASE}assets/covers/${slug}.webp`,
     `/assets/covers/_placeholder.jpg`, `${BASE}assets/covers/_placeholder.jpg`,
   ];
 }
-window._coverNext = function(ev){
+
+/* onerror → 다음 후보로 교체, onload에서 CSS var(--cover) 갱신 */
+window._coverSwap = function(ev){
   const img = ev.target;
-  try{
-    const list = JSON.parse(img.dataset.cands||'[]');
-    if (list.length){
-      const next = list.shift();
-      img.dataset.cands = JSON.stringify(list);
-      img.src = next;
-      return;
-    }
-  }catch(_){}
+  let list = [];
+  try { list = JSON.parse(img.dataset.cands || '[]'); } catch {}
+  const idx = list.indexOf(img.getAttribute('src'));
+  const next = list[idx + 1];
+  if (next){
+    img.setAttribute('src', next);
+  }
 };
 window._coverSet = function(ev){
   const img = ev.target;
-  const url = img.currentSrc || img.src;
-  const holder = img.closest('.book3d');
-  if (holder) holder.style.setProperty('--cover', `url("${url}")`);
+  const holder = img.previousElementSibling; // .book3d
+  const src = img.currentSrc || img.src;
+  holder.style.setProperty('--cover', `url("${src}")`);
 };
 
-/* ===== 카드 HTML ===== */
+/* 카드(책) 1개 HTML */
 function bookCardHTML(p){
-  const slug = p.slug;
-  const cands = coverCandidates(slug, p.cover);
+  const slug   = p.slug;
+  const color  = p.color || '#8e8e8e';
+  const cands  = coverCandidates(slug, p.cover);
+  const first  = cands[0];
+
   return `
-    <a class="book" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
-      <div class="book3d" style="--cover: url('${esc(cands[0])}')">
-        <!-- 숨은 프리로더(성공하면 --cover 갱신, 실패하면 후보 순환) -->
-        <img src="${esc(cands[0])}" data-cands='${esc(JSON.stringify(cands.slice(1)))}'
-             onerror="window._coverNext && window._coverNext(event)"
-             onload="window._coverSet && window._coverSet(event)" alt="" style="display:none">
-        <div class="spine"><span class="t">${esc(p.shortTitle || p.title)}</span></div>
-        <div class="back layer"></div>
-        <div class="page layer p6"></div>
-        <div class="page layer p5"></div>
-        <div class="page layer p4"></div>
-        <div class="page layer p3"></div>
-        <div class="page layer p2"></div>
-        <div class="page layer p1"></div>
-        <div class="front layer"></div>
-        <div class="ribbon" aria-hidden="true"></div>
-        <div class="label">${esc(p.title)}</div>
-      </div>
-    </a>`;
+  <a class="book" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
+    <article style="--avarage-color:${color}">
+      <figure>
+        <div class="book3d" style="--cover:url('${esc(first)}')">
+          <div class="layer back"></div>
+          <div class="layer page page6"></div>
+          <div class="layer page page5"></div>
+          <div class="layer page page4"></div>
+          <div class="layer page page3"></div>
+          <div class="layer page page2"></div>
+          <div class="layer page page1"></div>
+          <div class="layer front"></div>
+
+          <div class="spine"><span class="t">${esc(p.shortTitle || p.title)}</span></div>
+          <div class="ribbon" aria-hidden="true"></div>
+          <div class="label">${esc(p.title)}</div>
+        </div>
+
+        <!-- 커버 프리로드 + 폴백 체인 -->
+        <img class="preload"
+             src="${esc(first)}"
+             data-cands='${esc(JSON.stringify(cands))}'
+             onload="_coverSet(event)"
+             onerror="_coverSwap(event)"
+             alt="">
+      </figure>
+    </article>
+  </a>`;
 }
-function groupHTML(cat, list){
+
+/* 그룹(section) */
+function groupHTML(cat, posts){
   return `
-    <section class="group">
-      <h2 class="ghead">${esc(cat)}</h2>
-      <div class="grid">
-        ${list.map(bookCardHTML).join('')}
-      </div>
-    </section>`;
+  <div class="group">
+    <h2 class="ghead">${esc(cat)}</h2>
+    <div class="grid">
+      ${posts.map(bookCardHTML).join('')}
+    </div>
+  </div>`;
 }
 
 /* ===== 렌더링 ===== */
@@ -273,6 +329,7 @@ let ALL=[];
 function renderIndex(){
   $('#title').textContent='분류 전체보기';
   $('#viewPost').classList.add('hidden');
+
   const byCat={};
   ALL.forEach(p => (byCat[p.category||'기타'] ||= []).push(p));
   const html = Object.entries(byCat)
@@ -280,13 +337,6 @@ function renderIndex(){
     .map(([cat, list]) => groupHTML(cat, list.sort((a,b)=>new Date(b.date)-new Date(a.date))))
     .join('');
   $('#viewList').innerHTML = html;
-  // 터치(모바일)에서는 탭 시 3D 미리보기 토글(한번 더 탭하면 글로 이동)
-  document.querySelectorAll('.book3d').forEach(b=>{
-    let tapped = false;
-    b.addEventListener('touchend', (e)=>{
-      if (!tapped){ b.classList.toggle('open'); tapped=true; setTimeout(()=>tapped=false, 900); e.preventDefault(); }
-    }, {passive:false});
-  });
 }
 
 async function renderPost(slug){
@@ -306,9 +356,13 @@ async function renderPost(slug){
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el));
     document.title = m.title + ' - 보관된 도서';
+
     if (!document.querySelector('#viewPost .paper')) {
-      const wrap = document.createElement('div'); wrap.className = 'paper';
-      const art = $('#pBody'); art.parentNode.insertBefore(wrap, art); wrap.appendChild(art);
+      const wrap = document.createElement('div');
+      wrap.className = 'paper';
+      const art = $('#pBody');
+      art.parentNode.insertBefore(wrap, art);
+      wrap.appendChild(art);
     }
   }catch(e){
     console.error(e);
@@ -316,7 +370,7 @@ async function renderPost(slug){
   }
 }
 
-/* ===== 라우팅/네비 ===== */
+/* ===== 라우팅/뒤로 ===== */
 function route(){
   const mPost=location.hash.match(/^#\/post\/(.+)$/);
   if(mPost){ renderPost(decodeURIComponent(mPost[1])); return; }
@@ -327,7 +381,7 @@ $('#backBtn').addEventListener('click', () => {
   else location.assign('../');
 });
 
-/* ===== 부팅 ===== */
+/* ===== 초기화 ===== */
 (async () => {
   try{
     const r=await fetch(DATA_URL,{cache:'no-cache'});
