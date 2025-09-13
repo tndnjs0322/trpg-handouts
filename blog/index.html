@@ -14,7 +14,7 @@
 :root{
   --bg:#0d141b; --ink:#e7edf3; --muted:#a8b3bf; --line:#1e2732; --panel:#10171e;
   --min-card:192px;
-  --book-radius:12px; --book-border:2px; --book-depth:16px; --book-tilt:.15deg;
+  --book-radius:12px; --book-border:2px; --book-depth:16px;
   --spine-w:40px;
 }
 *{box-sizing:border-box}
@@ -43,13 +43,12 @@ header.page{
   box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 2px 12px rgba(0,0,0,.25);
 }
 .btn:hover{filter:brightness(1.05)}
-
 .hidden{display:none}
 
 /* === 목록 (카테고리 그룹) === */
 #viewList .group{margin:24px 0}
 #viewList .ghead{
-  display:inline-block; margin:0 0 8px; font:700 16px/1.2 system-ui;
+  display:inline-block; margin:0 0 8px; font:700 16px/1.2;
   color:#ffd166; letter-spacing:.02em;
   background:rgba(255,209,102,.08);
   border:1px solid rgba(255,209,102,.25);
@@ -73,12 +72,11 @@ a.bookCard{
     0 0 0 1px rgba(255,255,255,.06) inset,
     0 8px var(--book-depth) rgba(0,0,0,.35),
     0 2px 12px rgba(0,0,0,.35);
-  transform:rotate(var(--book-tilt));
   transition:transform .28s cubic-bezier(.22,.8,.2,1), box-shadow .28s, filter .28s;
   overflow:hidden;
 }
 a.bookCard:is(:hover,:focus-visible) article{
-  transform:translateY(-6px) rotate(0deg);
+  transform:translateY(-6px);
   box-shadow:
     0 0 0 1px rgba(255,255,255,.08) inset,
     0 16px calc(var(--book-depth)+6px) rgba(0,0,0,.42),
@@ -86,21 +84,21 @@ a.bookCard:is(:hover,:focus-visible) article{
   filter:saturate(1.05);
 }
 
-/* 비주얼 프레임(비율 유지) */
+/* 비주얼 프레임(비율) + 3D 원근 */
 .card-figure{
   margin:0; position:relative; aspect-ratio:257/364;
   border-radius:calc(var(--book-radius) - var(--book-border));
   overflow:hidden;
-  /* 3D를 보기 위한 원근 */
   perspective:1200px;
 }
+/* 정지 커버(밑에 깔아둠) */
 .card-figure > .coverBase{
   position:absolute; inset:0; z-index:0;
   background: var(--cover) center/cover no-repeat;
   filter: brightness(.98) saturate(.98);
 }
 
-/* ====== 여기부터: 당신이 준 “진짜” 3D 펼침 구조 ====== */
+/* ====== 실제 3D 펼침 구조 (네가 준 구조 그대로) ====== */
 .book{
   position:absolute; inset:0; z-index:2;
   transform-style: preserve-3d;
@@ -109,17 +107,16 @@ a.bookCard:is(:hover,:focus-visible) article{
 .book .front, .book .back,
 .book .page1, .book .page2, .book .page3,
 .book .page4, .book .page5, .book .page6{
-  position:absolute; top:0; left:0;
-  width:100%; height:100%;
+  position:absolute; top:0; left:0; width:100%; height:100%;
   transform-style:preserve-3d;
   transform-origin:left center;
   transition: transform .5s ease-in-out, box-shadow .35s ease-in-out;
   border-radius:calc(var(--book-radius) - var(--book-border));
-  backface-visibility: hidden; /* 뒤집힐 때 비쳐 보이지 않게 */
+  backface-visibility: hidden; /* 뒤면 비침 방지 */
   box-shadow: 0 1em 3em 0 rgba(0,0,0,.20);
 }
 
-/* 앞표지/뒤표지: 커버 이미지 사용 */
+/* 앞/뒤 표지는 커버 이미지 */
 .book .front{
   z-index:9;
   background:
@@ -134,25 +131,35 @@ a.bookCard:is(:hover,:focus-visible) article{
   filter: grayscale(.08) brightness(.92);
 }
 
-/* 페이지(종이) */
+/* 종이 페이지 */
 .book .page1, .book .page2{ background:#efefef }
 .book .page3, .book .page4{ background:#f5f5f5 }
 .book .page5{ background:#fafafa }
 .book .page6{ background:#fdfdfd }
 
-/* 당신이 준 각도/스케일 그대로 */
-.card-figure:hover .book .front { transform: rotateY(-160deg) scale(1.1) }
-.card-figure:hover .book .page1 { transform: rotateY(-150deg) scale(1.1) }
-.card-figure:hover .book .page2 { transform: rotateY(-30deg)  scale(1.1) }
-.card-figure:hover .book .page3 { transform: rotateY(-140deg) scale(1.1) }
-.card-figure:hover .book .page4 { transform: rotateY(-40deg)  scale(1.1) }
-.card-figure:hover .book .page5 { transform: rotateY(-130deg) scale(1.1) }
-.card-figure:hover .book .page6 { transform: rotateY(-50deg)  scale(1.1) }
-.card-figure:hover .book .back  { transform: rotateY(-20deg)  scale(1.1) }
+/* 호버로 펼침 (데스크톱) */
+.card-figure:hover .book .front { transform: rotateY(-160deg) scale(1.08) }
+.card-figure:hover .book .page1 { transform: rotateY(-150deg) scale(1.08) }
+.card-figure:hover .book .page2 { transform: rotateY(-30deg)  scale(1.08) }
+.card-figure:hover .book .page3 { transform: rotateY(-140deg) scale(1.08) }
+.card-figure:hover .book .page4 { transform: rotateY(-40deg)  scale(1.08) }
+.card-figure:hover .book .page5 { transform: rotateY(-130deg) scale(1.08) }
+.card-figure:hover .book .page6 { transform: rotateY(-50deg)  scale(1.08) }
+.card-figure:hover .book .back  { transform: rotateY(-20deg)  scale(1.08) }
+
+/* 클릭 시 .open으로도 동일하게 적용(모바일) */
+.card-figure.open .book .front { transform: rotateY(-160deg) scale(1.08) }
+.card-figure.open .book .page1 { transform: rotateY(-150deg) scale(1.08) }
+.card-figure.open .book .page2 { transform: rotateY(-30deg)  scale(1.08) }
+.card-figure.open .book .page3 { transform: rotateY(-140deg) scale(1.08) }
+.card-figure.open .book .page4 { transform: rotateY(-40deg)  scale(1.08) }
+.card-figure.open .book .page5 { transform: rotateY(-130deg) scale(1.08) }
+.card-figure.open .book .page6 { transform: rotateY(-50deg)  scale(1.08) }
+.card-figure.open .book .back  { transform: rotateY(-20deg)  scale(1.08) }
 
 /* 스파인(세로 제목) */
 .spine{
-  position:absolute; inset:0 auto 0 0; width:var(--spine-w); z-index:4;
+  position:absolute; inset:0 auto 0 0; width:var(--spine-w); z-index:5;
   background:
     linear-gradient(90deg,rgba(0,0,0,.46),rgba(255,255,255,.12) 46%,rgba(0,0,0,.38)),
     color-mix(in oklab, var(--avarage-color,#6f859c) 68%, black 32%);
@@ -170,7 +177,7 @@ a.bookCard:is(:hover,:focus-visible) article{
 
 /* 하단 캡션(글라스 라벨) */
 .caption{
-  position:absolute; left:calc(var(--spine-w) + 8px); right:10px; bottom:10px; z-index:5;
+  position:absolute; left:calc(var(--spine-w) + 8px); right:10px; bottom:10px; z-index:6;
   padding:8px 12px; border-radius:10px;
   background:linear-gradient(180deg,rgba(12,16,20,.72),rgba(12,16,20,.46));
   backdrop-filter:blur(6px) saturate(1.12);
@@ -182,7 +189,7 @@ a.bookCard:is(:hover,:focus-visible) article{
 
 /* 리본(북마크) */
 .ribbon{
-  position:absolute; top:10px; right:12px; width:18px; height:32px; z-index:6;
+  position:absolute; top:10px; right:12px; width:18px; height:32px; z-index:7;
   background:linear-gradient(0deg,#e63746,#ff7b7b);
   clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));
@@ -244,27 +251,9 @@ const $=s=>document.querySelector(s);
 const d=x=>x?new Date(x).toISOString().slice(0,10):'';
 const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-/* 커버 폴백: jpg → png → webp (루트/BASE) → placeholder */
-window._coverNext = function (ev) {
-  const img = ev.target;
-  try {
-    const list = JSON.parse(img.dataset.cands || "[]");
-    if (list.length) {
-      const next = list.shift();
-      img.dataset.cands = JSON.stringify(list);
-      img.src = next;
-      // CSS 변수 최신화
-      const art = img.closest('article');
-      if (art) art.style.setProperty('--cover', `url("${img.src}")`);
-      return;
-    }
-  } catch (_) {}
-};
-/* 후보 생성 */
-function coverCandidates(slug, cover) {
-  if (cover) {
-    return [cover, `/assets/covers/_placeholder.jpg`, `${BASE}assets/covers/_placeholder.jpg`];
-  }
+/* 커버 후보: jpg→png→webp(루트/BASE)→placeholder */
+function coverCandidates(slug, cover){
+  if(cover) return [cover, `/assets/covers/_placeholder.jpg`, `${BASE}assets/covers/_placeholder.jpg`];
   return [
     `/assets/covers/${slug}.jpg`, `${BASE}assets/covers/${slug}.jpg`,
     `/assets/covers/${slug}.png`, `${BASE}assets/covers/${slug}.png`,
@@ -272,8 +261,21 @@ function coverCandidates(slug, cover) {
     `/assets/covers/_placeholder.jpg`, `${BASE}assets/covers/_placeholder.jpg`,
   ];
 }
+window._coverNext = (ev)=>{
+  const img = ev.target;
+  try{
+    const list = JSON.parse(img.dataset.cands||'[]');
+    if(list.length){
+      const next = list.shift();
+      img.dataset.cands = JSON.stringify(list);
+      img.src = next;
+      const art = img.closest('article');
+      if(art) art.style.setProperty('--cover', `url("${img.src}")`);
+    }
+  }catch(_){}
+};
 
-/* 그룹/카드 HTML */
+/* 그룹/카드 생성 */
 function groupHTML(cat, list){
   return `
     <div class="group">
@@ -290,13 +292,12 @@ function bookCardHTML(p){
   const first  = cands[0];
 
   return `
-    <a class="bookCard" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
+    <a class="bookCard" href="#/post/${encodeURIComponent(slug)}" data-slug="${esc(slug)}" aria-label="${esc(p.title)}">
       <article style="--avarage-color:${color}; --cover:url('${first.replace(/'/g,"\\'")}')">
         <figure class="card-figure">
-          <!-- 바닥(정지 커버) -->
           <div class="coverBase"></div>
 
-          <!-- 당신이 준 구조 그대로 -->
+          <!-- 네가 준 구조 그대로 -->
           <div class="book" aria-hidden="true">
             <div class="back"></div>
             <div class="page6"></div>
@@ -308,18 +309,16 @@ function bookCardHTML(p){
             <div class="front"></div>
           </div>
 
-          <!-- 스파인/리본/캡션은 3D 위에 올림 -->
           <div class="spine"><span class="t">${esc(p.shortTitle || p.title)}</span></div>
           <div class="ribbon" aria-hidden="true"></div>
           <div class="caption">${esc(p.title)}</div>
 
-          <!-- 보이지 않는 img로 커버 로딩/폴백 제어 -->
-          <img
-            src="${esc(first)}"
-            data-cands='${esc(JSON.stringify(cands.slice(1)))}'
-            onload="this.closest('article')?.style.setProperty('--cover', 'url('+JSON.stringify(this.currentSrc||this.src)+')'); this.remove()"
-            onerror="window._coverNext && window._coverNext(event)"
-            alt="" style="display:none">
+          <!-- 보이지 않는 로더로 커버 변수 최신화 + 폴백 -->
+          <img src="${esc(first)}"
+               data-cands='${esc(JSON.stringify(cands.slice(1)))}'
+               onload="this.closest('article')?.style.setProperty('--cover','url('+JSON.stringify(this.currentSrc||this.src)+')'); this.remove()"
+               onerror="window._coverNext && window._coverNext(event)"
+               alt="" style="display:none">
         </figure>
       </article>
     </a>`;
@@ -379,6 +378,20 @@ function route(){
 document.getElementById('backBtn')?.addEventListener('click', () => {
   if (document.referrer && new URL(document.referrer).origin === location.origin) history.back();
   else location.assign('../');
+});
+
+/* ===== 카드 클릭: 먼저 펼치고 → 글로 이동 ===== */
+const OPEN_DELAY = 450; // ms (CSS .5s 보다 살짝 짧게)
+document.addEventListener('click', (e)=>{
+  const a = e.target.closest('a.bookCard'); if(!a) return;
+  const fig = a.querySelector('.card-figure');
+  // 이미 열린 상태면 기본 링크 동작(글 보기)
+  if(!fig.classList.contains('open')){
+    e.preventDefault();
+    fig.classList.add('open');
+    const slug = a.dataset.slug;
+    setTimeout(()=>{ location.hash = '#/post/' + encodeURIComponent(slug); }, OPEN_DELAY);
+  }
 });
 
 /* ===== 초기화 ===== */
