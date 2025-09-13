@@ -3,24 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>3D Book with Long Ribbon</title>
+<title>Library — CSS Flip Books</title>
 <style>
-/* ===== 기본 무대 ===== */
-:root{
-  /* 커버/리본 기본값 (필요시 인라인 style로 덮어쓰기 가능) */
-  --cover-image: url('/assets/covers/_placeholder.jpg');
-  --ribbon-color: #e63746;
-  --ribbon-w: 22px;   /* 리본 너비 */
-  --ribbon-l: 78%;    /* 리본 길이(책 높이에 대한 %) */
-}
-
-*{box-sizing:border-box}
-html,body{height:100%}
+/* ========== [네 원본 효과 유지] ========== */
 body {
   width: 100%;
   height: 100vh;
-  display: flex;
-  gap: 40px;
+  display: flex;              /* 중앙 정렬 유지 */
   justify-content: center;
   align-items: center;
   perspective: 1200px;
@@ -28,8 +17,6 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
 }
-
-/* ===== 네가 준 구조 그대로 ===== */
 .book {
   transform-style: preserve-3d;
   position: relative;
@@ -37,8 +24,6 @@ body {
   cursor: pointer;
   backface-visibility: visible;
 }
-
-/* 공통 레이어 */
 .front, .back, .page1, .page2, .page3, .page4, .page5, .page6 {
   transform-style: preserve-3d;
   position: absolute;
@@ -48,54 +33,7 @@ body {
   transform-origin: left center;
   transition: transform .5s ease-in-out, box-shadow .35s ease-in-out;
 }
-
-/* ===== 표지/뒷표지 ===== */
-/* 뒷표지는 단색 */
-.back {
-  background: navy;
-  border-bottom-right-radius: .5em;
-  border-top-right-radius: .5em;
-}
-
-/* 앞표지는 이미지 + 비네트 + 폴백색(네이비) */
-.front {
-  background-color: navy; /* 커버 없을 때 폴백 */
-  background-image:
-    linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.18)),
-    var(--cover-image);
-  background-size: cover;
-  background-position: center;
-  border-bottom-right-radius: .5em;
-  border-top-right-radius: .5em;
-  /* === 긴 책갈피 리본 === */
-}
-.front::after{
-  content:"";
-  position:absolute; top:-2px; right:12px;
-  width: var(--ribbon-w);
-  height: var(--ribbon-l);
-  background:
-    linear-gradient(0deg,
-      rgba(255,255,255,.18),
-      rgba(255,255,255,0) 18%),
-    var(--ribbon-color);
-  /* 아래쪽이 V자 모양으로 파이면서 실제 책갈피 느낌 */
-  clip-path: polygon(0 0,100% 0,100% calc(100% - 18px),50% 100%,0 calc(100% - 18px));
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
-  border-radius: 4px 4px 0 0;
-  pointer-events:none;
-  /* 표지 열릴 때 같이 움직이도록 .front에 붙여둠 */
-}
-
-/* ===== 페이지 컬러(네 값 유지) ===== */
-.page1 { background: #efefef; }
-.page2 { background: #efefef; }
-.page3 { background: #f5f5f5; }
-.page4 { background: #f5f5f5; }
-.page5 { background: #fafafa; }
-.page6 { background: #fdfdfd; }
-
-/* 공통 모서리(네 논리 유지) */
+.front, .back { background: navy; }
 .front, .page1, .page3, .page5 {
   border-bottom-right-radius: .5em;
   border-top-right-radius: .5em;
@@ -104,81 +42,220 @@ body {
   border-bottom-right-radius: .5em;
   border-top-right-radius: .5em;
 }
+.page1 { background: #efefef; }
+.page2 { background: #efefef; }
+.page3 { background: #f5f5f5; }
+.page4 { background: #f5f5f5; }
+.page5 { background: #fafafa; }
+.page6 { background: #fdfdfd; }
+/* hover 펼침 각도 그대로 유지 */
+.book:hover .front { transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .page1 { transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .page2 { transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .page3 { transform: rotateY(-140deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .page4 { transform: rotateY(-40deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .page5 { transform: rotateY(-130deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .page6 { transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:hover .back  { transform: rotateY(-20deg)  scale(1.1); }
 
-/* ===== 펼침 효과(네 각도값 그대로) ===== */
-.book:hover .front {
-  transform: rotateY(-160deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
+/* ========== [패치 1: 라이브러리 그리드] ========== */
+.library {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 28px 22px;
+  width: min(1140px, 100%);
+  padding: 32px 18px;
+  margin: 0 auto;
 }
-.book:hover .page1 {
-  transform: rotateY(-150deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
+.item {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
 }
-.book:hover .page2 {
-  transform: rotateY(-30deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
+.caption {
+  width: 200px;               /* 책 너비와 동일 */
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #222;
+  text-wrap: balance;
 }
-.book:hover .page3 {
-  transform: rotateY(-140deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
-}
-.book:hover .page4 {
-  transform: rotateY(-40deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
-}
-.book:hover .page5 {
-  transform: rotateY(-130deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
-}
-.book:hover .page6 {
-  transform: rotateY(-50deg) scale(1.1);
-  box-shadow: 0 1em 3em 0 rgba(0, 0, 0, .2);
-}
-.book:hover .back {
-  transform: rotateY(-20deg) scale(1.1);
+.meta {
+  font-size: 12px;
+  color: #555;
 }
 
-/* ===== (선택) 모션 감소 존중 ===== */
+/* body가 중앙정렬이라 전체가 한가운데에 뜨도록 wrapper 사용 */
+.wrapper {
+  width: 100%;
+  max-height: 100vh;
+  overflow: auto;            /* 책이 scale(1.1)로 커질 때 스크롤 */
+  display: grid;
+  place-items: center;
+}
+
+/* ========== [패치 2: 커버 이미지 & 긴 책갈피 리본] ========== */
+:root {
+  --cover-image: url('https://picsum.photos/seed/placeholder/600/900'); /* 폴백 */
+  --ribbon-color: #e63746;   /* 리본 색 */
+  --ribbon-w: 22px;          /* 리본 너비 */
+  --ribbon-l: 85%;           /* 리본 길이(책 높이 비율) */
+}
+
+/* 앞표지에 이미지 입히기 (네이비 폴백은 유지) */
+.front{
+  background-color: navy;
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.18)),
+    var(--cover-image);
+  background-size: cover;
+  background-position: center;
+}
+/* 긴 책갈피 리본 */
+.front::after{
+  content:"";
+  position:absolute;
+  top:-2px;
+  right:12px;
+  width: var(--ribbon-w);
+  height: var(--ribbon-l);
+  background:
+    linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,0) 18%),
+    var(--ribbon-color);
+  clip-path: polygon(0 0,100% 0,100% calc(100% - 18px),50% 100%,0 calc(100% - 18px));
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+  border-radius: 4px 4px 0 0;
+  pointer-events:none;
+  z-index: 2;
+}
+
+/* ========== [선택: 접근성—탭 포커스로도 펼치기] ========== */
+.book:focus-within .front{ transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .page1{ transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .page2{ transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .page3{ transform: rotateY(-140deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .page4{ transform: rotateY(-40deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .page5{ transform: rotateY(-130deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .page6{ transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
+.book:focus-within .back { transform: rotateY(-20deg)  scale(1.1); }
+
+/* (선택) 모션 감소 */
 @media (prefers-reduced-motion: reduce){
   .book *{ transition:none !important }
 }
 </style>
 </head>
 <body>
+<div class="wrapper">
+  <section class="library" aria-label="서가 목록">
 
-<!-- data-cover 로 이미지 교체하는 예시 -->
-<div class="book" data-cover="/assets/covers/example-1.jpg" style="--ribbon-l:88%; --ribbon-w:26px; --ribbon-color:#d72d4f">
-  <div class="back"></div>
-  <div class="page6"></div>
-  <div class="page5"></div>
-  <div class="page4"></div>
-  <div class="page3"></div>
-  <div class="page2"></div>
-  <div class="page1"></div>
-  <div class="front"></div>
+    <!-- 아이템 1 -->
+    <article class="item">
+      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book1/600/900'); --ribbon-color:#d72d4f; --ribbon-l:92%; --ribbon-w:26px" tabindex="0">
+        <div class="back"></div>
+        <div class="page6"></div>
+        <div class="page5"></div>
+        <div class="page4"></div>
+        <div class="page3"></div>
+        <div class="page2"></div>
+        <div class="page1"></div>
+        <div class="front"></div>
+      </div>
+      <div class="caption">그림자 서점의 비밀</div>
+      <div class="meta">추리 · 2025-09-10</div>
+    </article>
+
+    <!-- 아이템 2 -->
+    <article class="item">
+      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book2/600/900'); --ribbon-color:#7b3cff; --ribbon-l:88%" tabindex="0">
+        <div class="back"></div>
+        <div class="page6"></div>
+        <div class="page5"></div>
+        <div class="page4"></div>
+        <div class="page3"></div>
+        <div class="page2"></div>
+        <div class="page1"></div>
+        <div class="front"></div>
+      </div>
+      <div class="caption">달빛 기록 보관소</div>
+      <div class="meta">에세이 · 2025-08-22</div>
+    </article>
+
+    <!-- 아이템 3 -->
+    <article class="item">
+      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book3/600/900'); --ribbon-color:#1fbfbf; --ribbon-w:20px; --ribbon-l:95%" tabindex="0">
+        <div class="back"></div>
+        <div class="page6"></div>
+        <div class="page5"></div>
+        <div class="page4"></div>
+        <div class="page3"></div>
+        <div class="page2"></div>
+        <div class="page1"></div>
+        <div class="front"></div>
+      </div>
+      <div class="caption">바람이 멈춘 도서관</div>
+      <div class="meta">환상 · 2025-07-30</div>
+    </article>
+
+    <!-- 아이템 4 -->
+    <article class="item">
+      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book4/600/900'); --ribbon-color:#f59f00; --ribbon-l:80%" tabindex="0">
+        <div class="back"></div>
+        <div class="page6"></div>
+        <div class="page5"></div>
+        <div class="page4"></div>
+        <div class="page3"></div>
+        <div class="page2"></div>
+        <div class="page1"></div>
+        <div class="front"></div>
+      </div>
+      <div class="caption">유리 정원의 편지</div>
+      <div class="meta">로맨스 · 2025-06-12</div>
+    </article>
+
+    <!-- 아이템 5 -->
+    <article class="item">
+      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book5/600/900'); --ribbon-color:#ff6b6b; --ribbon-w:28px; --ribbon-l:98%" tabindex="0">
+        <div class="back"></div>
+        <div class="page6"></div>
+        <div class="page5"></div>
+        <div class="page4"></div>
+        <div class="page3"></div>
+        <div class="page2"></div>
+        <div class="page1"></div>
+        <div class="front"></div>
+      </div>
+      <div class="caption">밤의 아카이브</div>
+      <div class="meta">스릴러 · 2025-05-04</div>
+    </article>
+
+    <!-- 아이템 6 -->
+    <article class="item">
+      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book6/600/900'); --ribbon-color:#4dabf7; --ribbon-l:90%" tabindex="0">
+        <div class="back"></div>
+        <div class="page6"></div>
+        <div class="page5"></div>
+        <div class="page4"></div>
+        <div class="page3"></div>
+        <div class="page2"></div>
+        <div class="page1"></div>
+        <div class="front"></div>
+      </div>
+      <div class="caption">묵음과 공백 사이</div>
+      <div class="meta">시 · 2025-04-17</div>
+    </article>
+
+  </section>
 </div>
 
-<!-- 인라인 CSS 변수로 교체하는 예시 -->
-<div class="book" style="--cover-image:url('https://picsum.photos/seed/book/600/900'); --ribbon-l:75%; --ribbon-w:24px; --ribbon-color:#7b3cff">
-  <div class="back"></div>
-  <div class="page6"></div>
-  <div class="page5"></div>
-  <div class="page4"></div>
-  <div class="page3"></div>
-  <div class="page2"></div>
-  <div class="page1"></div>
-  <div class="front"></div>
-</div>
-
+<!-- (선택) data-cover / data-ribbon-* 으로도 값 주입하고 싶으면 이 짧은 JS 사용 -->
 <script>
-/* data-cover / data-ribbon-* 로 쉽게 바꾸기 */
-document.querySelectorAll('.book').forEach(book=>{
-  const cover = book.dataset.cover;
-  if (cover) book.style.setProperty('--cover-image', `url("${cover}")`);
-
-  if (book.dataset.ribbonColor) book.style.setProperty('--ribbon-color', book.dataset.ribbonColor);
-  if (book.dataset.ribbonW)     book.style.setProperty('--ribbon-w', book.dataset.ribbonW);
-  if (book.dataset.ribbonL)     book.style.setProperty('--ribbon-l', book.dataset.ribbonL);
+document.querySelectorAll('.book').forEach(b=>{
+  if (b.dataset.cover)       b.style.setProperty('--cover-image', `url("${b.dataset.cover}")`);
+  if (b.dataset.ribbonColor) b.style.setProperty('--ribbon-color', b.dataset.ribbonColor);
+  if (b.dataset.ribbonW)     b.style.setProperty('--ribbon-w', b.dataset.ribbonW);
+  if (b.dataset.ribbonL)     b.style.setProperty('--ribbon-l', b.dataset.ribbonL);
 });
 </script>
 </body>
