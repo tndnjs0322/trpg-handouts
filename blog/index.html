@@ -14,8 +14,14 @@
 :root{
   --bg:#0d141b; --ink:#e7edf3; --muted:#a8b3bf; --line:#1e2732; --panel:#10171e;
   --min-card:192px;
-  --book-radius:12px; --book-border:2px; --book-depth:16px; --book-tilt:.5deg;
-  --spine-w:36px;
+
+  /* 책 스타일 */
+  --book-radius:12px; --book-border:2px; --book-depth:16px; --book-tilt:.4deg;
+  --spine-w:40px; /* 책등 더 도톰하게 */
+
+  /* 3D 틸트 한계 */
+  --tilt-x:10deg;  /* 위/아래 */
+  --tilt-y:12deg;  /* 좌/우 */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -29,47 +35,58 @@ header.page{display:flex;gap:8px;align-items:center;margin-bottom:16px}
 .btn{border:1px solid var(--line);background:#0b1117;color:var(--ink);padding:8px 10px;border-radius:10px;text-decoration:none}
 .hidden{display:none}
 
-/* ① 리스트(섹션 헤더 + 그리드) */
-#viewList .group{margin:24px 0}
+/* ===== 카테고리 그룹 ===== */
+#viewList .group{margin:28px 0}
 #viewList .group > .ghead{
-  display:inline-block; margin:0 0 8px; font:700 16px/1.2 system-ui;
+  display:inline-block; margin:0 0 10px; font:800 17px/1.2 system-ui;
   color:#ffd166; letter-spacing:.02em;
-  background:rgba(255,209,102,.08);
-  border:1px solid rgba(255,209,102,.25);
-  padding:6px 10px; border-radius:8px;
+  background:rgba(255,209,102,.10);
+  border:1px solid rgba(255,209,102,.28);
+  padding:7px 12px; border-radius:9px;
+  text-shadow:0 1px 0 rgba(0,0,0,.22);
 }
 #viewList .grid{
-  display:grid; gap:16px;
+  display:grid; gap:18px;
   grid-template-columns:repeat(auto-fill,minmax(var(--min-card),1fr));
 }
 
-/* ② 책 카드 */
+/* ===== 책 카드 기본 컨테이너 ===== */
 a.book{
-  display:block; text-decoration:none; color:inherit;
-  -webkit-tap-highlight-color:transparent;
+  display:block; text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent;
+  perspective:1200px; /* 안쪽 요소 3D */
 }
 .book article{
   position:relative; border-radius:var(--book-radius);
-  border:var(--book-border) solid color-mix(in oklab, var(--avarage-color,#8aa0b4) 75%, black 25%);
-  background:linear-gradient(0deg,rgba(255,255,255,.06),transparent);
+  border:var(--book-border) solid color-mix(in oklab, var(--avarage-color,#8aa0b4) 70%, black 30%);
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,.08), rgba(255,255,255,0) 60%),
+    linear-gradient(0deg, rgba(255,255,255,.05), transparent);
+  /* 미세 가죽 텍스처 */
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.06) 0 12%, transparent 13%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,.04) 0 14%, transparent 15%),
+    linear-gradient(0deg, rgba(255,255,255,.05), transparent);
   box-shadow:
     0 0 0 1px rgba(255,255,255,.06) inset,
     0 8px var(--book-depth) rgba(0,0,0,.35),
     0 2px 12px rgba(0,0,0,.35);
-  transform:rotate(var(--book-tilt));
-  transition:transform .28s cubic-bezier(.22,.8,.2,1), box-shadow .28s, filter .28s;
+  transform:
+    rotate(var(--book-tilt))
+    rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg));
+  transition:transform .28s cubic-bezier(.22,.8,.2,1), box-shadow .28s, filter .28s, border-color .28s;
   overflow:hidden;
+  will-change: transform;
 }
 a.book:is(:hover,:focus-visible) article{
-  transform:translateY(-6px) rotate(0deg);
   box-shadow:
     0 0 0 1px rgba(255,255,255,.08) inset,
     0 16px calc(var(--book-depth)+6px) rgba(0,0,0,.42),
-    0 10px 28px rgba(0,0,0,.55);
+    0 12px 30px rgba(0,0,0,.55);
   filter:saturate(1.05);
 }
 
-/* 커버 프레임 */
+/* ===== 커버 프레임 ===== */
 .book figure{
   margin:0; position:relative; aspect-ratio:257/364;
   border-radius:calc(var(--book-radius) - var(--book-border));
@@ -78,61 +95,105 @@ a.book:is(:hover,:focus-visible) article{
 .book img{
   position:absolute; inset:0; width:100%; height:100%;
   object-fit:cover; object-position:center;
+  transform: translateZ(0); /* 레이어 분리 */
 }
 
-/* 책등(스파인) */
+/* ===== 책등(스파인) — 더 선명 + 가이드라인 ===== */
 .book .spine{
-  position:absolute; inset:0 auto 0 0; width:var(--spine-w); z-index:2;
+  position:absolute; inset:0 auto 0 0; width:var(--spine-w); z-index:3;
   background:
-    linear-gradient(90deg,rgba(0,0,0,.45),rgba(255,255,255,.12) 45%,rgba(0,0,0,.38)),
-    color-mix(in oklab, var(--avarage-color,#768aa2) 70%, black 30%);
-  border-right:1px solid rgba(255,255,255,.18);
-  box-shadow:2px 0 6px rgba(0,0,0,.35) inset;
-  display:flex; align-items:center; justify-content:center;
+    linear-gradient(90deg, rgba(0,0,0,.55), rgba(255,255,255,.16) 48%, rgba(0,0,0,.42)),
+    color-mix(in oklab, var(--avarage-color,#768aa2) 72%, black 28%);
+  border-right:1px solid rgba(255,255,255,.22);
+  box-shadow:
+    2px 0 8px rgba(0,0,0,.45) inset,
+    1px 0 0 rgba(255,255,255,.06) inset;
+}
+.spine::after{
+  /* 얕은 재봉선/문양 느낌 */
+  content:""; position:absolute; inset:6px 4px; border-left:1px dashed rgba(0,0,0,.25);
+  opacity:.35;
 }
 .spine .t{
+  position:absolute; inset:auto 0 10px 0; /* 아래에서 살짝 올라오게 */
   writing-mode:vertical-rl; text-orientation:mixed;
-  max-height:86%; padding-block:10px;
-  font-weight:800; letter-spacing:.06em; line-height:1.05; font-size:13px;
-  color:#f4f7fa; text-shadow:0 .5px 0 rgba(0,0,0,.55);
+  margin:auto; max-height:86%;
+  padding:10px 0 8px;
+  font-weight:900; letter-spacing:.08em; line-height:1.02; font-size:13px;
+  color:#f8fbff;
+  text-shadow:0 1px 0 rgba(0,0,0,.65), 0 0 10px rgba(255,255,255,.15);
+  filter:drop-shadow(0 0 1px rgba(0,0,0,.6));
   overflow:hidden;
 }
 
-/* ③ 하단 캡션 = 글라스 라벨 */
-.book figcaption{
-  position:absolute; left:calc(var(--spine-w) + 8px); right:10px; bottom:10px; z-index:2;
-  padding:8px 12px; border-radius:10px;
-  background:linear-gradient(180deg,rgba(12,16,20,.72),rgba(12,16,20,.46));
-  backdrop-filter:blur(6px) saturate(1.12);
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:0 2px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
-  color:#fff; font-weight:800; font-size:14px; line-height:1.2; letter-spacing:.01em;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  transform:translateY(0); transition:transform .25s ease, box-shadow .25s ease;
-}
-a.book:is(:hover,:focus-visible) figcaption{
-  transform:translateY(-2px);
-  box-shadow:0 6px 16px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+/* ===== 오른쪽 페이지 단면(엣지) ===== */
+.book .edge{
+  position:absolute; top:6px; bottom:6px; right:6px; width:12px; z-index:2;
+  background:
+    repeating-linear-gradient(180deg,
+      #f5f6f8 0 2px,
+      #e7e9ef 2px 4px);
+  border-left:1px solid rgba(0,0,0,.08);
+  box-shadow:inset 0 0 3px rgba(0,0,0,.15), 0 0 0 1px rgba(255,255,255,.04);
+  border-radius:3px;
+  opacity:.95;
 }
 
-/* ④ 리본(북마크) 더 또렷 + 반짝임 */
+/* ===== 커버 글라스 라벨(하단 캡션) ===== */
+.book figcaption{
+  position:absolute; left:calc(var(--spine-w) + 10px); right:12px; bottom:12px; z-index:4;
+  padding:9px 12px; border-radius:11px;
+  background:
+    linear-gradient(180deg, rgba(10,14,18,.78), rgba(10,14,18,.46)),
+    radial-gradient(80% 100% at 50% 0%, rgba(255,255,255,.08), transparent 70%);
+  backdrop-filter: blur(7px) saturate(1.18);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 2px 12px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.08);
+  color:#fff; font-weight:900; font-size:14px; line-height:1.2; letter-spacing:.01em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  transform:translateY(0); transition:transform .2s ease, box-shadow .2s ease;
+}
+a.book:is(:hover,:focus-visible) figcaption{ transform:translateY(-2px) }
+
+/* ===== 리본(책갈피) — 입체/스티치/반짝 스윕 ===== */
 .book .ribbon{
-  position:absolute; top:8px; right:10px; width:16px; height:30px; z-index:3;
-  background:linear-gradient(0deg,#e63746,#ff7b7b);
-  clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
+  position:absolute; top:-2px; right:14px; width:18px; height:38px; z-index:5;
+  background:
+    linear-gradient(180deg, #ff9aa8 0%, #e63a49 48%, #b11823 100%);
+  clip-path:polygon(0 0,100% 0,100% 72%,50% 100%,0 72%);
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));
+  border:1px solid rgba(0,0,0,.35);
+  box-shadow: inset 0 -6px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.28);
+}
+.book .ribbon::before{
+  /* 스티치 */
+  content:""; position:absolute; left:2px; right:2px; top:2px; height:2px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.9) 0 2px, rgba(255,255,255,0) 2px 4px);
+  opacity:.9; filter:drop-shadow(0 1px 0 rgba(0,0,0,.25));
 }
 .book .ribbon::after{
-  content:""; position:absolute; inset:0;
-  background:linear-gradient(180deg,transparent,rgba(255,255,255,.38) 55%,transparent 60%);
-  mix-blend-mode:screen; opacity:.7;
+  /* 반짝 스윕 */
+  content:""; position:absolute; inset:-6px; transform:translateX(-120%) rotate(18deg);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.7) 45%, transparent 70%);
+  mix-blend-mode:screen; opacity:.9;
 }
-a.book:is(:hover,:focus-visible) .ribbon{ animation:ribbon-pop .8s ease }
-@keyframes ribbon-pop{
-  0%{ transform:translateY(0) rotate(0) scale(1) }
-  40%{ transform:translateY(-2px) rotate(-8deg) scale(1.08) }
-  100%{ transform:translateY(0) rotate(0) scale(1) }
+a.book:is(:hover,:focus-visible) .ribbon::after{
+  animation: shine 900ms ease forwards;
 }
+@keyframes shine{
+  to { transform:translateX(40%) rotate(18deg); opacity:0; }
+}
+
+/* ===== 커버 하이라이트(글로스 스윕) ===== */
+.book .gloss{
+  position:absolute; inset:-20%; pointer-events:none; z-index:4; opacity:.0;
+  background:
+    linear-gradient(110deg, transparent 35%, rgba(255,255,255,.35) 48%, transparent 62%);
+  transform: translateX(calc((var(--mx, .5) - .5) * 20%));
+  transition: opacity .25s ease;
+}
+a.book:is(:hover,:focus-visible) .gloss{ opacity:.22 }
 
 /* 본문(글 보기) */
 #viewPost.post{padding:0;border:none;background:none;margin-top:8px}
@@ -191,14 +252,13 @@ window._coverNext = function (ev) {
     if (list.length) {
       const next = list.shift();
       img.dataset.cands = JSON.stringify(list);
-      img.src = next; // 다음 후보로 교체
+      img.src = next;
       return;
     }
   } catch (_) {}
-  // 후보가 더 없으면 종료
 };
 
-/* 후보 리스트: jpg → png → webp, 루트와 BASE 모두 시도 + 플레이스홀더 */
+/* 커버 후보: jpg → png → webp, 루트와 BASE 모두 + 플레이스홀더 */
 function coverCandidates(slug, cover) {
   if (cover) {
     return [
@@ -219,7 +279,7 @@ function coverCandidates(slug, cover) {
   ];
 }
 
-/* 카드 1개 */
+/* 책 카드 하나 */
 function bookCardHTML(p){
   const slug   = p.slug;
   const color  = p.color || '#8e8e8e';
@@ -235,6 +295,8 @@ function bookCardHTML(p){
             onerror="window._coverNext && window._coverNext(event)"
             alt="">
           <div class="spine"><span class="t">${esc(p.shortTitle || p.title)}</span></div>
+          <span class="edge" aria-hidden="true"></span>
+          <span class="gloss" aria-hidden="true"></span>
           <div class="ribbon" aria-hidden="true"></div>
           <figcaption>${esc(p.title)}</figcaption>
         </figure>
@@ -242,7 +304,7 @@ function bookCardHTML(p){
     </a>`;
 }
 
-/* 그룹(카테고리) 한 묶음 */
+/* 카테고리 묶음 */
 function groupHTML(cat, list){
   return `
     <div class="group">
@@ -253,7 +315,7 @@ function groupHTML(cat, list){
     </div>`;
 }
 
-/* ===== 렌더링 ===== */
+/* 데이터/렌더 */
 let ALL=[];
 function renderIndex(){
   $('#title').textContent='분류 전체보기';
@@ -268,6 +330,7 @@ function renderIndex(){
     .join('');
 
   $('#viewList').innerHTML = html;
+  enhanceBooks(); // 커서-따라 3D 인터랙션 부착
 }
 
 async function renderPost(slug){
@@ -283,8 +346,7 @@ async function renderPost(slug){
     const r = await fetch(url,{cache:'no-cache'});
     if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
     const md = await r.text();
-    // ✅ 프런트매터 제거 정규식 수정
-    const body = md.replace(/^---[\s\S]*?---\s*/, '');
+    const body = md.replace(/^---[\s\S]*?---\s*/, ''); // front-matter 제거
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el));
     document.title = m.title + ' - 보관된 도서';
@@ -303,7 +365,7 @@ async function renderPost(slug){
   }
 }
 
-/* ===== 라우트 ===== */
+/* 라우트 */
 function route(){
   const mPost=location.hash.match(/^#\/post\/(.+)$/);
   if(mPost){ renderPost(decodeURIComponent(mPost[1])); return; }
@@ -314,7 +376,48 @@ $('#backBtn').addEventListener('click', () => {
   else location.assign('../');
 });
 
-/* ===== 초기화 ===== */
+/* ===== 커서-따라 3D 틸트 & 글로스 위치 ===== */
+function enhanceBooks(){
+  const reduce = matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  if (reduce) return;
+
+  const books = document.querySelectorAll('#viewList a.book');
+  books.forEach((card) => {
+    const art = card.querySelector('article');
+    const gloss = card.querySelector('.gloss');
+
+    let raf = 0;
+
+    function onMove(e){
+      if (!art) return;
+      const rect = art.getBoundingClientRect();
+      const cx = (e.clientX - rect.left) / rect.width;   // 0..1
+      const cy = (e.clientY - rect.top)  / rect.height;  // 0..1
+      const rx = (0.5 - cy) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tilt-x')) || 0;
+      const ry = (cx - 0.5) * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tilt-y')) || 0;
+
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        art.style.setProperty('--rx', rx + ''); // deg 포함됨
+        art.style.setProperty('--ry', ry + '');
+        if (gloss){
+          gloss.style.setProperty('--mx', cx.toFixed(3));
+          gloss.style.setProperty('--my', cy.toFixed(3));
+        }
+      });
+    }
+    function reset(){
+      cancelAnimationFrame(raf);
+      art?.style.setProperty('--rx','0deg');
+      art?.style.setProperty('--ry','0deg');
+    }
+
+    card.addEventListener('pointermove', (e)=>{ if(e.pointerType==='mouse') onMove(e); });
+    card.addEventListener('pointerleave', reset);
+  });
+}
+
+/* 초기화 */
 (async () => {
   try{
     const r=await fetch(DATA_URL,{cache:'no-cache'});
