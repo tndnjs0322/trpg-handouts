@@ -80,7 +80,7 @@ a.book:is(:hover,:focus-visible) article{
   object-fit:cover; object-position:center;
 }
 
-/* 책등(스파인) — 기본(심플) */
+/* 책등(스파인) */
 .book .spine{
   position:absolute; inset:0 auto 0 0; width:var(--spine-w); z-index:2;
   background:
@@ -98,7 +98,7 @@ a.book:is(:hover,:focus-visible) article{
   overflow:hidden;
 }
 
-/* ③ 하단 캡션 = 글라스 라벨 (요청 1) */
+/* ③ 하단 캡션 = 글라스 라벨 */
 .book figcaption{
   position:absolute; left:calc(var(--spine-w) + 8px); right:10px; bottom:10px; z-index:2;
   padding:8px 12px; border-radius:10px;
@@ -115,7 +115,7 @@ a.book:is(:hover,:focus-visible) figcaption{
   box-shadow:0 6px 16px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
 }
 
-/* ④ 리본(북마크) 더 또렷 + 반짝임 (요청 2) */
+/* ④ 리본(북마크) 더 또렷 + 반짝임 */
 .book .ribbon{
   position:absolute; top:8px; right:10px; width:16px; height:30px; z-index:3;
   background:linear-gradient(0deg,#e63746,#ff7b7b);
@@ -184,49 +184,73 @@ const d=x=>x?new Date(x).toISOString().slice(0,10):'';
 const esc=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 /* 커버 폴백: /assets → BASE/assets → placeholder */
-window._coverFallback = function(ev){
+window._coverNext = function (ev) {
   const img = ev.target;
-  if (!img.dataset.try2 && img.dataset.alt) { img.dataset.try2='1'; img.src = img.dataset.alt; return; }
-  if (!img.dataset.try3 && img.dataset.ph1) { img.dataset.try3='1'; img.src = img.dataset.ph1; return; }
-  if (!img.dataset.try4 && img.dataset.ph2) { img.dataset.try4='1'; img.src = img.dataset.ph2; }
+  try {
+    const list = JSON.parse(img.dataset.cands || "[]");
+    if (list.length) {
+      const next = list.shift();
+      img.dataset.cands = JSON.stringify(list);
+      img.src = next; // 다음 후보로 교체
+      return;
+    }
+  } catch (_) {}
+  // 후보가 더 없으면 종료
 };
 
-/* 카드 HTML */
-function bookCardHTML(p){
-  const slug = p.slug;
-  const color = p.color || '#8e8e8e';
-  const rootCover = `/assets/covers/${slug}.jpg`;
-  const baseCover = `${BASE}assets/covers/${slug}.jpg`;
-  const phRoot    = `/assets/covers/_placeholder.jpg`;
-  const phBase    = `${BASE}assets/covers/_placeholder.jpg`;
-
-  return `
-  <a class="book" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
-    <article style="--avarage-color:${color}">
-      <figure>
-        <img src="${esc(rootCover)}"
-             data-alt="${esc(baseCover)}"
-             data-ph1="${esc(phRoot)}"
-             data-ph2="${esc(phBase)}"
-             onerror="window._coverFallback && window._coverFallback(event)"
-             alt="">
-        <div class="spine"><span class="t">${esc(p.shortTitle || p.title)}</span></div>
-        <div class="ribbon" aria-hidden="true"></div>
-        <figcaption>${esc(p.title)}</figcaption>
-      </figure>
-    </article>
-  </a>`;
+/* 후보 리스트: jpg → png → webp, 루트와 BASE 모두 시도 + 플레이스홀더 */
+function coverCandidates(slug, cover) {
+  if (cover) {
+    return [
+      cover,
+      `/assets/covers/_placeholder.jpg`,
+      `${BASE}assets/covers/_placeholder.jpg`,
+    ];
+  }
+  return [
+    `/assets/covers/${slug}.jpg`,
+    `${BASE}assets/covers/${slug}.jpg`,
+    `/assets/covers/${slug}.png`,
+    `${BASE}assets/covers/${slug}.png`,
+    `/assets/covers/${slug}.webp`,
+    `${BASE}assets/covers/${slug}.webp`,
+    `/assets/covers/_placeholder.jpg`,
+    `${BASE}assets/covers/_placeholder.jpg`,
+  ];
 }
 
-/* 섹션(카테고리) 묶음 */
-function groupHTML(cat, posts){
+/* 카드 1개 */
+function bookCardHTML(p){
+  const slug   = p.slug;
+  const color  = p.color || '#8e8e8e';
+  const cands  = coverCandidates(slug, p.cover);
+
   return `
-  <div class="group">
-    <div class="ghead">${esc(cat)}</div>
-    <div class="grid">
-      ${posts.map(bookCardHTML).join('')}
-    </div>
-  </div>`;
+    <a class="book" href="#/post/${encodeURIComponent(slug)}" aria-label="${esc(p.title)}">
+      <article style="--avarage-color:${color}">
+        <figure>
+          <img
+            src="${esc(cands[0])}"
+            data-cands='${esc(JSON.stringify(cands.slice(1)))}'
+            onerror="window._coverNext && window._coverNext(event)"
+            alt="">
+          <div class="spine"><span class="t">${esc(p.shortTitle || p.title)}</span></div>
+          <div class="ribbon" aria-hidden="true"></div>
+          <figcaption>${esc(p.title)}</figcaption>
+        </figure>
+      </article>
+    </a>`;
+}
+
+/* 그룹(카테고리) 한 묶음 */
+function groupHTML(cat, list){
+  return `
+    <div class="group">
+      <h2 class="ghead">${esc(cat)}</h2>
+      <div class="grid">
+        ${list.map(bookCardHTML).join('')}
+      </div>
+    </div>`;
 }
 
 /* ===== 렌더링 ===== */
@@ -234,14 +258,18 @@ let ALL=[];
 function renderIndex(){
   $('#title').textContent='분류 전체보기';
   $('#viewPost').classList.add('hidden');
+
   const byCat={};
   ALL.forEach(p => (byCat[p.category||'기타'] ||= []).push(p));
+
   const html = Object.entries(byCat)
     .sort(([a],[b])=>a.localeCompare(b,'ko'))
     .map(([cat, list]) => groupHTML(cat, list.sort((a,b)=>new Date(b.date)-new Date(a.date))))
     .join('');
+
   $('#viewList').innerHTML = html;
 }
+
 async function renderPost(slug){
   $('#viewPost').classList.remove('hidden');
   const m = ALL.find(p=>p.slug===slug) || {title:slug};
@@ -255,7 +283,8 @@ async function renderPost(slug){
     const r = await fetch(url,{cache:'no-cache'});
     if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
     const md = await r.text();
-    const body = md.replace(/^---[\\s\\S]*?---\\s*/, '');
+    // ✅ 프런트매터 제거 정규식 수정
+    const body = md.replace(/^---[\s\S]*?---\s*/, '');
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el));
     document.title = m.title + ' - 보관된 도서';
