@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Library — Flip Books</title>
+<title>Library — Flip Books (원본 유지 + 배경 + 다양 형태)</title>
 <style>
-/* ====== (원본 유지) 네가 준 책 펼쳐지는 CSS ====== */
+/* =====================[ 네가 준 책 펼침 CSS: 원본 유지 ]===================== */
 body {
   width: 100%;
   height: 100vh;
@@ -59,13 +59,32 @@ body {
 .book:hover .page6 { transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:hover .back  { transform: rotateY(-20deg)  scale(1.1); }
 
-/* ====== 패치: 커버 이미지 & 긴 책갈피 리본 ====== */
+/* =====================[ PATCH 1: 책 커버/리본/스파인/크기 다양화 ]===================== */
+/* 기본값(필요하면 전역에서 조정) */
 :root{
   --cover-image: url('https://picsum.photos/seed/placeholder/600/900'); /* 폴백 */
-  --ribbon-color: #e63746;   /* 리본 색 */
-  --ribbon-w: 22px;          /* 리본 너비 */
-  --ribbon-l: 85%;           /* 리본 길이(책 높이 비율) */
+  --ribbon-color: #e63746;
+  --ribbon-w: 22px;
+  --ribbon-l: 85%;
+  --spine-color: #243;       /* 스파인 색 */
+  --spine-w: 14px;           /* 스파인 너비 */
 }
+/* 책 개별 크기/라운드 변수 적용 (원본 width/height를 변수로 덮어쓰기) */
+.book{ --bw:200px; --bh:300px; --br:.5em; height: var(--bh); }
+.front, .back, .page1, .page2, .page3, .page4, .page5, .page6{
+  width: var(--bw) !important;  /* 원본 200px 덮어쓰기 */
+}
+/* 라운드도 변수로 덮어쓰기 */
+.front, .page1, .page3, .page5{
+  border-bottom-right-radius: var(--br) !important;
+  border-top-right-radius: var(--br) !important;
+}
+.back, .page2, .page4, .page6{
+  border-bottom-right-radius: var(--br) !important;
+  border-top-right-radius: var(--br) !important;
+}
+
+/* 커버 이미지 + 비네트 */
 .front{
   background-color: navy; /* 커버 없을 때 폴백 */
   background-image:
@@ -74,13 +93,11 @@ body {
   background-size: cover;
   background-position: center;
 }
+/* 긴 책갈피 리본 */
 .front::after{
   content:"";
-  position:absolute;
-  top:-2px;
-  right:12px;
-  width: var(--ribbon-w);
-  height: var(--ribbon-l);
+  position:absolute; top:-2px; right:12px;
+  width: var(--ribbon-w); height: var(--ribbon-l);
   background:
     linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,0) 18%),
     var(--ribbon-color);
@@ -90,85 +107,93 @@ body {
   pointer-events:none;
   z-index: 2;
 }
+/* 스파인(왼쪽으로 살짝 튀어나온 느낌) */
+.book::before{
+  content:"";
+  position:absolute; left: calc(-1 * var(--spine-w)); top:0;
+  width: var(--spine-w); height: 100%;
+  background:
+    linear-gradient(90deg,
+      color-mix(in oklab, var(--spine-color) 85%, black 15%),
+      color-mix(in oklab, var(--spine-color) 65%, white 15%) 35%,
+      color-mix(in oklab, var(--spine-color) 92%, black 8%) 100%);
+  box-shadow: 2px 0 6px rgba(0,0,0,.25), inset -1px 0 0 rgba(255,255,255,.12);
+  border-radius: 6px 0 0 6px;
+  pointer-events:none;
+}
 
-/* ====== 패치: 도서관 느낌의 뒷배경(선반X, 아웃오브포커스 책등 느낌) ====== */
-.library-bg{
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, #e9edf3 0%, #d7dde6 40%, #e9edf3 100%);
+/* =====================[ PATCH 2: ‘도서관’ 느낌 배경 ]===================== */
+/* 멀리 흐릿한 ‘책등이 꽂힌 선반들’ 레이어. 나무 무늬 없이 책등 스트라이프만 */
+.lib-bg{
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 100%, rgba(0,0,0,.22), transparent 55%),
+              linear-gradient(120deg, #e9edf3 0%, #d7dde6 45%, #e9edf3 100%);
 }
-.library-bg::before{
-  /* 흐릿한 세로 스트라이프 = 멀리 있는 책등 */
-  content:"";
-  position:absolute; inset:-10% -10%;
+/* 책등 덩어리(세로 스트라이프)를 ‘선반 마스크’로 잘라서 보여줌 */
+.lib-bg .books{
+  position:absolute; inset:-5% -5%;
+  /* 여러 겹의 세로 스트라이프를 다른 간격/오프셋으로 겹쳐 다양하게 */
   background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(70, 80, 110, .18) 0px,   rgba(70, 80, 110, .18) 6px,
-      rgba(180,190,205,.12) 6px,    rgba(180,190,205,.12) 18px,
-      rgba(160,125,90, .12) 18px,   rgba(160,125,90, .12) 26px,
-      rgba(120,85,60,  .10) 26px,   rgba(120,85,60,  .10) 34px
+    repeating-linear-gradient(90deg,
+      rgba(70, 80,110,.22) 0 10px, rgba(180,190,205,.14) 10px 26px, rgba(120,85,60,.16) 26px 40px),
+    repeating-linear-gradient(90deg,
+      rgba(60, 50, 40,.18) 0 14px, rgba(200,215,225,.12) 14px 28px, rgba(90,60,40,.12) 28px 46px),
+    repeating-linear-gradient(90deg,
+      rgba(40, 55, 90,.16) 0 8px,  rgba(160,170,190,.10) 8px 18px,  rgba(110,80,55,.12) 18px 32px);
+  filter: blur(12px) saturate(.9);
+  opacity:.40;
+  /* 선반 위치 마스크 (가로 줄 내부에서만 보이게) */
+  --shelf-h: 120px;    /* 선반 ‘책 영역’ 높이 */
+  --gap: 38px;         /* 선반 사이 여백 */
+  -webkit-mask:
+    repeating-linear-gradient(to bottom,
+      transparent 0, transparent var(--gap),
+      #fff var(--gap) calc(var(--gap) + var(--shelf-h))
     );
-  filter: blur(14px) saturate(.9);
-  opacity: .35;
-  transform: skewY(-2deg);
+  mask:
+    repeating-linear-gradient(to bottom,
+      transparent 0, transparent var(--gap),
+      #fff var(--gap) calc(var(--gap) + var(--shelf-h))
+    );
 }
-.library-bg::after{
-  /* 비네트 + 윗쪽 소프트 글로우 */
-  content:"";
+.lib-bg .shelf-shade{
+  /* 선반 그림자 같은 가로 음영 */
   position:absolute; inset:0;
   background:
-    radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,.25), transparent 55%),
-    linear-gradient(0deg, rgba(255,255,255,.75), rgba(255,255,255,0) 40%);
-  mix-blend-mode: multiply;
-  opacity:.45;
+    repeating-linear-gradient(to bottom,
+      rgba(0,0,0,.20) 0 2px,
+      rgba(0,0,0,0) 2px calc(120px + 38px)  /* shelf-h + gap과 맞춤 */
+    );
+  filter: blur(3px);
+  opacity:.35;
 }
 
-/* ====== 패치: 헤더(홈/뒤로) & 그리드 ====== */
-.header-nav{
-  position: fixed; top: 14px; left: 14px;
-  display:flex; gap:8px; align-items:center; z-index: 5;
+/* =====================[ PATCH 3: 그리드 + 헤더(홈/뒤로) ]===================== */
+.header{
+  position: fixed; inset: 14px auto auto 14px; z-index: 5; display:flex; gap:8px
 }
 .btn{
   appearance:none; border:1px solid rgba(0,0,0,.15);
-  background: rgba(0,0,0,.55);
-  color:#fff; padding:8px 10px; border-radius:10px;
-  text-decoration:none; font-weight:700; font-size:14px;
-  backdrop-filter: blur(6px) saturate(1.05);
+  background: rgba(0,0,0,.55); color:#fff; padding:8px 10px; border-radius:10px;
+  text-decoration:none; font-weight:700; font-size:14px; backdrop-filter: blur(6px) saturate(1.05);
 }
 .btn:hover{ background: rgba(0,0,0,.65) }
 .title{
   position: fixed; top: 18px; right: 18px; z-index:5;
   color:#223; font-weight:800; letter-spacing:.02em; font-size:16px;
-  background: rgba(255,255,255,.6); padding:6px 10px; border-radius:10px;
-  border:1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.6); padding:6px 10px; border-radius:10px; border:1px solid rgba(0,0,0,.08);
 }
 
-/* body가 중앙정렬이라, 그리드를 감싸 스크롤 여유 제공 */
-.wrapper{
-  width: 100%; max-height: 100vh; overflow:auto;
-  display:grid; place-items:center;
-  padding-top: 64px; padding-bottom: 24px;
-}
+.wrapper{ width:100%; max-height:100vh; overflow:auto; display:grid; place-items:center; padding:64px 0 28px }
 .library{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 28px 22px;
-  width:min(1140px, 100%);
-  padding: 18px;
-  box-sizing:border-box;
+  display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 28px 22px; width:min(1140px, 100%); padding: 0 18px; box-sizing:border-box;
 }
 .item{ display:grid; justify-items:center; gap:8px }
-.caption{
-  width:200px; text-align:center; font-weight:700;
-  font-size:14px; line-height:1.35; color:#1f2a3a;
-}
+.caption{ width:var(--bw,200px); text-align:center; font-weight:700; font-size:14px; line-height:1.35; color:#1f2a3a }
 .meta{ font-size:12px; color:#5c6b7a }
 
-/* (선택) 키보드 포커스로도 펼치기 */
+/* 키보드 포커스도 펼침 허용(선택) */
 .book:focus-within .front{ transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:focus-within .page1{ transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:focus-within .page2{ transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
@@ -186,126 +211,64 @@ body {
 </head>
 <body>
 
-<!-- 도서관 느낌의 배경 -->
-<div class="library-bg" aria-hidden="true"></div>
+<!-- 도서관 배경 -->
+<div class="lib-bg" aria-hidden="true">
+  <div class="books"></div>
+  <div class="shelf-shade"></div>
+</div>
 
-<!-- 홈/뒤로 헤더 -->
-<nav class="header-nav" aria-label="내비게이션">
+<!-- 헤더: 홈/뒤로 -->
+<nav class="header" aria-label="내비게이션">
   <a class="btn" id="homeBtn" href="/">← 홈</a>
   <button class="btn" id="backBtn" type="button">뒤로</button>
 </nav>
 <div class="title">보관된 도서</div>
 
-<!-- 책 목록 그리드 -->
+<!-- 책 목록 -->
 <div class="wrapper">
   <section class="library" aria-label="도서 목록">
 
-    <!-- 아이템 1 -->
+    <!-- 다양한 크기/스파인/리본/커버 예시들 -->
     <article class="item">
-      <div class="book"
-           style="--cover-image:url('https://picsum.photos/seed/lib1/600/900'); --ribbon-color:#d72d4f; --ribbon-l:92%; --ribbon-w:26px"
-           tabindex="0" role="group" aria-label="그림자 서점의 비밀">
-        <div class="back"></div>
-        <div class="page6"></div>
-        <div class="page5"></div>
-        <div class="page4"></div>
-        <div class="page3"></div>
-        <div class="page2"></div>
-        <div class="page1"></div>
-        <div class="front"></div>
+      <div class="book" style="--bw:210px; --bh:300px; --br:.6em; --cover-image:url('https://picsum.photos/seed/a1/600/900'); --spine-color:#2f3a5e; --spine-w:16px; --ribbon-color:#d72d4f; --ribbon-l:92%; --ribbon-w:26px" tabindex="0" role="group" aria-label="그림자 서점의 비밀">
+        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
       </div>
-      <div class="caption">그림자 서점의 비밀</div>
-      <div class="meta">추리 · 2025-09-10</div>
+      <div class="caption">그림자 서점의 비밀</div><div class="meta">추리 · 2025-09-10</div>
     </article>
 
-    <!-- 아이템 2 -->
     <article class="item">
-      <div class="book"
-           style="--cover-image:url('https://picsum.photos/seed/lib2/600/900'); --ribbon-color:#7b3cff; --ribbon-l:88%"
-           tabindex="0" role="group" aria-label="달빛 기록 보관소">
-        <div class="back"></div>
-        <div class="page6"></div>
-        <div class="page5"></div>
-        <div class="page4"></div>
-        <div class="page3"></div>
-        <div class="page2"></div>
-        <div class="page1"></div>
-        <div class="front"></div>
+      <div class="book" style="--bw:190px; --bh:280px; --br:.45em; --cover-image:url('https://picsum.photos/seed/a2/600/900'); --spine-color:#684c3a; --spine-w:18px; --ribbon-color:#7b3cff; --ribbon-l:88%" tabindex="0" role="group" aria-label="달빛 기록 보관소">
+        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
       </div>
-      <div class="caption">달빛 기록 보관소</div>
-      <div class="meta">에세이 · 2025-08-22</div>
+      <div class="caption">달빛 기록 보관소</div><div class="meta">에세이 · 2025-08-22</div>
     </article>
 
-    <!-- 아이템 3 -->
     <article class="item">
-      <div class="book"
-           style="--cover-image:url('https://picsum.photos/seed/lib3/600/900'); --ribbon-color:#1fbfbf; --ribbon-w:20px; --ribbon-l:95%"
-           tabindex="0" role="group" aria-label="바람이 멈춘 도서관">
-        <div class="back"></div>
-        <div class="page6"></div>
-        <div class="page5"></div>
-        <div class="page4"></div>
-        <div class="page3"></div>
-        <div class="page2"></div>
-        <div class="page1"></div>
-        <div class="front"></div>
+      <div class="book" style="--bw:230px; --bh:320px; --br:.8em; --cover-image:url('https://picsum.photos/seed/a3/600/900'); --spine-color:#37524f; --spine-w:14px; --ribbon-color:#1fbfbf; --ribbon-w:20px; --ribbon-l:95%" tabindex="0" role="group" aria-label="바람이 멈춘 도서관">
+        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
       </div>
-      <div class="caption">바람이 멈춘 도서관</div>
-      <div class="meta">환상 · 2025-07-30</div>
+      <div class="caption">바람이 멈춘 도서관</div><div class="meta">환상 · 2025-07-30</div>
     </article>
 
-    <!-- 아이템 4 -->
     <article class="item">
-      <div class="book"
-           style="--cover-image:url('https://picsum.photos/seed/lib4/600/900'); --ribbon-color:#f59f00; --ribbon-l:80%"
-           tabindex="0" role="group" aria-label="유리 정원의 편지">
-        <div class="back"></div>
-        <div class="page6"></div>
-        <div class="page5"></div>
-        <div class="page4"></div>
-        <div class="page3"></div>
-        <div class="page2"></div>
-        <div class="page1"></div>
-        <div class="front"></div>
+      <div class="book" style="--bw:200px; --bh:300px; --br:.5em; --cover-image:url('https://picsum.photos/seed/a4/600/900'); --spine-color:#3b3b6b; --spine-w:12px; --ribbon-color:#f59f00; --ribbon-l:80%" tabindex="0" role="group" aria-label="유리 정원의 편지">
+        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
       </div>
-      <div class="caption">유리 정원의 편지</div>
-      <div class="meta">로맨스 · 2025-06-12</div>
+      <div class="caption">유리 정원의 편지</div><div class="meta">로맨스 · 2025-06-12</div>
     </article>
 
-    <!-- 아이템 5 -->
     <article class="item">
-      <div class="book"
-           style="--cover-image:url('https://picsum.photos/seed/lib5/600/900'); --ribbon-color:#ff6b6b; --ribbon-w:28px; --ribbon-l:98%"
-           tabindex="0" role="group" aria-label="밤의 아카이브">
-        <div class="back"></div>
-        <div class="page6"></div>
-        <div class="page5"></div>
-        <div class="page4"></div>
-        <div class="page3"></div>
-        <div class="page2"></div>
-        <div class="page1"></div>
-        <div class="front"></div>
+      <div class="book" style="--bw:215px; --bh:290px; --br:.6em; --cover-image:url('https://picsum.photos/seed/a5/600/900'); --spine-color:#5b2f2f; --spine-w:20px; --ribbon-color:#ff6b6b; --ribbon-w:28px; --ribbon-l:98%" tabindex="0" role="group" aria-label="밤의 아카이브">
+        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
       </div>
-      <div class="caption">밤의 아카이브</div>
-      <div class="meta">스릴러 · 2025-05-04</div>
+      <div class="caption">밤의 아카이브</div><div class="meta">스릴러 · 2025-05-04</div>
     </article>
 
-    <!-- 아이템 6 -->
     <article class="item">
-      <div class="book"
-           style="--cover-image:url('https://picsum.photos/seed/lib6/600/900'); --ribbon-color:#4dabf7; --ribbon-l:90%"
-           tabindex="0" role="group" aria-label="묵음과 공백 사이">
-        <div class="back"></div>
-        <div class="page6"></div>
-        <div class="page5"></div>
-        <div class="page4"></div>
-        <div class="page3"></div>
-        <div class="page2"></div>
-        <div class="page1"></div>
-        <div class="front"></div>
+      <div class="book" style="--bw:185px; --bh:310px; --br:.45em; --cover-image:url('https://picsum.photos/seed/a6/600/900'); --spine-color:#254e8a; --spine-w:16px; --ribbon-color:#4dabf7; --ribbon-l:90%" tabindex="0" role="group" aria-label="묵음과 공백 사이">
+        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
       </div>
-      <div class="caption">묵음과 공백 사이</div>
-      <div class="meta">시 · 2025-04-17</div>
+      <div class="caption">묵음과 공백 사이</div><div class="meta">시 · 2025-04-17</div>
     </article>
 
   </section>
@@ -317,10 +280,7 @@ document.getElementById('backBtn').addEventListener('click', ()=>{
   if (history.length > 1) history.back();
   else location.assign('/');
 });
-/* 홈 버튼: 필요 시 경로 조정(현재는 사이트 루트 '/') */
-document.getElementById('homeBtn').addEventListener('click', (e)=>{
-  // 별도 처리 필요 없으면 이 핸들러 제거해도 됨
-});
+/* 홈 버튼은 a[href="/"]로 처리(필요 시 경로 바꿔줘) */
 </script>
 </body>
 </html>
