@@ -16,7 +16,7 @@
   *{box-sizing:border-box}
   body{margin:0;background:#0d141b;color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
   main{max-width:1040px;margin:28px auto;padding:0 16px}
-  main>header{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+  main>header{display:flex;gap:8px;align-items:center;margin-bottom:12px;position:relative}
   a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
 
   /* 목록/본문 */
@@ -31,7 +31,7 @@
 
   /* ====== Jabas Library (책장) ====== */
   .libwrap{position:relative}
-  .libwrap ul.library{margin:0;padding:0 0 10px 0;list-style:none;overflow:hidden}
+  .libwrap ul.library{margin:0;padding:0 0 10px 0;list-style:none;overflow:hidden;width:960px;max-width:100%}
   .libwrap li.book{position:relative;top:0;left:0;margin:0;padding:10px;float:left;width:140px;height:224px;cursor:pointer}
   .libwrap li.book.selected{z-index:4}
   .libwrap .book:hover{background-color:#E5E5E5}
@@ -61,8 +61,12 @@
   .libwrap .right-side .summary{left:-480px;border-left:10px solid #D9D9D9}
   .libwrap .right-side.last .summary{left:-640px}
 
-  .libwrap .overlay-page{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#fff;opacity:.7;z-index:2}
-  .libwrap .overlay-summary{display:none;position:absolute;top:0;left:0;height:0;width:480px;background:#E5E5E5;opacity:.9;z-index:3}
+  .libwrap .overlay-page{
+    display:none;position:absolute;inset:0;background:#fff;opacity:.7;z-index:2;cursor:pointer
+  }
+  .libwrap .overlay-summary{
+    display:none;position:absolute;top:0;left:0;height:0;width:480px;background:#E5E5E5;opacity:.9;z-index:3
+  }
 
   .clearfix::after{content:"";display:block;clear:both}
   /* ☑️ 겹침 방지: Jabas 영역만 content-box */
@@ -78,7 +82,7 @@
   .dbg-pill{display:none;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
     background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
     backdrop-filter: blur(12px) saturate(1.15); -webkit-backdrop-filter: blur(12px) saturate(1.15);
-    color:#dfe7ef;cursor:pointer;opacity:.85;transition:transform .18s ease,opacity .18s ease,box-shadow .18s ease,border-color .18s ease}
+    color:#dfe7ef;cursor:pointer;opacity:.85;transition:transform .18s ease,opacity .18s ease,box-shadow .18s ease,border-color .18s ease; margin-left:auto}
   .dbg-pill:hover{transform:translateY(-1px);opacity:1;border-color:rgba(255,255,255,.22);box-shadow:0 8px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08)}
   .dbg-pill svg{width:16px;height:16px;opacity:.95}
   .dbg-pill .txt{font-size:12px;letter-spacing:.01em;opacity:.9}
@@ -101,13 +105,13 @@
     <a class="btn" id="homeBtn" href="../" data-home="">← 홈</a>
     <button id="backBtn" class="btn" type="button" aria-label="뒤로 가기">뒤로</button>
     <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
-    <!-- 여기 오른쪽에 디버그 pill이 스텔스로 붙습니다 -->
+    <!-- 스텔스 디버그 pill가 오른쪽에 나타남 -->
   </header>
 
   <!-- 카테고리 = 책장 -->
   <section id="viewCats" class="libwrap">
     <ul class="library clearfix"></ul>
-    <div class="overlay-page"></div>
+    <div class="overlay-page" title="클릭하면 닫기"></div>
     <div class="overlay-summary"></div>
     <div id="diag" class="empty hidden"></div>
   </section>
@@ -151,17 +155,16 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   if (history.length > 1) history.back(); else document.getElementById('homeBtn').click();
 });
 
-/* ===== Whisper Debug v2 — Stealth (에러/경고때만 등장) ===== */
+/* ===== Whisper Debug v2 — Stealth ===== */
 (function glassDebuggerStealth(){
   const CFG = {
     force: /(?:\?|&)debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__')==='1',
-    showOn: ['ERROR','WARN'],   // 이 타입이 오면 pill 표시
-    autoOpenOn: ['ERROR'],      // 이 타입이면 드로어 자동 오픈
+    showOn: ['ERROR','WARN'],
+    autoOpenOn: ['ERROR'],
     buffer: 300
   };
   const header = document.querySelector('main > header'); if (!header) return;
 
-  // 헤더 글래스 pill 생성 (초기 숨김, 강제표시이면 보이기)
   const pill = document.createElement('button');
   pill.className = 'dbg-pill';
   pill.type = 'button';
@@ -182,7 +185,6 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   const out = drawer.querySelector('#wLog');
   const buf = [];
 
-  // 드로어 위치
   function placeDrawer(){
     const r = header.getBoundingClientRect();
     drawer.style.top = (r.bottom + 8) + 'px';
@@ -204,7 +206,6 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   drawer.querySelector('#wClear').addEventListener('click', ()=>{ buf.length=0; out.textContent=''; });
   drawer.querySelector('#wHealth').addEventListener('click', ()=>{ if (typeof runHealthCheck==='function') runHealthCheck(); });
 
-  // Alt+D: 강제 디버그 모드 토글
   addEventListener('keydown', (e)=>{
     if (e.altKey && (e.key==='d' || e.key==='D')){
       if (!CFG.force && pill.style.display==='none'){
@@ -225,7 +226,6 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   const ensurePillVisible = ()=>{ if (pill.style.display==='none') pill.style.display='inline-flex'; };
   const pulse = ()=>{ pill.classList.remove('badge'); void pill.offsetWidth; pill.classList.add('badge'); };
 
-  // 전역 dbg() 제공 (없을 때)
   const orig = window.dbg;
   window.dbg = function(type, msg, extra){
     (type==='ERROR'?console.error:console.log)('[Blog]', type, msg, extra||'');
@@ -242,7 +242,6 @@ const d  = (x)=>x?new Date(x).toISOString().slice(0,10):'';
 const esc= (s)=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let LAST_ERR = '';
 
-/* fetch 래퍼 (디버그 연동) */
 async function ffetch(url, opt={}, tag='fetch'){
   try{
     const r = await fetch(url, opt);
@@ -250,12 +249,11 @@ async function ffetch(url, opt={}, tag='fetch'){
     if (!r.ok) throw new Error(`${tag} HTTP ${r.status}`);
     return r;
   }catch(err){
-    dbg('ERROR', `${tag} 실패`, (err&&err.message)||String(err));
+    dbg('WARN', `${tag} 실패`, (err&&err.message)||String(err));
     throw err;
   }
 }
 
-/* placeholder */
 function placeholderCover(){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='280' height='448'>
     <rect width='100%' height='100%' fill='%23e8e8e8'/>
@@ -338,10 +336,9 @@ function renderCats(){
     s.innerHTML = html;
   });
 
-  // 데이터 0 → 안내
   if (library.length === 0){
     const tips = [];
-    if (location.protocol === 'file:') tips.push('로컬 파일(file://)에서는 fetch가 막혀요. 임시 서버로 열어주세요: python -m http.server');
+    if (location.protocol === 'file:') tips.push('로컬 파일(file://)에서는 fetch가 막혀요. 임시 서버: python -m http.server');
     tips.push('posts.json 경로 확인 → '+DATA_URL);
     tips.push('폴더 구조: /blog/index.html, /blog/data/posts.json, /blog/posts/*.md');
     showDiag('불러올 카테고리가 없습니다.', tips);
@@ -401,7 +398,7 @@ function route(){
 }
 window.addEventListener('hashchange', route);
 
-/* ===== Lazy cover + 폴백(무한루프 방지) ===== */
+/* ===== Lazy cover + 폴백 ===== */
 function initLazyCovers(){
   const getCands = (img) => {
     try{
@@ -436,17 +433,18 @@ function initLazyCovers(){
   document.querySelectorAll('#viewCats .library img[data-cands]').forEach(img => io.observe(img));
 }
 
-/* ===== Jabas 애니메이션(선택/해제) ===== */
+/* ===== Jabas 애니메이션 (CodePen 스타일 보정) ===== */
 function attachAnimations(){
   const animSpeed = 750;
   const $lib = $('.libwrap .library');
   const $overlayPage = $('.libwrap .overlay-page');
   const $overlaySummary = $('.libwrap .overlay-summary');
 
-  function isBtmRow($sel){
-    const pos = $sel.position();
-    const libH = $('.content').length ? $('.content').height() : $('.libwrap').height();
-    return (libH - pos.top) === 254; // 224 + 여백 30
+  // 마지막 행인지 안전하게 판별
+  function isBottomRow($sel){
+    const tops = $('.libwrap li.book').map((i,el)=>$(el).position().top).get();
+    const maxTop = Math.max.apply(null, tops);
+    return Math.abs($sel.position().top - maxTop) < 1;
   }
   function positionTop($sel){ $('html, body').animate({ scrollTop: $sel.offset().top }, animSpeed); }
   function overlayVertPos($sel){
@@ -463,7 +461,9 @@ function attachAnimations(){
   }
 
   function selectAnimation($li){
-    $li.addClass('selected');
+    if ($li.hasClass('animating') || $li.hasClass('selected')) return;
+    $li.addClass('animating selected');
+
     const $cover = $li.find('.cover');
     const $img = $li.find('.cover img');
     const $summary = $li.find('.summary');
@@ -471,14 +471,14 @@ function attachAnimations(){
     $cover.stop().animate({ width:'300px', height:'468px' }, { duration:animSpeed });
     $img.stop().animate({ width:'280px', height:'448px', borderWidth:'10px' }, { duration:animSpeed });
 
-    if (isBtmRow($li)){ $lib.css('paddingBottom','234px'); }
+    if (isBottomRow($li)){ $lib.css('paddingBottom','234px'); }
     positionTop($li);
 
     $overlayPage.show();
     const px = overlayVertPos($li);
     $overlaySummary.css('left',px);
 
-    const ht = $('main').height();
+    const ht = $('.libwrap').outerHeight(); // 컨테이너 기준
     const pos = $li.position();
     const start = pos.top + 30;
     const speed = Math.round((animSpeed/ht) * 450);
@@ -491,11 +491,16 @@ function attachAnimations(){
             $summary.show().animate({ height:'450px' }, { duration:speed, easing:'linear' });
           }
         }
-      }
+      },
+      complete: ()=> $li.removeClass('animating')
     });
   }
 
   function deselectAnimation($li){
+    if (!$li.length) return;
+    if ($li.hasClass('animating')) return;
+    $li.addClass('animating');
+
     const $cover = $li.find('.cover');
     const $img = $li.find('.cover img');
     const $summary = $li.find('.summary');
@@ -503,7 +508,7 @@ function attachAnimations(){
     $summary.stop();
     $cover.stop().animate({ width:'140px', height:'224px' }, { duration:animSpeed });
     $img.stop().animate({ width:'140px', height:'224px', borderWidth:'0px' }, {
-      duration:animSpeed, complete: ()=>{ $li.removeClass('selected'); }
+      duration:animSpeed, complete: ()=>{ $li.removeClass('selected animating'); }
     });
 
     $lib.stop().animate({ paddingBottom:'10px' }, { duration:animSpeed });
@@ -522,18 +527,32 @@ function attachAnimations(){
           }
         }
       },
-      complete: ()=>{ $overlayPage.hide(); $summary.hide(); $overlaySummary.hide(); }
+      complete: ()=>{ $overlayPage.hide(); $summary.hide(); $overlaySummary.hide(); $li.removeClass('animating'); }
     });
   }
 
-  // 바인딩
+  // 이벤트 바인딩 (CodePen 동작과 동일 UX)
   $('.libwrap').on('click', 'li.book', function(e){
-    if (!$(this).hasClass('selected')) selectAnimation($(this));
+    const $current = $('.libwrap li.book.selected');
+    const $me = $(this);
+    if ($me.is($current)) return;           // 이미 선택된 항목이면 무시
+    if ($current.length){                   // 다른 항목이 열려있으면 닫고 열기
+      deselectAnimation($current);
+      setTimeout(()=> selectAnimation($me), 40);
+    } else {
+      selectAnimation($me);
+    }
   });
+
+  // 선택된 상태에서 표지 클릭 → 닫기
   $('.libwrap').on('click', '.book .cover', function(e){
     const $li = $(this).closest('li.book');
     if ($li.hasClass('selected')) { e.stopPropagation(); deselectAnimation($li); }
   });
+
+  // 오버레이 클릭/ESC로 닫기
+  $overlayPage.on('click', ()=> deselectAnimation($('.libwrap li.book.selected')));
+  $(document).on('keydown', (e)=>{ if (e.key === 'Escape') deselectAnimation($('.libwrap li.book.selected')); });
 }
 
 /* ===== 헬스체크 ===== */
@@ -587,7 +606,6 @@ async function runHealthCheck(){
   attachAnimations();
   route();
 
-  // 디버그 강제 모드면 자동 헬스체크
   if (/[?&]debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__')==='1') {
     runHealthCheck();
   }
