@@ -76,6 +76,30 @@
   .empty h3{margin:0 0 8px;font-size:16px}
   .empty code{background:#0b1117;border:1px solid var(--line);padding:2px 6px;border-radius:6px}
   .empty ul{margin:10px 0 0 18px}
+
+  /* ===== 디버그 패널 ===== */
+  #dbgToggle{
+    position:fixed;right:12px;bottom:12px;z-index:99;
+    width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+    background:#0b1117;color:#fff;display:grid;place-items:center;cursor:pointer;opacity:.8
+  }
+  #dbgToggle:hover{opacity:1}
+  #dbgPanel{
+    position:fixed;right:12px;bottom:56px;width:min(520px,92vw);max-height:60vh;overflow:auto;
+    background:#0b1117;border:1px solid var(--line);border-radius:12px;padding:10px;z-index:99;display:none
+  }
+  #dbgPanel.open{display:block}
+  #dbgPanel h4{margin:0 0 8px;font-size:14px}
+  #dbgPanel pre{margin:0;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;background:#0c1218;border:1px solid #12202c}
+  #dbgPanel .row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+  #dbgPanel .row button{padding:6px 8px;border-radius:8px;border:1px solid #273445;background:#0e1821;color:#dfe7ef;cursor:pointer}
+  #dbgPanel .row code{background:#0c1218;border:1px solid #12202c;padding:2px 6px;border-radius:6px}
+  #dbgBadge{
+    position:fixed;left:12px;bottom:12px;z-index:99;
+    display:none;background:#2b1120;border:1px solid #61203e;border-radius:10px;color:#ffd3df;
+    padding:6px 10px;font-size:12px
+  }
+  #dbgBadge.show{display:block}
 </style>
 </head>
 <body>
@@ -105,6 +129,23 @@
   </section>
 </main>
 
+<!-- 디버그 UI -->
+<button id="dbgToggle" title="Alt+D 로 토글">🐞</button>
+<div id="dbgPanel">
+  <div class="row">
+    <h4 style="flex:1">디버그 패널</h4>
+    <button id="dbgHealth">헬스체크</button>
+    <button id="dbgCopy">로그 복사</button>
+    <button id="dbgClear">지우기</button>
+  </div>
+  <div class="row" style="flex-wrap:wrap">
+    <div>BASE: <code id="dbgBase"></code></div>
+    <div>DATA_URL: <code id="dbgData"></code></div>
+  </div>
+  <pre id="dbgLog"></pre>
+</div>
+<div id="dbgBadge"></div>
+
 <script>
 /* ===== 경로/기본 ===== */
 const BASE = (function(){ const p=location.pathname; return /\/$/.test(p)?p:p.replace(/[^/]+$/,'/'); })();
@@ -121,6 +162,65 @@ const POSTS_DIR = BASE + 'posts/';
 document.getElementById('backBtn')?.addEventListener('click', () => {
   if (history.length > 1) history.back(); else document.getElementById('homeBtn').click();
 });
+
+/* ====== 디버그 도구 ====== */
+const DEBUG = /(?:\?|&)debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__')==='1';
+const dbgLogEl = ()=>document.getElementById('dbgLog');
+const dbgBadge = document.getElementById('dbgBadge');
+
+function dbgLine(type, msg, extra){
+  const t = new Date().toLocaleTimeString();
+  return `[${t}] ${type.padEnd(7)} │ ${msg}${extra?` │ ${extra}`:''}`;
+}
+function dbg(type, msg, extra){
+  try{
+    const el = dbgLogEl(); if (!el) return;
+    el.textContent += (el.textContent?'\n':'') + dbgLine(type, msg, extra);
+    el.scrollTop = el.scrollHeight;
+  }catch{}
+  // 마지막 에러를 작은 뱃지로
+  if (type==='ERROR'){
+    dbgBadge.textContent = msg;
+    dbgBadge.classList.add('show');
+    setTimeout(()=>dbgBadge.classList.remove('show'), 3500);
+  }
+  // 콘솔도 남김
+  (type==='ERROR'?console.error:console.log)('[Blog]', type, msg, extra||'');
+}
+function dbgOpen(open=true){
+  const p = document.getElementById('dbgPanel');
+  p.classList.toggle('open', open);
+  if (open){ localStorage.setItem('__blog_debug__','1'); }
+  else { localStorage.removeItem('__blog_debug__'); }
+}
+(function setupDbg(){
+  document.getElementById('dbgBase').textContent = BASE;
+  document.getElementById('dbgData').textContent = DATA_URL;
+  document.getElementById('dbgToggle').addEventListener('click', ()=>dbgOpen(!document.getElementById('dbgPanel').classList.contains('open')));
+  document.getElementById('dbgHealth').addEventListener('click', runHealthCheck);
+  document.getElementById('dbgCopy').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(dbgLogEl().textContent||'').then(()=>dbg('INFO','로그 복사 완료'));
+  });
+  document.getElementById('dbgClear').addEventListener('click', ()=>{ dbgLogEl().textContent=''; });
+  window.addEventListener('keydown', (e)=>{ if (e.altKey && (e.key==='d' || e.key==='D')) dbgOpen(!document.getElementById('dbgPanel').classList.contains('open')); });
+  if (DEBUG) dbgOpen(true);
+  // 전역 오류 잡기
+  window.addEventListener('error', (e)=>dbg('ERROR', e.message, e.filename+':'+e.lineno));
+  window.addEventListener('unhandledrejection', (e)=>dbg('ERROR','UnhandledRejection', String(e.reason||e)));
+})();
+/* fetch 래퍼 */
+async function ffetch(url, opt={}, tag='fetch'){
+  dbg('INFO', `HTTP ${tag} 시작`, url);
+  try{
+    const r = await fetch(url, opt);
+    dbg('INFO', `HTTP ${tag} 상태 ${r.status}`, url);
+    if (!r.ok) throw new Error(`${tag} HTTP ${r.status}`);
+    return r;
+  }catch(err){
+    dbg('ERROR', `${tag} 실패`, (err&&err.message)||String(err));
+    throw err;
+  }
+}
 
 /* ===== 유틸 ===== */
 const $  = (s)=>document.querySelector(s);
@@ -194,7 +294,7 @@ function renderCats(){
   const classlist = ['left-side first','left-side','left-side','right-side','right-side','right-side last'];
   library.forEach(bk=>{
     let html = `<li class="book ${classlist[0]}" data-cat="${esc(bk._cat)}">`;
-    html += `<div class="cover"><img src="${esc(placeholderCover())}" data-src="${esc(bk.cover)}" data-cands='${esc(JSON.stringify(bk._coverCands||[]))}' alt="${esc(bk.title)}"/></div>`;
+    html += `<div class="cover"><img src="${esc(placeholderCover())}" data-cands='${esc(JSON.stringify(bk._coverCands||[]))}' alt="${esc(bk.title)}"/></div>`;
     html += `<div class="summary"></div></li>`;
     $lib.insertAdjacentHTML('beforeend', html);
     const cn=classlist.shift(); classlist.push(cn);
@@ -217,19 +317,7 @@ function renderCats(){
     if (location.protocol === 'file:') tips.push('로컬 파일(file://)에서는 fetch가 막혀요. 임시 서버로 열어주세요: python -m http.server');
     tips.push('posts.json이 없거나 비어있을 수 있어요 → '+DATA_URL+' 경로 확인');
     tips.push('폴더 구조: /blog/index.html, /blog/data/posts.json, /blog/posts/*.md');
-    tips.push('posts.json 예시를 아래에 참고해 넣어주세요.');
     showDiag('불러올 카테고리가 없습니다.', tips);
-
-    // 예시 안내
-    const demo = document.createElement('div');
-    demo.style.cssText='margin-top:10px;font-size:12px;opacity:.9';
-    demo.innerHTML = `<pre>{
-  "posts":[
-    {"slug":"hello-world","title":"첫 글","date":"2025-06-12","category":"공지","summary":"블로그 시작!"},
-    {"slug":"orpg-log-1","title":"세션 로그 #1","date":"2025-06-10","category":"ORPG 로그 백업","summary":"세션 1 요약"}
-  ]
-}</pre>`;
-    document.getElementById('diag').appendChild(demo);
   }
 }
 
@@ -259,8 +347,8 @@ async function renderPost(slug){
   $('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
 
   try{
-    const r = await fetch(POSTS_DIR + encodeURIComponent(slug) + '.md', {cache:'no-cache'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
+    const r = await ffetch(url,{cache:'no-cache'}, 'post-md:'+slug);
     const md = await r.text();
     const body = md.replace(/^---[\s\S]*?---\s*/, '');
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
@@ -274,119 +362,103 @@ async function renderPost(slug){
 
 /* 라우팅 */
 function route(){
-  const mPost=location.hash.match(/^#\/post\/(.+)$/);
-  const mCat =location.hash.match(/^#\/category\/(.+)$/);
-  if(mPost) return renderPost(decodeURIComponent(mPost[1]));
-  if(mCat)  return renderList(decodeURIComponent(mCat[1]));
-  return renderCats();
+  try{
+    const mPost=location.hash.match(/^#\/post\/(.+)$/);
+    const mCat =location.hash.match(/^#\/category\/(.+)$/);
+    if(mPost) return renderPost(decodeURIComponent(mPost[1]));
+    if(mCat)  return renderList(decodeURIComponent(mCat[1]));
+    return renderCats();
+  }catch(err){
+    dbg('ERROR','route 실패', String(err));
+  }
 }
 window.addEventListener('hashchange', route);
 
-/* Lazy + 폴백 */
+/* Lazy + 폴백 (무한루프/깜빡임 방지 + 로깅) */
 function initLazyCovers(){
-  const io=new IntersectionObserver((entries)=>{
+  const getCands = (img) => {
+    try{
+      const arr = JSON.parse(img.getAttribute('data-cands') || '[]');
+      return [...new Set(arr)];
+    }catch{ return []; }
+  };
+
+  const io = new IntersectionObserver((entries)=>{
     entries.forEach(e=>{
-      if(!e.isIntersecting) return;
-      const img=e.target;
-      if(img.dataset._started) return;
-      img.dataset._started='1';
-      img.onerror=()=>imgFallbackChainThrottled(img);
-      img.src=img.dataset.src || img.src;
+      if (!e.isIntersecting) return;
+      const img = e.target;
+      if (img.dataset._started) return;
+      img.dataset._started = '1';
+
+      const cands = getCands(img);
+      let i = -1;
+
+      const advance = () => {
+        i += 1;
+        if (i < cands.length){
+          const u = cands[i];
+          dbg('INFO','img try', u);
+          img.src = u;
+          return;
+        }
+        img.onerror = null;
+        img.onload  = null;
+        img.src = placeholderCover();
+        dbg('ERROR','img 모든 후보 실패, placeholder 적용');
+      };
+
+      img.onload = () => { dbg('INFO','img ok', img.currentSrc||img.src); img.onerror = null; img.onload = null; };
+      img.onerror = () => { dbg('ERROR','img fail', img.src); setTimeout(advance, 50); };
+
+      advance();         // 시작
       io.unobserve(img);
     });
-  },{rootMargin:'200px'});
-  document.querySelectorAll('#viewCats .library img[data-src]').forEach(img=>io.observe(img));
-}
-function imgFallbackChainThrottled(el){
-  let list=[]; try{ list=JSON.parse(el.getAttribute('data-cands')||'[]'); }catch(e){}
-  const cur=el.getAttribute('src');
-  const idx=list.indexOf(cur);
-  const next=list[idx+1] || placeholderCover();
-  setTimeout(()=>{ el.src = next; }, 120);
+  }, { rootMargin: '200px' });
+
+  document.querySelectorAll('#viewCats .library img[data-cands]').forEach(img => io.observe(img));
 }
 
-/* Jabas 애니메이션 */
-var animationSpeed = 750;
-function attachAnimations(){
-  $('.library .book').off('click.jb').on('click.jb',function(e){
-    if (!$(this).hasClass('selected')) selectAnimation($(this));
-  });
-  $('.library .book .cover').off('click.jb').on('click.jb',function(e){
-    e.stopPropagation();
-    const $li = $(this).parent();
-    if ($li.hasClass('selected')) deselectAnimation($li);
-  });
-}
-function selectAnimation(obj){
-  obj.addClass('selected');
-  var cover=obj.find('.cover'), image=obj.find('.cover img'), library=$('.library');
-  var summaryBG=$('.overlay-summary'), summary=obj.find('.summary');
-
-  cover.animate({width:'300px',height:'468px'},{duration:animationSpeed});
-  image.animate({width:'280px',height:'448px',borderWidth:'10px'},{duration:animationSpeed});
-
-  if (isBtmRow()){ library.css('paddingBottom','234px'); }
-  positionTop(); $('.overlay-page').show();
-
-  var px = overlayVertPos(); summaryBG.css('left',px);
-  var ht = $('.libwrap').height(); var pos=$('.book.selected').position(); var start=(pos?pos.top:0)+30;
-  var speed=Math.round((animationSpeed/ht)*450);
-
-  summary.show();
-  summaryBG.show().animate({height: ht + 'px'},{duration: animationSpeed, easing:'linear',
-    step:function(now,fx){
-      if(now>start && fx.prop==="height"){
-        if(!summary.is(':animated') && summary.height()<450){
-          summary.show().animate({height:'450px'},{duration:speed,easing:'linear'});
-        }
-      }
+/* 헬스체크 */
+async function runHealthCheck(){
+  dbg('INFO','— 헬스체크 시작 —');
+  try{
+    const r = await ffetch(DATA_URL,{cache:'no-store'},'posts.json');
+    const j = await r.json();
+    dbg('INFO',`posts.json ok, posts=${(j.posts||[]).length}`);
+    if ((j.posts||[]).length){
+      const first = j.posts[0];
+      const mdURL = POSTS_DIR + encodeURIComponent(first.slug) + '.md';
+      try{
+        await ffetch(mdURL,{cache:'no-store'},'first-md');
+        dbg('INFO','first md ok', mdURL);
+      }catch{}
+      // 커버 후보 하나 테스트
+      const cat = first.category || '기타';
+      const cand = coverCandidates(cat, first.cover||'')[0];
+      try{
+        await ffetch(cand,{cache:'no-store'},'cover-test');
+        dbg('INFO','cover candidate ok', cand);
+      }catch{}
     }
-  });
-
-  summary.off('click.nav').on('click.nav','a',function(){ deselectAnimation(obj); });
+  }catch{}
+  dbg('INFO','— 헬스체크 완료 —');
 }
-function deselectAnimation(obj){
-  var cover=obj.find('.cover'), image=obj.find('.cover img'), library=$('.library');
-  var summaryBG=$('.overlay-summary'), summary=obj.find('.summary');
-
-  summary.stop();
-  cover.stop().animate({width:'140px',height:'224px'},{duration:animationSpeed});
-  image.stop().animate({width:'140px',height:'224px',borderWidth:'0px'},{duration:animationSpeed,complete:function(){ obj.removeClass('selected'); }});
-  library.stop().animate({paddingBottom:'10px'},{duration:animationSpeed});
-
-  var ht=summaryBG.height(); var pos=$('.book.selected').position()||{top:0}; var start=pos.top + 480;
-  var speed=Math.round((animationSpeed/ht) * (summary.height()||450));
-
-  summaryBG.stop().animate({height:'0px'},{duration:animationSpeed,easing:'linear',
-    step:function(now,fx){
-      if(now < start && fx.prop==="height"){
-        if(!summary.is(':animated') && summary.height()>0){
-          summary.animate({height:'0px'},{duration:speed,easing:'linear',complete:function(){ summary.hide(); }});
-        }
-      }
-    },
-    complete:function(){ $('.overlay-page').hide(); summary.hide(); summaryBG.hide(); }
-  });
-}
-function isBtmRow(){ var pos=$('.book.selected').position(); var libHgt=$('.libwrap').height(); if(!pos) return false; return (libHgt-pos.top===254); }
-function positionTop(){ var offset=$('.book.selected').offset(); $('html, body').animate({scrollTop: offset?offset.top:0}, animationSpeed); }
-function overlayVertPos(){ var pos=$('.book.selected').position()||{left:0}; switch(pos.left){ case 0: case 160: return '320px'; case 320: return '480px'; case 480: return '0px'; case 640: case 800: return '160px'; default: return '0px'; }}
 
 /* 부팅 */
 (async function init(){
-  // 로컬 파일 경고 선제 노출
   if (location.protocol === 'file:'){
     showDiag('로컬 파일 모드(file://)에서는 데이터 로드가 차단돼요.', [
       '터미널에서: python -m http.server 8000',
       '그리고 http://localhost:8000/ 로 접속하세요.'
     ]);
+    dbg('ERROR','file:// 환경 — fetch 차단될 수 있음');
   }
   try{
-    const r = await fetch(DATA_URL,{cache:'no-cache'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    const r = await ffetch(DATA_URL,{cache:'no-cache'},'posts.json');
     const j = await r.json();
     ALL = (j.posts||[]).map(p=>({...p,category:p.category||'기타'}));
     if (!Array.isArray(j.posts)) throw new Error('posts.json에 "posts" 배열이 없습니다.');
+    dbg('INFO',`로드된 posts: ${ALL.length}`);
   }catch(e){
     LAST_ERR = (e && e.message) ? e.message : String(e||'');
     ALL = [];
@@ -396,6 +468,7 @@ function overlayVertPos(){ var pos=$('.book.selected').position()||{left:0}; swi
   initLazyCovers();
   attachAnimations();
   route();
+  if (DEBUG) runHealthCheck();
 })();
 </script>
 </body>
