@@ -6,7 +6,7 @@
       "date": "2025-06-12",
       "category": "공지",
       "summary": "블로그 시작!",
-      "cover": "assets/covers/test.jpg"
+      "cover": "/blog/assets/covers/test.jpg"
     }
   ]
 }
