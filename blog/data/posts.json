@@ -1,4 +1,18 @@
-{ "posts":[
-  {"slug":"hello","title":"첫 글","date":"2025-06-10","category":"공지","summary":"테스트"},
-  {"slug":"log-1","title":"세션 로그","date":"2025-06-12","category":"ORPG 로그 백업"}
-]}
+{
+  "posts": [
+    {
+      "slug": "hello-world",
+      "title": "첫 글",
+      "date": "2025-06-12",
+      "category": "공지",
+      "summary": "블로그 시작!",
+    },
+    {
+      "slug": "orpg-log-1",
+      "title": "ORPG 세션 로그 #1",
+      "date": "2025-06-10",
+      "category": "ORPG 로그 백업",
+      "summary": "세션 1 요약"
+    }
+  ]
+}
