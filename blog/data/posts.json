@@ -1,18 +1,4 @@
-{
-  "posts": [
-    {
-      "slug": "orpg-log-01",
-      "title": "예식시 강력계정1 (완결)",
-      "date": "2025-08-30",
-      "category": "ORPG 로그 백업",
-      "summary": "첫 테스트 글입니다."
-    },
-    {
-      "slug": "scenario-overview",
-      "title": "시나리오 개요",
-      "date": "2025-06-12",
-      "category": "시나리오들",
-      "summary": "예정 시나리오의 간단한 개요."
-    }
-  ]
-}
+{ "posts":[
+  {"slug":"hello","title":"첫 글","date":"2025-06-10","category":"공지","summary":"테스트"},
+  {"slug":"log-1","title":"세션 로그","date":"2025-06-12","category":"ORPG 로그 백업"}
+]}
