@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Library — CSS Flip Books</title>
+<title>Library — Flip Books</title>
 <style>
-/* ========== [네 원본 효과 유지] ========== */
+/* ====== (원본 유지) 네가 준 책 펼쳐지는 CSS ====== */
 body {
   width: 100%;
   height: 100vh;
-  display: flex;              /* 중앙 정렬 유지 */
+  display: flex;
   justify-content: center;
   align-items: center;
   perspective: 1200px;
@@ -33,7 +33,9 @@ body {
   transform-origin: left center;
   transition: transform .5s ease-in-out, box-shadow .35s ease-in-out;
 }
-.front, .back { background: navy; }
+.front, .back {
+  background: navy;
+}
 .front, .page1, .page3, .page5 {
   border-bottom-right-radius: .5em;
   border-top-right-radius: .5em;
@@ -48,7 +50,6 @@ body {
 .page4 { background: #f5f5f5; }
 .page5 { background: #fafafa; }
 .page6 { background: #fdfdfd; }
-/* hover 펼침 각도 그대로 유지 */
 .book:hover .front { transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:hover .page1 { transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:hover .page2 { transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
@@ -58,61 +59,21 @@ body {
 .book:hover .page6 { transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:hover .back  { transform: rotateY(-20deg)  scale(1.1); }
 
-/* ========== [패치 1: 라이브러리 그리드] ========== */
-.library {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 28px 22px;
-  width: min(1140px, 100%);
-  padding: 32px 18px;
-  margin: 0 auto;
-}
-.item {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-}
-.caption {
-  width: 200px;               /* 책 너비와 동일 */
-  text-align: center;
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 1.35;
-  color: #222;
-  text-wrap: balance;
-}
-.meta {
-  font-size: 12px;
-  color: #555;
-}
-
-/* body가 중앙정렬이라 전체가 한가운데에 뜨도록 wrapper 사용 */
-.wrapper {
-  width: 100%;
-  max-height: 100vh;
-  overflow: auto;            /* 책이 scale(1.1)로 커질 때 스크롤 */
-  display: grid;
-  place-items: center;
-}
-
-/* ========== [패치 2: 커버 이미지 & 긴 책갈피 리본] ========== */
-:root {
+/* ====== 패치: 커버 이미지 & 긴 책갈피 리본 ====== */
+:root{
   --cover-image: url('https://picsum.photos/seed/placeholder/600/900'); /* 폴백 */
   --ribbon-color: #e63746;   /* 리본 색 */
   --ribbon-w: 22px;          /* 리본 너비 */
   --ribbon-l: 85%;           /* 리본 길이(책 높이 비율) */
 }
-
-/* 앞표지에 이미지 입히기 (네이비 폴백은 유지) */
 .front{
-  background-color: navy;
+  background-color: navy; /* 커버 없을 때 폴백 */
   background-image:
     linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.18)),
     var(--cover-image);
   background-size: cover;
   background-position: center;
 }
-/* 긴 책갈피 리본 */
 .front::after{
   content:"";
   position:absolute;
@@ -130,7 +91,84 @@ body {
   z-index: 2;
 }
 
-/* ========== [선택: 접근성—탭 포커스로도 펼치기] ========== */
+/* ====== 패치: 도서관 느낌의 뒷배경(선반X, 아웃오브포커스 책등 느낌) ====== */
+.library-bg{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, #e9edf3 0%, #d7dde6 40%, #e9edf3 100%);
+}
+.library-bg::before{
+  /* 흐릿한 세로 스트라이프 = 멀리 있는 책등 */
+  content:"";
+  position:absolute; inset:-10% -10%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(70, 80, 110, .18) 0px,   rgba(70, 80, 110, .18) 6px,
+      rgba(180,190,205,.12) 6px,    rgba(180,190,205,.12) 18px,
+      rgba(160,125,90, .12) 18px,   rgba(160,125,90, .12) 26px,
+      rgba(120,85,60,  .10) 26px,   rgba(120,85,60,  .10) 34px
+    );
+  filter: blur(14px) saturate(.9);
+  opacity: .35;
+  transform: skewY(-2deg);
+}
+.library-bg::after{
+  /* 비네트 + 윗쪽 소프트 글로우 */
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,.25), transparent 55%),
+    linear-gradient(0deg, rgba(255,255,255,.75), rgba(255,255,255,0) 40%);
+  mix-blend-mode: multiply;
+  opacity:.45;
+}
+
+/* ====== 패치: 헤더(홈/뒤로) & 그리드 ====== */
+.header-nav{
+  position: fixed; top: 14px; left: 14px;
+  display:flex; gap:8px; align-items:center; z-index: 5;
+}
+.btn{
+  appearance:none; border:1px solid rgba(0,0,0,.15);
+  background: rgba(0,0,0,.55);
+  color:#fff; padding:8px 10px; border-radius:10px;
+  text-decoration:none; font-weight:700; font-size:14px;
+  backdrop-filter: blur(6px) saturate(1.05);
+}
+.btn:hover{ background: rgba(0,0,0,.65) }
+.title{
+  position: fixed; top: 18px; right: 18px; z-index:5;
+  color:#223; font-weight:800; letter-spacing:.02em; font-size:16px;
+  background: rgba(255,255,255,.6); padding:6px 10px; border-radius:10px;
+  border:1px solid rgba(0,0,0,.08);
+}
+
+/* body가 중앙정렬이라, 그리드를 감싸 스크롤 여유 제공 */
+.wrapper{
+  width: 100%; max-height: 100vh; overflow:auto;
+  display:grid; place-items:center;
+  padding-top: 64px; padding-bottom: 24px;
+}
+.library{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 28px 22px;
+  width:min(1140px, 100%);
+  padding: 18px;
+  box-sizing:border-box;
+}
+.item{ display:grid; justify-items:center; gap:8px }
+.caption{
+  width:200px; text-align:center; font-weight:700;
+  font-size:14px; line-height:1.35; color:#1f2a3a;
+}
+.meta{ font-size:12px; color:#5c6b7a }
+
+/* (선택) 키보드 포커스로도 펼치기 */
 .book:focus-within .front{ transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:focus-within .page1{ transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:focus-within .page2{ transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
@@ -140,19 +178,33 @@ body {
 .book:focus-within .page6{ transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
 .book:focus-within .back { transform: rotateY(-20deg)  scale(1.1); }
 
-/* (선택) 모션 감소 */
+/* 접근성: 모션 감소 */
 @media (prefers-reduced-motion: reduce){
   .book *{ transition:none !important }
 }
 </style>
 </head>
 <body>
+
+<!-- 도서관 느낌의 배경 -->
+<div class="library-bg" aria-hidden="true"></div>
+
+<!-- 홈/뒤로 헤더 -->
+<nav class="header-nav" aria-label="내비게이션">
+  <a class="btn" id="homeBtn" href="/">← 홈</a>
+  <button class="btn" id="backBtn" type="button">뒤로</button>
+</nav>
+<div class="title">보관된 도서</div>
+
+<!-- 책 목록 그리드 -->
 <div class="wrapper">
-  <section class="library" aria-label="서가 목록">
+  <section class="library" aria-label="도서 목록">
 
     <!-- 아이템 1 -->
     <article class="item">
-      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book1/600/900'); --ribbon-color:#d72d4f; --ribbon-l:92%; --ribbon-w:26px" tabindex="0">
+      <div class="book"
+           style="--cover-image:url('https://picsum.photos/seed/lib1/600/900'); --ribbon-color:#d72d4f; --ribbon-l:92%; --ribbon-w:26px"
+           tabindex="0" role="group" aria-label="그림자 서점의 비밀">
         <div class="back"></div>
         <div class="page6"></div>
         <div class="page5"></div>
@@ -168,7 +220,9 @@ body {
 
     <!-- 아이템 2 -->
     <article class="item">
-      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book2/600/900'); --ribbon-color:#7b3cff; --ribbon-l:88%" tabindex="0">
+      <div class="book"
+           style="--cover-image:url('https://picsum.photos/seed/lib2/600/900'); --ribbon-color:#7b3cff; --ribbon-l:88%"
+           tabindex="0" role="group" aria-label="달빛 기록 보관소">
         <div class="back"></div>
         <div class="page6"></div>
         <div class="page5"></div>
@@ -184,7 +238,9 @@ body {
 
     <!-- 아이템 3 -->
     <article class="item">
-      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book3/600/900'); --ribbon-color:#1fbfbf; --ribbon-w:20px; --ribbon-l:95%" tabindex="0">
+      <div class="book"
+           style="--cover-image:url('https://picsum.photos/seed/lib3/600/900'); --ribbon-color:#1fbfbf; --ribbon-w:20px; --ribbon-l:95%"
+           tabindex="0" role="group" aria-label="바람이 멈춘 도서관">
         <div class="back"></div>
         <div class="page6"></div>
         <div class="page5"></div>
@@ -200,7 +256,9 @@ body {
 
     <!-- 아이템 4 -->
     <article class="item">
-      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book4/600/900'); --ribbon-color:#f59f00; --ribbon-l:80%" tabindex="0">
+      <div class="book"
+           style="--cover-image:url('https://picsum.photos/seed/lib4/600/900'); --ribbon-color:#f59f00; --ribbon-l:80%"
+           tabindex="0" role="group" aria-label="유리 정원의 편지">
         <div class="back"></div>
         <div class="page6"></div>
         <div class="page5"></div>
@@ -216,7 +274,9 @@ body {
 
     <!-- 아이템 5 -->
     <article class="item">
-      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book5/600/900'); --ribbon-color:#ff6b6b; --ribbon-w:28px; --ribbon-l:98%" tabindex="0">
+      <div class="book"
+           style="--cover-image:url('https://picsum.photos/seed/lib5/600/900'); --ribbon-color:#ff6b6b; --ribbon-w:28px; --ribbon-l:98%"
+           tabindex="0" role="group" aria-label="밤의 아카이브">
         <div class="back"></div>
         <div class="page6"></div>
         <div class="page5"></div>
@@ -232,7 +292,9 @@ body {
 
     <!-- 아이템 6 -->
     <article class="item">
-      <div class="book" style="--cover-image:url('https://picsum.photos/seed/book6/600/900'); --ribbon-color:#4dabf7; --ribbon-l:90%" tabindex="0">
+      <div class="book"
+           style="--cover-image:url('https://picsum.photos/seed/lib6/600/900'); --ribbon-color:#4dabf7; --ribbon-l:90%"
+           tabindex="0" role="group" aria-label="묵음과 공백 사이">
         <div class="back"></div>
         <div class="page6"></div>
         <div class="page5"></div>
@@ -249,13 +311,15 @@ body {
   </section>
 </div>
 
-<!-- (선택) data-cover / data-ribbon-* 으로도 값 주입하고 싶으면 이 짧은 JS 사용 -->
 <script>
-document.querySelectorAll('.book').forEach(b=>{
-  if (b.dataset.cover)       b.style.setProperty('--cover-image', `url("${b.dataset.cover}")`);
-  if (b.dataset.ribbonColor) b.style.setProperty('--ribbon-color', b.dataset.ribbonColor);
-  if (b.dataset.ribbonW)     b.style.setProperty('--ribbon-w', b.dataset.ribbonW);
-  if (b.dataset.ribbonL)     b.style.setProperty('--ribbon-l', b.dataset.ribbonL);
+/* 뒤로가기: 히스토리가 없으면 홈으로 */
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  if (history.length > 1) history.back();
+  else location.assign('/');
+});
+/* 홈 버튼: 필요 시 경로 조정(현재는 사이트 루트 '/') */
+document.getElementById('homeBtn').addEventListener('click', (e)=>{
+  // 별도 처리 필요 없으면 이 핸들러 제거해도 됨
 });
 </script>
 </body>
