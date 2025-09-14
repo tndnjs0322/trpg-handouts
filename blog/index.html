@@ -19,7 +19,7 @@
   header{display:flex;gap:8px;align-items:center;margin-bottom:12px}
   a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
 
-  /* ===== 목록/본문 ===== */
+  /* 목록/본문 */
   .list{display:grid;gap:12px}
   .item{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
   .item .m{color:var(--muted);font-size:12px;margin-top:4px}
@@ -64,19 +64,23 @@
   .libwrap .overlay-page{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#fff;opacity:.7;z-index:2}
   .libwrap .overlay-summary{display:none;position:absolute;top:0;left:0;height:0;width:480px;background:#E5E5E5;opacity:.9;z-index:3}
 
-  /* float 해제 */
   .clearfix::after{content:"";display:block;clear:both}
 
-  /* ☑️ 겹침 원인 해소: Jabas 영역만 content-box 강제 */
+  /* ☑️ 겹침 방지: Jabas 영역만 content-box */
   .libwrap li.book,
   .libwrap .book .cover,
   .libwrap .book .cover img{ box-sizing:content-box }
+
+  /* ===== 진단 카드 ===== */
+  .empty {margin:24px 0;padding:16px;border:1px solid var(--line);background:#0f151c;border-radius:12px}
+  .empty h3{margin:0 0 8px;font-size:16px}
+  .empty code{background:#0b1117;border:1px solid var(--line);padding:2px 6px;border-radius:6px}
+  .empty ul{margin:10px 0 0 18px}
 </style>
 </head>
 <body>
 <main>
   <header>
-    <!-- data-home 비워두면 ../ 로 이동 -->
     <a class="btn" id="homeBtn" href="../" data-home="">← 홈</a>
     <button id="backBtn" class="btn" type="button" aria-label="뒤로 가기">뒤로</button>
     <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
@@ -87,6 +91,7 @@
     <ul class="library clearfix"></ul>
     <div class="overlay-page"></div>
     <div class="overlay-summary"></div>
+    <div id="diag" class="empty hidden"></div>
   </section>
 
   <!-- 글 목록 -->
@@ -121,70 +126,59 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
 const $  = (s)=>document.querySelector(s);
 const d  = (x)=>x?new Date(x).toISOString().slice(0,10):'';
 const esc= (s)=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+let LAST_ERR = '';
+
 function placeholderCover(){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='280' height='448'>
-    <defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop stop-color='%23e9eaec' offset='0'/><stop stop-color'%23f5f6f8' offset='1'/></linearGradient></defs>
     <rect width='100%' height='100%' fill='%23e8e8e8'/>
     <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='12' fill='%23666'>no cover</text>
   </svg>`;
   return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
 }
 
-/* ☑️ 커버 자동탐색 강화 */
+/* 커버 자동탐색 */
 function coverCandidates(nameOrSlug, cover){
-  const out = [];
-  const add = (u) => { if (u && !out.includes(u)) out.push(u); };
-  const noSlash = (s) => (s || '').replace(/^\//, '');
-
+  const out = []; const add = (u)=>{ if(u && !out.includes(u)) out.push(u); }; const noSlash=(s)=>(s||'').replace(/^\//,'');
   if (cover){ add(cover); add(BASE + noSlash(cover)); }
 
-  const raw      = String(nameOrSlug || '').trim();
-  const rawEnc   = encodeURIComponent(raw);
-  const dashed   = raw.replace(/\s+/g, '-').replace(/[\/\\?#%:*|"<>]/g, '-');
-  const undersc  = raw.replace(/\s+/g, '_').replace(/[\/\\?#%:*|"<>]/g, '_');
-  const nospace  = raw.replace(/\s+/g, '');
-  const lower    = raw.toLowerCase();
-
-  const suffixes = ['', ' cover', ' 커버', '-cover', '-커버', '_cover', '_커버', ' 표지', '-표지', '_표지'];
-  const bases = [raw, rawEnc, dashed, undersc, nospace, lower];
-  const roots = [BASE + 'assets/covers/', '/assets/covers/'];
-  const exts  = ['jpg','png','webp'];
-
-  for (const root of roots){
-    for (const base of bases){
-      for (const suf of suffixes){
-        for (const ext of exts){
-          add(root + base + suf + '.' + ext);
-        }
-      }
-    }
-  }
-
-  add(placeholderCover());
-  return out;
+  const raw=String(nameOrSlug||'').trim();
+  const rawEnc=encodeURIComponent(raw);
+  const dashed=raw.replace(/\s+/g,'-').replace(/[\/\\?#%:*|"<>]/g,'-');
+  const undersc=raw.replace(/\s+/g,'_').replace(/[\/\\?#%:*|"<>]/g,'_');
+  const nospace=raw.replace(/\s+/g,'');
+  const lower=raw.toLowerCase();
+  const suffixes=['',' cover',' 커버','-cover','-커버','_cover','_커버',' 표지','-표지','_표지'];
+  const bases=[raw,rawEnc,dashed,undersc,nospace,lower];
+  const roots=[BASE+'assets/covers/','/assets/covers/'];
+  const exts=['jpg','png','webp'];
+  for(const root of roots){ for(const base of bases){ for(const suf of suffixes){ for(const ext of exts){ add(root+base+suf+'.'+ext); }}}}
+  add(placeholderCover()); return out;
 }
 
 /* ===== 데이터 ===== */
 let ALL=[], CATS={}, library=[];
-
-function Book(cover,title,author,abstract){
-  this.cover=cover; this.title=title; this.author=author; this.abstract=abstract;
-  library.push(this);
-}
-
-/* posts.json → 카테고리 → 책 */
+function Book(cover,title,author,abstract){ this.cover=cover; this.title=title; this.author=author; this.abstract=abstract; library.push(this); }
 function buildLibraryFromPosts(){
   CATS = {};
   ALL.forEach(p => { const c=p.category||'기타'; (CATS[c] ||= {name:c,posts:[]}).posts.push(p); });
-
   library.length = 0;
   Object.keys(CATS).sort((a,b)=>a.localeCompare(b,'ko')).forEach(cat=>{
-    const posts = CATS[cat].posts;
-    const newest = posts.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-    const cand = coverCandidates(cat, newest?.cover);
-    const bk = new Book(cand[0]||placeholderCover(), cat, '', posts.length+'개의 글');
-    bk._cat = cat; bk._coverCands = cand;
+    const posts=CATS[cat].posts;
+    const newest=posts.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const cand=coverCandidates(cat, newest?.cover);
+    const bk=new Book(cand[0]||placeholderCover(), cat, '', posts.length+'개의 글');
+    bk._cat=cat; bk._coverCands=cand;
   });
+}
+
+/* ===== 진단 카드 ===== */
+function showDiag(title, lines=[]){
+  const box = document.getElementById('diag');
+  box.classList.remove('hidden');
+  box.innerHTML = `<h3>${esc(title)}</h3>
+  <div style="font-size:13px;opacity:.9">BASE: <code>${esc(BASE)}</code><br>DATA_URL: <code>${esc(DATA_URL)}</code><br>주소: <code>${esc(location.pathname)}</code></div>
+  ${lines.length? `<ul>${lines.map(s=>`<li>${esc(s)}`).join('')}</ul>`:''}
+  ${LAST_ERR? `<div style="margin-top:8px;color:#ffb3b3">오류: ${esc(LAST_ERR)}</div>`:''}`;
 }
 
 /* 루트: 책장 렌더 */
@@ -201,8 +195,7 @@ function renderCats(){
   library.forEach(bk=>{
     let html = `<li class="book ${classlist[0]}" data-cat="${esc(bk._cat)}">`;
     html += `<div class="cover"><img src="${esc(placeholderCover())}" data-src="${esc(bk.cover)}" data-cands='${esc(JSON.stringify(bk._coverCands||[]))}' alt="${esc(bk.title)}"/></div>`;
-    html += `<div class="summary"></div>`;
-    html += `</li>`;
+    html += `<div class="summary"></div></li>`;
     $lib.insertAdjacentHTML('beforeend', html);
     const cn=classlist.shift(); classlist.push(cn);
   });
@@ -217,6 +210,27 @@ function renderCats(){
     html += `</ul><p style="margin-top:8px"><a href="#/category/${encodeURIComponent(cat)}">이 카테고리 전체 보기 →</a></p>`;
     s.innerHTML = html;
   });
+
+  // 데이터가 0이면 진단 표시
+  if (library.length === 0){
+    const tips = [];
+    if (location.protocol === 'file:') tips.push('로컬 파일(file://)에서는 fetch가 막혀요. 임시 서버로 열어주세요: python -m http.server');
+    tips.push('posts.json이 없거나 비어있을 수 있어요 → '+DATA_URL+' 경로 확인');
+    tips.push('폴더 구조: /blog/index.html, /blog/data/posts.json, /blog/posts/*.md');
+    tips.push('posts.json 예시를 아래에 참고해 넣어주세요.');
+    showDiag('불러올 카테고리가 없습니다.', tips);
+
+    // 예시 안내
+    const demo = document.createElement('div');
+    demo.style.cssText='margin-top:10px;font-size:12px;opacity:.9';
+    demo.innerHTML = `<pre>{
+  "posts":[
+    {"slug":"hello-world","title":"첫 글","date":"2025-06-12","category":"공지","summary":"블로그 시작!"},
+    {"slug":"orpg-log-1","title":"세션 로그 #1","date":"2025-06-10","category":"ORPG 로그 백업","summary":"세션 1 요약"}
+  ]
+}</pre>`;
+    document.getElementById('diag').appendChild(demo);
+  }
 }
 
 /* 카테고리 목록 */
@@ -246,13 +260,14 @@ async function renderPost(slug){
 
   try{
     const r = await fetch(POSTS_DIR + encodeURIComponent(slug) + '.md', {cache:'no-cache'});
-    if(!r.ok) throw 0;
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const md = await r.text();
     const body = md.replace(/^---[\s\S]*?---\s*/, '');
     $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
     $('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
     document.title = m.title + ' - Blog';
-  }catch{
+  }catch(e){
+    LAST_ERR = (e && e.message) ? e.message : String(e||'');
     $('#pBody').innerHTML = '<p class="m">게시글을 찾을 수 없습니다.</p>';
   }
 }
@@ -304,62 +319,47 @@ function attachAnimations(){
 }
 function selectAnimation(obj){
   obj.addClass('selected');
-  var cover=obj.find('.cover');
-  var image=obj.find('.cover img');
-  var library=$('.library');
-  var summaryBG=$('.overlay-summary');
-  var summary=obj.find('.summary');
+  var cover=obj.find('.cover'), image=obj.find('.cover img'), library=$('.library');
+  var summaryBG=$('.overlay-summary'), summary=obj.find('.summary');
 
   cover.animate({width:'300px',height:'468px'},{duration:animationSpeed});
   image.animate({width:'280px',height:'448px',borderWidth:'10px'},{duration:animationSpeed});
 
   if (isBtmRow()){ library.css('paddingBottom','234px'); }
-  positionTop();
-  $('.overlay-page').show();
+  positionTop(); $('.overlay-page').show();
 
-  var px = overlayVertPos();
-  summaryBG.css('left',px);
-
-  var ht = $('.libwrap').height();
-  var pos = $('.book.selected').position();
-  var start = (pos?pos.top:0) + 30;
-  var speed = Math.round((animationSpeed/ht) * 450);
+  var px = overlayVertPos(); summaryBG.css('left',px);
+  var ht = $('.libwrap').height(); var pos=$('.book.selected').position(); var start=(pos?pos.top:0)+30;
+  var speed=Math.round((animationSpeed/ht)*450);
 
   summary.show();
   summaryBG.show().animate({height: ht + 'px'},{duration: animationSpeed, easing:'linear',
-    step: function(now,fx){
-      if (now > start && fx.prop === "height"){
-        if(!summary.is(':animated') && summary.height() < 450){
+    step:function(now,fx){
+      if(now>start && fx.prop==="height"){
+        if(!summary.is(':animated') && summary.height()<450){
           summary.show().animate({height:'450px'},{duration:speed,easing:'linear'});
         }
       }
     }
   });
 
-  summary.off('click.nav').on('click.nav','a',function(){
-    deselectAnimation(obj);
-  });
+  summary.off('click.nav').on('click.nav','a',function(){ deselectAnimation(obj); });
 }
 function deselectAnimation(obj){
-  var cover=obj.find('.cover');
-  var image=obj.find('.cover img');
-  var library=$('.library');
-  var summaryBG=$('.overlay-summary');
-  var summary=obj.find('.summary');
+  var cover=obj.find('.cover'), image=obj.find('.cover img'), library=$('.library');
+  var summaryBG=$('.overlay-summary'), summary=obj.find('.summary');
 
   summary.stop();
   cover.stop().animate({width:'140px',height:'224px'},{duration:animationSpeed});
   image.stop().animate({width:'140px',height:'224px',borderWidth:'0px'},{duration:animationSpeed,complete:function(){ obj.removeClass('selected'); }});
   library.stop().animate({paddingBottom:'10px'},{duration:animationSpeed});
 
-  var ht=summaryBG.height();
-  var pos=$('.book.selected').position()||{top:0};
-  var start=pos.top + 480;
+  var ht=summaryBG.height(); var pos=$('.book.selected').position()||{top:0}; var start=pos.top + 480;
   var speed=Math.round((animationSpeed/ht) * (summary.height()||450));
 
   summaryBG.stop().animate({height:'0px'},{duration:animationSpeed,easing:'linear',
     step:function(now,fx){
-      if (now < start && fx.prop === "height"){
+      if(now < start && fx.prop==="height"){
         if(!summary.is(':animated') && summary.height()>0){
           summary.animate({height:'0px'},{duration:speed,easing:'linear',complete:function(){ summary.hide(); }});
         }
@@ -368,40 +368,32 @@ function deselectAnimation(obj){
     complete:function(){ $('.overlay-page').hide(); summary.hide(); summaryBG.hide(); }
   });
 }
-function isBtmRow(){
-  var pos=$('.book.selected').position();
-  var libHgt=$('.libwrap').height();
-  if (!pos) return false;
-  return (libHgt-pos.top===254);
-}
-function positionTop(){
-  var offset=$('.book.selected').offset();
-  $('html, body').animate({scrollTop: offset?offset.top:0}, animationSpeed);
-}
-function overlayVertPos(){
-  var pos=$('.book.selected').position()||{left:0};
-  switch(pos.left){
-    case 0: case 160: return '320px';
-    case 320: return '480px';
-    case 480: return '0px';
-    case 640: case 800: return '160px';
-    default: return '0px';
-  }
-}
+function isBtmRow(){ var pos=$('.book.selected').position(); var libHgt=$('.libwrap').height(); if(!pos) return false; return (libHgt-pos.top===254); }
+function positionTop(){ var offset=$('.book.selected').offset(); $('html, body').animate({scrollTop: offset?offset.top:0}, animationSpeed); }
+function overlayVertPos(){ var pos=$('.book.selected').position()||{left:0}; switch(pos.left){ case 0: case 160: return '320px'; case 320: return '480px'; case 480: return '0px'; case 640: case 800: return '160px'; default: return '0px'; }}
 
 /* 부팅 */
 (async function init(){
+  // 로컬 파일 경고 선제 노출
+  if (location.protocol === 'file:'){
+    showDiag('로컬 파일 모드(file://)에서는 데이터 로드가 차단돼요.', [
+      '터미널에서: python -m http.server 8000',
+      '그리고 http://localhost:8000/ 로 접속하세요.'
+    ]);
+  }
   try{
     const r = await fetch(DATA_URL,{cache:'no-cache'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const j = await r.json();
     ALL = (j.posts||[]).map(p=>({...p,category:p.category||'기타'}));
+    if (!Array.isArray(j.posts)) throw new Error('posts.json에 "posts" 배열이 없습니다.');
   }catch(e){
-    console.error('posts.json 로드 실패', e);
+    LAST_ERR = (e && e.message) ? e.message : String(e||'');
     ALL = [];
   }
   buildLibraryFromPosts();
   renderCats();
-  initLazyCovers();     /* ← 반드시 renderCats 뒤에 */
+  initLazyCovers();
   attachAnimations();
   route();
 })();
