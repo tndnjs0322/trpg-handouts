@@ -1,18 +1,33 @@
 {
-  "posts": [
+  "categories": [
     {
-      "slug": "orpg-log-01",
-      "title": "예식시 강력계정1 (완결)",
-      "date": "2025-08-30",
-      "category": "ORPG 로그 백업",
-      "summary": "첫 테스트 글입니다."
+      "name": "공지",
+      "title": "공지",
+      "abstract": "블로그 업데이트와 공지 모음",
+      "cover": "assets/covers/notice.jpg"
     },
     {
-      "slug": "scenario-overview",
-      "title": "시나리오 개요",
-      "date": "2025-06-12",
-      "category": "시나리오들",
-      "summary": "예정 시나리오의 간단한 개요."
+      "name": "소설",
+      "title": "소설 서가",
+      "abstract": "읽은 소설과 기록",
+      "cover": "assets/covers/novel.jpg"
+    }
+  ],
+  "posts": [
+    {
+      "slug": "hello",
+      "title": "블로그 시작",
+      "date": "2025-09-01",
+      "category": "공지",
+      "tags": ["intro","notice"]
+    },
+    {
+      "slug": "clockwork-orange-review",
+      "title": "A Clockwork Orange — 감상",
+      "date": "2025-08-31",
+      "category": "소설",
+      "cover": "assets/covers/clockwork.jpg",
+      "tags": ["review","classic"]
     }
   ]
 }
