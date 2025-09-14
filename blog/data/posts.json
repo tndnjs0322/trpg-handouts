@@ -7,13 +7,5 @@
       "category": "공지",
       "summary": "블로그 시작!",
       "cover": "assets/covers/공지.jpg"
-    },
-    {
-      "slug": "orpg-log-1",
-      "title": "세션 로그 #1",
-      "date": "2025-06-10",
-      "category": "ORPG 로그 백업",
-      "cover": "assets/covers/ORPG-로그-백업.jpg"
-    }
-  ]
+    } 
 }
