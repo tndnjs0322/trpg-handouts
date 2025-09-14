@@ -19,7 +19,6 @@
   main>header{display:flex;gap:8px;align-items:center;margin-bottom:12px;position:relative}
   a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
 
-  /* 목록/본문 */
   .list{display:grid;gap:12px}
   .item{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
   .item .m{color:var(--muted);font-size:12px;margin-top:4px}
@@ -29,7 +28,7 @@
   pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
   .hidden{display:none}
 
-  /* ====== Jabas Library (책장) ====== */
+  /* ====== Jabas Library ====== */
   .libwrap{position:relative}
   .libwrap ul.library{margin:0;padding:0 0 10px 0;list-style:none;overflow:hidden;width:960px;max-width:100%}
   .libwrap li.book{position:relative;top:0;left:0;margin:0;padding:10px;float:left;width:140px;height:224px;cursor:pointer}
@@ -61,15 +60,10 @@
   .libwrap .right-side .summary{left:-480px;border-left:10px solid #D9D9D9}
   .libwrap .right-side.last .summary{left:-640px}
 
-  .libwrap .overlay-page{
-    display:none;position:absolute;inset:0;background:#fff;opacity:.7;z-index:2;cursor:pointer
-  }
-  .libwrap .overlay-summary{
-    display:none;position:absolute;top:0;left:0;height:0;width:480px;background:#E5E5E5;opacity:.9;z-index:3
-  }
+  .libwrap .overlay-page{display:none;position:absolute;inset:0;background:#fff;opacity:.7;z-index:2;cursor:pointer}
+  .libwrap .overlay-summary{display:none;position:absolute;top:0;left:0;height:0;width:480px;background:#E5E5E5;opacity:.9;z-index:3}
 
   .clearfix::after{content:"";display:block;clear:both}
-  /* ☑️ 겹침 방지: Jabas 영역만 content-box */
   .libwrap li.book, .libwrap .book .cover, .libwrap .book .cover img{ box-sizing:content-box }
 
   /* ===== 진단 카드 ===== */
@@ -78,7 +72,7 @@
   .empty code{background:#0b1117;border:1px solid var(--line);padding:2px 6px;border-radius:6px}
   .empty ul{margin:10px 0 0 18px}
 
-  /* ===== Whisper Debug v2: Glass Pill + Header Drawer (Stealth) ===== */
+  /* ===== Whisper Debug v2 ===== */
   .dbg-pill{display:none;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
     background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
     backdrop-filter: blur(12px) saturate(1.15); -webkit-backdrop-filter: blur(12px) saturate(1.15);
@@ -105,10 +99,8 @@
     <a class="btn" id="homeBtn" href="../" data-home="">← 홈</a>
     <button id="backBtn" class="btn" type="button" aria-label="뒤로 가기">뒤로</button>
     <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
-    <!-- 스텔스 디버그 pill가 오른쪽에 나타남 -->
   </header>
 
-  <!-- 카테고리 = 책장 -->
   <section id="viewCats" class="libwrap">
     <ul class="library clearfix"></ul>
     <div class="overlay-page" title="클릭하면 닫기"></div>
@@ -116,10 +108,8 @@
     <div id="diag" class="empty hidden"></div>
   </section>
 
-  <!-- 글 목록 -->
   <div id="viewList" class="list hidden" aria-label="글 목록"></div>
 
-  <!-- 본문 -->
   <section id="viewPost" class="post hidden" aria-label="글 본문">
     <h2 id="pTitle"></h2>
     <div id="pMeta" class="meta"></div>
@@ -127,7 +117,6 @@
   </section>
 </main>
 
-<!-- 드로어(스텔스용) -->
 <section id="dbgDrawer">
   <header>
     <h4>디버그</h4><span class="sp"></span>
@@ -139,23 +128,26 @@
 </section>
 
 <script>
+/* ===== jQuery는 $ 유지, 바닐라는 qs() 사용 ===== */
+const qs = (s)=>document.querySelector(s);
+
 /* ===== 경로/기본 ===== */
 const BASE = (function(){ const p=location.pathname; return /\/$/.test(p)?p:p.replace(/[^/]+$/,'/'); })();
 const DATA_URL  = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
 
-/* 홈 버튼: data-home 우선, 없으면 ../ */
+/* 홈 버튼 */
 (() => {
-  const el = document.getElementById('homeBtn'); if (!el) return;
+  const el = qs('#homeBtn'); if (!el) return;
   const explicit = (el.dataset.home || '').trim();
   const fallback = new URL('../', location.href).href;
   el.href = explicit || fallback;
 })();
-document.getElementById('backBtn')?.addEventListener('click', () => {
-  if (history.length > 1) history.back(); else document.getElementById('homeBtn').click();
+qs('#backBtn')?.addEventListener('click', () => {
+  if (history.length > 1) history.back(); else qs('#homeBtn').click();
 });
 
-/* ===== Whisper Debug v2 — Stealth ===== */
+/* ===== Whisper Debug v2 ===== */
 (function glassDebuggerStealth(){
   const CFG = {
     force: /(?:\?|&)debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__')==='1',
@@ -237,7 +229,6 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
 })();
 
 /* ===== 유틸 ===== */
-const $  = (s)=>document.querySelector(s);
 const d  = (x)=>x?new Date(x).toISOString().slice(0,10):'';
 const esc= (s)=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let LAST_ERR = '';
@@ -262,7 +253,6 @@ function placeholderCover(){
   return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
 }
 
-/* 커버 자동탐색 후보 */
 function coverCandidates(nameOrSlug, cover){
   const out = []; const add = (u)=>{ if(u && !out.includes(u)) out.push(u); }; const noSlash=(s)=>(s||'').replace(/^\//,'');
   if (cover){ add(cover); add(BASE + noSlash(cover)); }
@@ -280,7 +270,7 @@ function coverCandidates(nameOrSlug, cover){
   add(placeholderCover()); return out;
 }
 
-/* ===== 데이터/모델 ===== */
+/* ===== 데이터 ===== */
 let ALL=[], CATS={}, library=[];
 function Book(cover,title,author,abstract){ this.cover=cover; this.title=title; this.author=author; this.abstract=abstract; library.push(this); }
 function buildLibraryFromPosts(){
@@ -298,7 +288,7 @@ function buildLibraryFromPosts(){
 
 /* ===== 진단 카드 ===== */
 function showDiag(title, lines=[]){
-  const box = document.getElementById('diag');
+  const box = qs('#diag');
   box.classList.remove('hidden');
   box.innerHTML = `<h3>${esc(title)}</h3>
   <div style="font-size:13px;opacity:.9">BASE: <code>${esc(BASE)}</code><br>DATA_URL: <code>${esc(DATA_URL)}</code><br>주소: <code>${esc(location.pathname)}</code></div>
@@ -308,10 +298,10 @@ function showDiag(title, lines=[]){
 
 /* ===== 렌더: 책장 ===== */
 function renderCats(){
-  $('#title').textContent='분류 전체보기';
-  $('#viewCats').classList.remove('hidden');
-  $('#viewList').classList.add('hidden');
-  $('#viewPost').classList.add('hidden');
+  qs('#title').textContent='분류 전체보기';
+  qs('#viewCats').classList.remove('hidden');
+  qs('#viewList').classList.add('hidden');
+  qs('#viewPost').classList.add('hidden');
 
   const $lib = document.querySelector('#viewCats ul.library');
   $lib.innerHTML='';
@@ -325,7 +315,6 @@ function renderCats(){
     const cn=classlist.shift(); classlist.push(cn);
   });
 
-  // summary(최근글)
   document.querySelectorAll('#viewCats li.book').forEach(li=>{
     const cat = li.dataset.cat;
     const list = (CATS[cat]?.posts||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
@@ -345,42 +334,42 @@ function renderCats(){
   }
 }
 
-/* ===== 렌더: 카테고리 글 목록 ===== */
+/* ===== 렌더: 카테고리 목록 ===== */
 function renderList(cat){
-  $('#title').textContent=cat;
-  $('#viewCats').classList.add('hidden');
-  $('#viewList').classList.remove('hidden');
-  $('#viewPost').classList.add('hidden');
+  qs('#title').textContent=cat;
+  qs('#viewCats').classList.add('hidden');
+  qs('#viewList').classList.remove('hidden');
+  qs('#viewPost').classList.add('hidden');
 
   const list = ALL.filter(p => (p.category||'기타')===cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  $('#viewList').innerHTML = list.length
+  qs('#viewList').innerHTML = list.length
     ? list.map(p=>`<a class="item" href="#/post/${encodeURIComponent(p.slug)}"><div class="t">${esc(p.title)}</div><div class="m">${d(p.date)} · ${esc(p.summary||'')}</div></a>`).join('')
     : '<p class="m">글이 없습니다.</p>';
 }
 
 /* ===== 렌더: 본문 ===== */
 async function renderPost(slug){
-  $('#viewCats').classList.add('hidden');
-  $('#viewList').classList.add('hidden');
-  $('#viewPost').classList.remove('hidden');
+  qs('#viewCats').classList.add('hidden');
+  qs('#viewList').classList.add('hidden');
+  qs('#viewPost').classList.remove('hidden');
 
   const m = ALL.find(p=>p.slug===slug) || {title:slug};
-  $('#title').textContent = m.category || '';
-  $('#pTitle').textContent = m.title;
-  $('#pMeta').textContent = [m.category,d(m.date)].filter(Boolean).join(' · ');
-  $('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
+  qs('#title').textContent = m.category || '';
+  qs('#pTitle').textContent = m.title;
+  qs('#pMeta').textContent = [m.category,d(m.date)].filter(Boolean).join(' · ');
+  qs('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
 
   try{
     const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
     const r = await ffetch(url,{cache:'no-cache'}, 'post-md:'+slug);
     const md = await r.text();
     const body = md.replace(/^---[\s\S]*?---\s*/, '');
-    $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
-    $('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
+    qs('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
+    qs('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
     document.title = m.title + ' - Blog';
   }catch(e){
     LAST_ERR = (e && e.message) ? e.message : String(e||'');
-    $('#pBody').innerHTML = '<p class="m">게시글을 찾을 수 없습니다.</p>';
+    qs('#pBody').innerHTML = '<p class="m">게시글을 찾을 수 없습니다.</p>';
   }
 }
 
@@ -398,7 +387,7 @@ function route(){
 }
 window.addEventListener('hashchange', route);
 
-/* ===== Lazy cover + 폴백 ===== */
+/* ===== Lazy cover ===== */
 function initLazyCovers(){
   const getCands = (img) => {
     try{
@@ -433,14 +422,13 @@ function initLazyCovers(){
   document.querySelectorAll('#viewCats .library img[data-cands]').forEach(img => io.observe(img));
 }
 
-/* ===== Jabas 애니메이션 (CodePen 스타일 보정) ===== */
+/* ===== Jabas 애니메이션 ===== */
 function attachAnimations(){
   const animSpeed = 750;
   const $lib = $('.libwrap .library');
   const $overlayPage = $('.libwrap .overlay-page');
   const $overlaySummary = $('.libwrap .overlay-summary');
 
-  // 마지막 행인지 안전하게 판별
   function isBottomRow($sel){
     const tops = $('.libwrap li.book').map((i,el)=>$(el).position().top).get();
     const maxTop = Math.max.apply(null, tops);
@@ -462,6 +450,7 @@ function attachAnimations(){
 
   function selectAnimation($li){
     if ($li.hasClass('animating') || $li.hasClass('selected')) return;
+    dbg('INFO','select', $li.data('cat'));
     $li.addClass('animating selected');
 
     const $cover = $li.find('.cover');
@@ -478,7 +467,7 @@ function attachAnimations(){
     const px = overlayVertPos($li);
     $overlaySummary.css('left',px);
 
-    const ht = $('.libwrap').outerHeight(); // 컨테이너 기준
+    const ht = $('.libwrap').outerHeight();
     const pos = $li.position();
     const start = pos.top + 30;
     const speed = Math.round((animSpeed/ht) * 450);
@@ -499,6 +488,7 @@ function attachAnimations(){
   function deselectAnimation($li){
     if (!$li.length) return;
     if ($li.hasClass('animating')) return;
+    dbg('INFO','deselect', $li.data('cat'));
     $li.addClass('animating');
 
     const $cover = $li.find('.cover');
@@ -531,12 +521,11 @@ function attachAnimations(){
     });
   }
 
-  // 이벤트 바인딩 (CodePen 동작과 동일 UX)
-  $('.libwrap').on('click', 'li.book', function(e){
+  $('.libwrap').on('click', 'li.book', function(){
     const $current = $('.libwrap li.book.selected');
     const $me = $(this);
-    if ($me.is($current)) return;           // 이미 선택된 항목이면 무시
-    if ($current.length){                   // 다른 항목이 열려있으면 닫고 열기
+    if ($me.is($current)) return;
+    if ($current.length){
       deselectAnimation($current);
       setTimeout(()=> selectAnimation($me), 40);
     } else {
@@ -544,14 +533,12 @@ function attachAnimations(){
     }
   });
 
-  // 선택된 상태에서 표지 클릭 → 닫기
   $('.libwrap').on('click', '.book .cover', function(e){
     const $li = $(this).closest('li.book');
     if ($li.hasClass('selected')) { e.stopPropagation(); deselectAnimation($li); }
   });
 
-  // 오버레이 클릭/ESC로 닫기
-  $overlayPage.on('click', ()=> deselectAnimation($('.libwrap li.book.selected')));
+  $('.libwrap .overlay-page').on('click', ()=> deselectAnimation($('.libwrap li.book.selected')));
   $(document).on('keydown', (e)=>{ if (e.key === 'Escape') deselectAnimation($('.libwrap li.book.selected')); });
 }
 
@@ -565,16 +552,10 @@ async function runHealthCheck(){
     if ((j.posts||[]).length){
       const first = j.posts[0];
       const mdURL = POSTS_DIR + encodeURIComponent(first.slug) + '.md';
-      try{
-        await ffetch(mdURL,{cache:'no-store'},'first-md');
-        dbg('INFO','first md ok', mdURL);
-      }catch{}
+      try{ await ffetch(mdURL,{cache:'no-store'},'first-md'); dbg('INFO','first md ok', mdURL); }catch{}
       const cat = first.category || '기타';
       const cand = coverCandidates(cat, first.cover||'')[0];
-      try{
-        await ffetch(cand,{cache:'no-store'},'cover-test');
-        dbg('INFO','cover candidate ok', cand);
-      }catch{}
+      try{ await ffetch(cand,{cache:'no-store'},'cover-test'); dbg('INFO','cover candidate ok', cand); }catch{}
     }
   }catch{}
   dbg('INFO','— 헬스체크 완료 —');
