@@ -1,102 +1,154 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Library — Flip Books (원본 유지 + 배경 + 다양 형태)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>보관된 도서</title>
+
+<!-- Markdown & code highlight -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+
 <style>
-/* =====================[ 네가 준 책 펼침 CSS: 원본 유지 ]===================== */
-body {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 1200px;
-  background: #ccc;
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-}
-.book {
-  transform-style: preserve-3d;
-  position: relative;
-  height: 300px;
-  cursor: pointer;
-  backface-visibility: visible;
-}
-.front, .back, .page1, .page2, .page3, .page4, .page5, .page6 {
-  transform-style: preserve-3d;
-  position: absolute;
-  width: 200px;
-  height: 100%;
-  top: 0; left: 0;
-  transform-origin: left center;
-  transition: transform .5s ease-in-out, box-shadow .35s ease-in-out;
-}
-.front, .back {
-  background: navy;
-}
-.front, .page1, .page3, .page5 {
-  border-bottom-right-radius: .5em;
-  border-top-right-radius: .5em;
-}
-.back, .page2, .page4, .page6 {
-  border-bottom-right-radius: .5em;
-  border-top-right-radius: .5em;
-}
-.page1 { background: #efefef; }
-.page2 { background: #efefef; }
-.page3 { background: #f5f5f5; }
-.page4 { background: #f5f5f5; }
-.page5 { background: #fafafa; }
-.page6 { background: #fdfdfd; }
-.book:hover .front { transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .page1 { transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .page2 { transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .page3 { transform: rotateY(-140deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .page4 { transform: rotateY(-40deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .page5 { transform: rotateY(-130deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .page6 { transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:hover .back  { transform: rotateY(-20deg)  scale(1.1); }
-
-/* =====================[ PATCH 1: 책 커버/리본/스파인/크기 다양화 ]===================== */
-/* 기본값(필요하면 전역에서 조정) */
+/* ============== 기본 ============== */
 :root{
-  --cover-image: url('https://picsum.photos/seed/placeholder/600/900'); /* 폴백 */
+  --page-w: 1100px;
+
+  /* 책 기본값 (책마다 개별 덮어쓰기 가능: posts.json 에 bw/bh 지정) */
+  --bw: 140px;
+  --bh: 224px;
+
+  /* 리본(책갈피) 기본값 */
   --ribbon-color: #e63746;
-  --ribbon-w: 22px;
+  --ribbon-w: 20px;
   --ribbon-l: 85%;
-  --spine-color: #243;       /* 스파인 색 */
-  --spine-w: 14px;           /* 스파인 너비 */
 }
-/* 책 개별 크기/라운드 변수 적용 (원본 width/height를 변수로 덮어쓰기) */
-.book{ --bw:200px; --bh:300px; --br:.5em; height: var(--bh); }
-.front, .back, .page1, .page2, .page3, .page4, .page5, .page6{
-  width: var(--bw) !important;  /* 원본 200px 덮어쓰기 */
-}
-/* 라운드도 변수로 덮어쓰기 */
-.front, .page1, .page3, .page5{
-  border-bottom-right-radius: var(--br) !important;
-  border-top-right-radius: var(--br) !important;
-}
-.back, .page2, .page4, .page6{
-  border-bottom-right-radius: var(--br) !important;
-  border-top-right-radius: var(--br) !important;
+*{ box-sizing:border-box }
+html,body{ height:100% }
+body{
+  margin:0;
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  color:#1f2a3a;
+  display:grid;
+  place-items:start center;
+  background:#dfe6f1;
 }
 
-/* 커버 이미지 + 비네트 */
-.front{
-  background-color: navy; /* 커버 없을 때 폴백 */
-  background-image:
-    linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.18)),
-    var(--cover-image);
-  background-size: cover;
-  background-position: center;
+/* ============== 도서관 느낌 배경(책등/선반, 나무X) ============== */
+.bg{
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 50% 100%, rgba(0,0,0,.15), transparent 55%),
+    linear-gradient(120deg, #e9edf3 0%, #d4dbe5 45%, #e9edf3 100%);
 }
-/* 긴 책갈피 리본 */
-.front::after{
+.bg::before{
   content:"";
-  position:absolute; top:-2px; right:12px;
+  position:absolute; inset:-6% -6%;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(70,80,110,.22) 0 9px, rgba(180,190,205,.14) 9px 22px, rgba(120,85,60,.16) 22px 36px),
+    repeating-linear-gradient(90deg,
+      rgba(60,50,40,.16) 0 12px, rgba(200,215,225,.10) 12px 26px, rgba(90,60,40,.12) 26px 42px);
+  filter: blur(12px) saturate(.9);
+  opacity:.40;
+  --shelf-h: 120px; --gap: 36px;
+  -webkit-mask:
+    repeating-linear-gradient(to bottom,
+      transparent 0, transparent var(--gap),
+      #fff var(--gap) calc(var(--gap) + var(--shelf-h)));
+          mask:
+    repeating-linear-gradient(to bottom,
+      transparent 0, transparent var(--gap),
+      #fff var(--gap) calc(var(--gap) + var(--shelf-h)));
+}
+.bg::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(0deg, rgba(255,255,255,.75), rgba(255,255,255,0) 40%);
+  mix-blend-mode:multiply;
+  opacity:.45;
+}
+
+/* ============== 상단 내비 ============== */
+.header{
+  position:fixed; top:14px; left:14px; z-index:5; display:flex; gap:8px; align-items:center;
+}
+.btn{
+  appearance:none; border:1px solid rgba(0,0,0,.15);
+  background:rgba(0,0,0,.55); color:#fff;
+  padding:8px 10px; border-radius:10px; font-weight:700; font-size:14px;
+  text-decoration:none; backdrop-filter: blur(6px) saturate(1.05);
+}
+.btn:hover{ background:rgba(0,0,0,.65) }
+
+.title{
+  position:fixed; top:18px; right:18px; z-index:5;
+  color:#223; font-weight:800; font-size:16px; letter-spacing:.02em;
+  background:rgba(255,255,255,.6); padding:6px 10px; border-radius:10px;
+  border:1px solid rgba(0,0,0,.08);
+}
+
+/* ============== 컨텐츠 래퍼 ============== */
+.content{
+  width: min(var(--page-w), 100%);
+  margin-top:64px;
+  position:relative;
+  padding: 8px 12px 24px;
+}
+
+/* ============== 카테고리 탭/검색 ============== */
+.controls{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:6px 0 10px;
+}
+.tabs{
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+.tab{
+  background:#eef2f7; color:#1f2a3a; border:1px solid rgba(0,0,0,.08);
+  padding:6px 10px; border-radius:9px; font-weight:700; cursor:pointer;
+}
+.tab.active{ background:#1f2a3a; color:#fff }
+.search{
+  margin-left:auto; display:flex; align-items:center; gap:6px;
+}
+.search input[type="search"]{
+  padding:8px 10px; border-radius:10px; border:1px solid rgba(0,0,0,.1); min-width:220px;
+}
+
+/* ============== 라이브러리 그리드 ============== */
+ul.library{
+  margin:0; padding:0; list-style:none;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 22px 16px;
+}
+li.card{
+  display:grid; justify-items:center; gap:8px;
+}
+
+/* ============== 책 커버(hover/selected에서만 리본) ============== */
+.book{
+  position:relative;
+  width: var(--bw); height: var(--bh);
+  cursor:pointer;
+  transition: transform .2s ease, filter .2s ease;
+}
+.book:hover{ transform: translateY(-3px); filter:saturate(1.03) }
+
+.cover{
+  width: var(--bw); height: var(--bh);
+  box-shadow: 3px 3px 5px rgba(0,0,0,.25);
+  position:relative; border-radius: 8px; overflow:hidden;
+}
+.cover img{
+  display:block; width:100%; height:100%; object-fit:cover; background:#e5e5e5;
+}
+
+/* 책갈피 리본 — 기본 숨김, hover/selected/focus에서만 */
+.cover::after{
+  content:"";
+  position:absolute; top:-2px; right:10px;
   width: var(--ribbon-w); height: var(--ribbon-l);
   background:
     linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,0) 18%),
@@ -105,182 +157,232 @@ body {
   filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
   border-radius: 4px 4px 0 0;
   pointer-events:none;
-  z-index: 2;
+  opacity:0; transform: translateY(-6px);
+  transition: opacity .25s ease, transform .25s ease;
 }
-/* 스파인(왼쪽으로 살짝 튀어나온 느낌) */
-.book::before{
-  content:"";
-  position:absolute; left: calc(-1 * var(--spine-w)); top:0;
-  width: var(--spine-w); height: 100%;
-  background:
-    linear-gradient(90deg,
-      color-mix(in oklab, var(--spine-color) 85%, black 15%),
-      color-mix(in oklab, var(--spine-color) 65%, white 15%) 35%,
-      color-mix(in oklab, var(--spine-color) 92%, black 8%) 100%);
-  box-shadow: 2px 0 6px rgba(0,0,0,.25), inset -1px 0 0 rgba(255,255,255,.12);
-  border-radius: 6px 0 0 6px;
-  pointer-events:none;
+.book:hover .cover::after,
+.book.selected .cover::after,
+.book:focus-within .cover::after{
+  opacity:1; transform: translateY(0);
 }
 
-/* =====================[ PATCH 2: ‘도서관’ 느낌 배경 ]===================== */
-/* 멀리 흐릿한 ‘책등이 꽂힌 선반들’ 레이어. 나무 무늬 없이 책등 스트라이프만 */
-.lib-bg{
-  position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 100%, rgba(0,0,0,.22), transparent 55%),
-              linear-gradient(120deg, #e9edf3 0%, #d7dde6 45%, #e9edf3 100%);
+.caption{
+  width: var(--bw); text-align:center; font-weight:800; font-size:14px; line-height:1.35; color:#0d2234;
 }
-/* 책등 덩어리(세로 스트라이프)를 ‘선반 마스크’로 잘라서 보여줌 */
-.lib-bg .books{
-  position:absolute; inset:-5% -5%;
-  /* 여러 겹의 세로 스트라이프를 다른 간격/오프셋으로 겹쳐 다양하게 */
-  background:
-    repeating-linear-gradient(90deg,
-      rgba(70, 80,110,.22) 0 10px, rgba(180,190,205,.14) 10px 26px, rgba(120,85,60,.16) 26px 40px),
-    repeating-linear-gradient(90deg,
-      rgba(60, 50, 40,.18) 0 14px, rgba(200,215,225,.12) 14px 28px, rgba(90,60,40,.12) 28px 46px),
-    repeating-linear-gradient(90deg,
-      rgba(40, 55, 90,.16) 0 8px,  rgba(160,170,190,.10) 8px 18px,  rgba(110,80,55,.12) 18px 32px);
-  filter: blur(12px) saturate(.9);
-  opacity:.40;
-  /* 선반 위치 마스크 (가로 줄 내부에서만 보이게) */
-  --shelf-h: 120px;    /* 선반 ‘책 영역’ 높이 */
-  --gap: 38px;         /* 선반 사이 여백 */
-  -webkit-mask:
-    repeating-linear-gradient(to bottom,
-      transparent 0, transparent var(--gap),
-      #fff var(--gap) calc(var(--gap) + var(--shelf-h))
-    );
-  mask:
-    repeating-linear-gradient(to bottom,
-      transparent 0, transparent var(--gap),
-      #fff var(--gap) calc(var(--gap) + var(--shelf-h))
-    );
-}
-.lib-bg .shelf-shade{
-  /* 선반 그림자 같은 가로 음영 */
-  position:absolute; inset:0;
-  background:
-    repeating-linear-gradient(to bottom,
-      rgba(0,0,0,.20) 0 2px,
-      rgba(0,0,0,0) 2px calc(120px + 38px)  /* shelf-h + gap과 맞춤 */
-    );
-  filter: blur(3px);
-  opacity:.35;
-}
-
-/* =====================[ PATCH 3: 그리드 + 헤더(홈/뒤로) ]===================== */
-.header{
-  position: fixed; inset: 14px auto auto 14px; z-index: 5; display:flex; gap:8px
-}
-.btn{
-  appearance:none; border:1px solid rgba(0,0,0,.15);
-  background: rgba(0,0,0,.55); color:#fff; padding:8px 10px; border-radius:10px;
-  text-decoration:none; font-weight:700; font-size:14px; backdrop-filter: blur(6px) saturate(1.05);
-}
-.btn:hover{ background: rgba(0,0,0,.65) }
-.title{
-  position: fixed; top: 18px; right: 18px; z-index:5;
-  color:#223; font-weight:800; letter-spacing:.02em; font-size:16px;
-  background: rgba(255,255,255,.6); padding:6px 10px; border-radius:10px; border:1px solid rgba(0,0,0,.08);
-}
-
-.wrapper{ width:100%; max-height:100vh; overflow:auto; display:grid; place-items:center; padding:64px 0 28px }
-.library{
-  display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 28px 22px; width:min(1140px, 100%); padding: 0 18px; box-sizing:border-box;
-}
-.item{ display:grid; justify-items:center; gap:8px }
-.caption{ width:var(--bw,200px); text-align:center; font-weight:700; font-size:14px; line-height:1.35; color:#1f2a3a }
 .meta{ font-size:12px; color:#5c6b7a }
 
-/* 키보드 포커스도 펼침 허용(선택) */
-.book:focus-within .front{ transform: rotateY(-160deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .page1{ transform: rotateY(-150deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .page2{ transform: rotateY(-30deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .page3{ transform: rotateY(-140deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .page4{ transform: rotateY(-40deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .page5{ transform: rotateY(-130deg) scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .page6{ transform: rotateY(-50deg)  scale(1.1); box-shadow: 0 1em 3em 0 rgba(0,0,0,.2); }
-.book:focus-within .back { transform: rotateY(-20deg)  scale(1.1); }
+/* ============== 글 보기(본문) ============== */
+#viewPost{ display:none; }
+.paper{
+  position:relative; padding:26px 22px;
+  background:
+    radial-gradient(150% 100% at 0% 0%, rgba(0,0,0,.14), transparent 40%),
+    radial-gradient(150% 100% at 100% 0%, rgba(0,0,0,.12), transparent 42%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.035), rgba(0,0,0,.035) 1px, transparent 1px, transparent 26px),
+    linear-gradient(0deg,#ffffff,#f6f8fb);
+  border-radius:12px; border:1px solid rgba(0,0,0,.1);
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 14px 30px rgba(0,0,0,.15);
+}
+#pTitle{ margin:0 0 6px; font-size:24px }
+#pMeta{ color:#5c6b7a; margin-bottom:14px }
+#pBody{ line-height:1.75; font-size:16px; color:#18202a }
+#pBody h1,#pBody h2,#pBody h3{ margin-top:1.6em }
+#pBody img{ display:block; margin:12px auto; border-radius:10px; max-width:100% }
+#pBody blockquote{ margin:14px 0; padding:10px 12px; border-left:4px solid #ffd16666; background:#ffd16622; color:#745600; border-radius:8px }
+#pBody a{ color:#0b6cff; text-decoration:underline }
 
-/* 접근성: 모션 감소 */
+/* 접근성 */
 @media (prefers-reduced-motion: reduce){
-  .book *{ transition:none !important }
+  .book, .cover::after{ transition:none !important }
 }
 </style>
 </head>
 <body>
+<div class="bg" aria-hidden="true"></div>
 
-<!-- 도서관 배경 -->
-<div class="lib-bg" aria-hidden="true">
-  <div class="books"></div>
-  <div class="shelf-shade"></div>
-</div>
-
-<!-- 헤더: 홈/뒤로 -->
 <nav class="header" aria-label="내비게이션">
-  <a class="btn" id="homeBtn" href="/">← 홈</a>
+  <a class="btn" id="homeBtn" href="#/">← 홈</a>
   <button class="btn" id="backBtn" type="button">뒤로</button>
 </nav>
-<div class="title">보관된 도서</div>
+<div class="title" id="pageTitle">보관된 도서</div>
 
-<!-- 책 목록 -->
-<div class="wrapper">
-  <section class="library" aria-label="도서 목록">
+<main class="content">
 
-    <!-- 다양한 크기/스파인/리본/커버 예시들 -->
-    <article class="item">
-      <div class="book" style="--bw:210px; --bh:300px; --br:.6em; --cover-image:url('https://picsum.photos/seed/a1/600/900'); --spine-color:#2f3a5e; --spine-w:16px; --ribbon-color:#d72d4f; --ribbon-l:92%; --ribbon-w:26px" tabindex="0" role="group" aria-label="그림자 서점의 비밀">
-        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
+  <!-- 메인: 카테고리 + 리스트 -->
+  <section id="viewList" aria-label="도서 목록">
+    <div class="controls">
+      <div class="tabs" id="tabs"></div>
+      <div class="search">
+        <input id="q" type="search" placeholder="제목/태그 검색…" aria-label="검색">
       </div>
-      <div class="caption">그림자 서점의 비밀</div><div class="meta">추리 · 2025-09-10</div>
-    </article>
-
-    <article class="item">
-      <div class="book" style="--bw:190px; --bh:280px; --br:.45em; --cover-image:url('https://picsum.photos/seed/a2/600/900'); --spine-color:#684c3a; --spine-w:18px; --ribbon-color:#7b3cff; --ribbon-l:88%" tabindex="0" role="group" aria-label="달빛 기록 보관소">
-        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
-      </div>
-      <div class="caption">달빛 기록 보관소</div><div class="meta">에세이 · 2025-08-22</div>
-    </article>
-
-    <article class="item">
-      <div class="book" style="--bw:230px; --bh:320px; --br:.8em; --cover-image:url('https://picsum.photos/seed/a3/600/900'); --spine-color:#37524f; --spine-w:14px; --ribbon-color:#1fbfbf; --ribbon-w:20px; --ribbon-l:95%" tabindex="0" role="group" aria-label="바람이 멈춘 도서관">
-        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
-      </div>
-      <div class="caption">바람이 멈춘 도서관</div><div class="meta">환상 · 2025-07-30</div>
-    </article>
-
-    <article class="item">
-      <div class="book" style="--bw:200px; --bh:300px; --br:.5em; --cover-image:url('https://picsum.photos/seed/a4/600/900'); --spine-color:#3b3b6b; --spine-w:12px; --ribbon-color:#f59f00; --ribbon-l:80%" tabindex="0" role="group" aria-label="유리 정원의 편지">
-        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
-      </div>
-      <div class="caption">유리 정원의 편지</div><div class="meta">로맨스 · 2025-06-12</div>
-    </article>
-
-    <article class="item">
-      <div class="book" style="--bw:215px; --bh:290px; --br:.6em; --cover-image:url('https://picsum.photos/seed/a5/600/900'); --spine-color:#5b2f2f; --spine-w:20px; --ribbon-color:#ff6b6b; --ribbon-w:28px; --ribbon-l:98%" tabindex="0" role="group" aria-label="밤의 아카이브">
-        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
-      </div>
-      <div class="caption">밤의 아카이브</div><div class="meta">스릴러 · 2025-05-04</div>
-    </article>
-
-    <article class="item">
-      <div class="book" style="--bw:185px; --bh:310px; --br:.45em; --cover-image:url('https://picsum.photos/seed/a6/600/900'); --spine-color:#254e8a; --spine-w:16px; --ribbon-color:#4dabf7; --ribbon-l:90%" tabindex="0" role="group" aria-label="묵음과 공백 사이">
-        <div class="back"></div><div class="page6"></div><div class="page5"></div><div class="page4"></div><div class="page3"></div><div class="page2"></div><div class="page1"></div><div class="front"></div>
-      </div>
-      <div class="caption">묵음과 공백 사이</div><div class="meta">시 · 2025-04-17</div>
-    </article>
-
+    </div>
+    <ul class="library" id="library"></ul>
   </section>
-</div>
+
+  <!-- 글 보기 -->
+  <section id="viewPost" aria-label="글 본문">
+    <div class="paper">
+      <h2 id="pTitle"></h2>
+      <div id="pMeta" class="meta"></div>
+      <article id="pBody"></article>
+    </div>
+  </section>
+
+</main>
 
 <script>
-/* 뒤로가기: 히스토리가 없으면 홈으로 */
-document.getElementById('backBtn').addEventListener('click', ()=>{
+/* ===== 경로/도구 ===== */
+const BASE = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/, '/');
+const DATA_URL  = BASE + 'data/posts.json';
+const POSTS_DIR = BASE + 'posts/';
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const formatDate = x => x ? new Date(x).toISOString().slice(0,10) : '';
+
+/* ===== 상태 ===== */
+let ALL = [];
+let FILTERED = [];
+let CURRENT_CAT = '전체';
+
+/* ===== 카테고리 탭 렌더 ===== */
+function renderTabs(){
+  const tabs = $('#tabs');
+  const cats = ['전체', ...new Set(ALL.map(p=>p.category || '기타'))];
+  tabs.innerHTML = cats.map(c => `<button class="tab${c===CURRENT_CAT?' active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  tabs.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      CURRENT_CAT = btn.dataset.cat;
+      location.hash = '#/cat/' + encodeURIComponent(CURRENT_CAT);
+    });
+  });
+}
+
+/* ===== 리스트 렌더 ===== */
+function renderList(){
+  $('#viewPost').style.display = 'none';
+  $('#viewList').style.display = '';
+  $('#pageTitle').textContent = '보관된 도서';
+
+  renderTabs();
+
+  const q = $('#q').value.trim().toLowerCase();
+  const list = ALL.filter(p=>{
+    const inCat = (CURRENT_CAT==='전체') || ((p.category||'기타')===CURRENT_CAT);
+    if (!inCat) return false;
+    if (!q) return true;
+    const hay = [p.title,p.author,(p.tags||[]).join(','),p.slug,p.category].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+
+  const $lib = $('#library');
+  $lib.innerHTML = list.map(p => cardHTML(p)).join('');
+
+  // 카드 이벤트(클릭 → 글 보기)
+  $$('#library .book').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const slug = el.dataset.slug;
+      location.hash = '#/post/' + encodeURIComponent(slug);
+    });
+    el.addEventListener('keydown', (e)=>{
+      if (e.key==='Enter') {
+        const slug = el.dataset.slug;
+        location.hash = '#/post/' + encodeURIComponent(slug);
+      }
+    });
+  });
+}
+
+/* 카드 HTML */
+function cardHTML(p){
+  const bw = p.bw || 'var(--bw)';
+  const bh = p.bh || 'var(--bh)';
+  const ribbon = p.ribbon || 'var(--ribbon-color)';
+  const ribbonW = p.ribbonW || 'var(--ribbon-w)';
+  const ribbonL = p.ribbonL || 'var(--ribbon-l)';
+  const cover = p.cover || (BASE + 'assets/covers/_placeholder.jpg');
+
+  return `
+  <li class="card">
+    <div class="book" tabindex="0" data-slug="${esc(p.slug)}" style="--bw:${esc(bw)}; --bh:${esc(bh)}; --ribbon-color:${esc(ribbon)}; --ribbon-w:${esc(ribbonW)}; --ribbon-l:${esc(ribbonL)}">
+      <div class="cover" style="width:${esc(bw)};height:${esc(bh)}">
+        <img src="${esc(cover)}" alt="${esc(p.title)} 커버">
+      </div>
+    </div>
+    <div class="caption">${esc(p.title)}</div>
+    <div class="meta">${esc(p.category||'기타')} · ${esc(formatDate(p.date))}</div>
+  </li>`;
+}
+
+/* ===== 글 보기 ===== */
+async function renderPost(slug){
+  const post = ALL.find(p=>p.slug===slug) || {title:slug};
+  $('#viewList').style.display = 'none';
+  $('#viewPost').style.display = '';
+  $('#pageTitle').textContent = post.category ? `${post.category}` : '글 보기';
+
+  $('#pTitle').textContent = post.title || slug;
+  $('#pMeta').textContent = [post.category, formatDate(post.date)].filter(Boolean).join(' · ');
+  $('#pBody').innerHTML = '불러오는 중…';
+
+  const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
+  try{
+    const r = await fetch(url,{cache:'no-cache'});
+    if(!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    const md = await r.text();
+    const body = md.replace(/^---[\\s\\S]*?---\\s*/, ''); // frontmatter 제거
+    $('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
+    $('#pBody').querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el));
+    document.title = post.title + ' - 보관된 도서';
+  }catch(e){
+    console.error(e);
+    $('#pBody').innerHTML = `<p>게시글을 찾을 수 없습니다.<br><small>경로: ${esc(url)}</small></p>`;
+  }
+}
+
+/* ===== 라우팅 ===== */
+function route(){
+  const mPost = location.hash.match(/^#\/post\/(.+)$/);
+  const mCat  = location.hash.match(/^#\/cat\/(.+)$/);
+  if (mPost){ renderPost(decodeURIComponent(mPost[1])); return; }
+  if (mCat){ CURRENT_CAT = decodeURIComponent(mCat[1]); renderList(); return; }
+  CURRENT_CAT = '전체';
+  renderList();
+}
+
+/* 검색 핸들러 */
+$('#q').addEventListener('input', renderList);
+
+/* 뒤로가기 */
+$('#backBtn').addEventListener('click', ()=>{
   if (history.length > 1) history.back();
-  else location.assign('/');
+  else location.hash = '#/';
 });
-/* 홈 버튼은 a[href="/"]로 처리(필요 시 경로 바꿔줘) */
+
+/* ===== 초기화 ===== */
+(async ()=>{
+  try{
+    const r = await fetch(DATA_URL,{cache:'no-cache'});
+    const j = await r.json();
+    ALL = (j.posts||[]).map(p=>({
+      ...p,
+      category: p.category || '기타'
+    }));
+  }catch(e){
+    console.warn('posts.json 로드 실패. 샘플 데이터 사용', e);
+    // 샘플
+    ALL = [
+      { slug:'clockwork', title:'A Clockwork Orange', author:'Anthony Burgess', date:'2025-05-01', category:'소설', cover:'https://picsum.photos/seed/clockwork/280/448', ribbon:'#d72d4f' },
+      { slug:'general-theory-of-love', title:'A General Theory of Love', author:'Lewis · Amini · Lannon', date:'2025-04-12', category:'에세이', cover:'https://picsum.photos/seed/generaltheory/280/448', ribbon:'#7b3cff', ribbonL:'92%' },
+      { slug:'watteau', title:'Antoine’s Alphabet', author:'Jed Perl', date:'2025-04-02', category:'미술', cover:'https://picsum.photos/seed/watteau/280/448', ribbon:'#1fbfbf', ribbonW:'18px' },
+      { slug:'brave-new-world', title:'Brave New World', author:'Aldous Huxley', date:'2025-03-15', category:'소설', cover:'https://picsum.photos/seed/bravenew/280/448', ribbon:'#f59f00', ribbonL:'80%' },
+      { slug:'centauri-device', title:'Centauri Device', author:'M. John Harrison', date:'2025-02-20', category:'SF', cover:'https://picsum.photos/seed/centauri/280/448', ribbon:'#ff6b6b', ribbonW:'26px', ribbonL:'98%' },
+      { slug:'archivist', title:'The Archivist', author:'Martha Cooley', date:'2025-02-03', category:'소설', cover:'https://picsum.photos/seed/archivist/280/448', ribbon:'#4dabf7', ribbonL:'90%' },
+    ];
+  }
+  route(); addEventListener('hashchange', route);
+})();
 </script>
 </body>
 </html>
