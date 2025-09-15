@@ -96,30 +96,33 @@ a.btn:hover, button.btn:hover {
   padding: 20px;
   background: rgba(16, 23, 30, 0.4);
   border-radius: 14px;
+  overflow: hidden;
 }
 .libwrap ul.library {
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow: hidden;
-  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
 }
 .libwrap li.book {
   position: relative;
-  top: 0;
-  left: 0;
-  margin: 0;
-  padding: 10px;
-  float: left;
   width: 140px;
   height: 224px;
   cursor: pointer;
   background: transparent;
-  transition: all var(--transition-speed) ease;
+  transition: transform var(--transition-speed) ease-out;
+  flex-shrink: 0;
+  z-index: 1;
 }
 .libwrap .book:hover { background-color: rgba(255, 255, 255, 0.05); }
-.libwrap .book.selected { z-index: 4; }
-.libwrap .book.selected:hover, .libwrap li.book.selected:active { background-color: transparent; }
+.libwrap .book.selected {
+  transform: scale(2.14);
+  z-index: 5;
+  transition: transform 0.5s ease-out;
+}
 
 /* 책 표지 */
 .libwrap .book .cover {
@@ -129,9 +132,6 @@ a.btn:hover, button.btn:hover {
   height: 224px;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
   transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease, left var(--transition-speed) ease, right var(--transition-speed) ease;
-}
-.libwrap .book.selected .cover {
-  transform: scale(2.14);
 }
 .libwrap .book.selected .cover img {
   border: 10px solid transparent;
