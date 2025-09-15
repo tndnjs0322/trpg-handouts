@@ -3,94 +3,346 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Blog</title>
+<title>블로그</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='90' font-size='90'>📜</text></svg>">
 
-<!-- libs -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://cdn.jsdelivr.net/gh/orion-orion/orion-assets@main/Pretendard-Orion.css" rel="stylesheet" />
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
 
 <style>
-  :root{--line:#1e2732;--panel:#10171e;--text:#e7edf3;--muted:#a8b3bf}
-  *{box-sizing:border-box}
-  body{margin:0;background:#0d141b;color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-  main{max-width:1040px;margin:28px auto;padding:0 16px}
-  main>header{display:flex;gap:8px;align-items:center;margin-bottom:12px;position:relative}
-  a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none}
+/* ===== 전역 변수 & 기본 스타일 ===== */
+:root {
+  --bg: #0d141b;
+  --panel: #10171e;
+  --line: #1e2732;
+  --text: #e7edf3;
+  --muted: #a8b3bf;
+  --accent: #2c5282; /* 신비로운 도서관 컨셉을 위한 포인트 색상 */
+  --highlight-text: #b3c5e8; /* 강조 텍스트 색상 */
+  --transition-speed: 0.75s;
+}
 
-  .list{display:grid;gap:12px}
-  .item{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
-  .item .m{color:var(--muted);font-size:12px;margin-top:4px}
-  .post{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
-  .post .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
-  .post img{max-width:100%;border-radius:10px}
-  pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
-  .hidden{display:none}
+/* 폰트, 기본 레이아웃 */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.6 "Pretendard", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  transition: background var(--transition-speed) ease;
+}
 
-  /* ====== Jabas Library ====== */
-  .libwrap{position:relative}
-  .libwrap ul.library{margin:0;padding:0 0 10px 0;list-style:none;overflow:hidden;width:960px;max-width:100%}
-  .libwrap li.book{position:relative;top:0;left:0;margin:0;padding:10px;float:left;width:140px;height:224px;cursor:pointer}
-  .libwrap li.book.selected{z-index:4}
-  .libwrap .book:hover{background-color:#E5E5E5}
-  .libwrap .book:active{background-color:#D9D9D9}
-  .libwrap .book.selected:hover,.libwrap li.book.selected:active{background-color:transparent}
+main {
+  max-width: 1040px;
+  margin: 28px auto;
+  padding: 0 16px;
+  min-height: calc(100vh - 56px);
+}
 
-  .libwrap .book .cover{cursor:pointer;width:140px;height:224px;box-shadow:3px 3px 5px rgba(0,0,0,.3)}
-  .libwrap .book .cover img{background:#e5e5e5;width:140px;height:224px;border:0 solid #fff}
+/* 헤더 및 버튼 */
+main > header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  position: relative;
+}
 
-  .libwrap .book.selected .cover{position:absolute;top:10px}
-  .libwrap .book.selected.left-side.first .cover, .libwrap .book.selected.right-side .cover{left:10px;right:auto}
-  .libwrap .book.selected.right-side.last .cover, .libwrap .book.selected.left-side .cover{left:auto;right:10px}
+a.btn, button.btn {
+  border: 1px solid var(--line);
+  background: #0b1117;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+a.btn:hover, button.btn:hover {
+  background: #151e2a;
+  color: var(--highlight-text);
+  transform: translateY(-1px);
+}
 
-  .libwrap li.book .summary{
-    display:none;cursor:default;position:absolute;top:10px;z-index:4;padding:10px;width:450px;height:0;overflow:hidden;
-    background:#E5E5E5;color:#0d1117;border-radius:8px
-  }
-  .libwrap .summary h1{font-size:26px;line-height:32px;margin:0 0 4px}
-  .libwrap .summary h2{font-weight:400;font-style:italic;font-size:20px;margin:0 0 12px;padding:0 0 12px;border-bottom:2px dotted #999}
-  .libwrap .summary p{font-size:16px;line-height:22px;margin:0}
-  .libwrap .summary .mini{list-style:none;margin:10px 0 0;padding:0}
-  .libwrap .summary .mini li{margin:0 0 6px}
-  .libwrap .summary .mini a{color:#0b6cff;text-decoration:underline}
+.hidden { display: none !important; }
 
-  .libwrap .left-side .summary{left:160px;border-right:10px solid #D9D9D9}
-  .libwrap .left-side.first .summary{left:320px}
-  .libwrap .right-side .summary{left:-480px;border-left:10px solid #D9D9D9}
-  .libwrap .right-side.last .summary{left:-640px}
+/* 글 목록 */
+.list { display: grid; gap: 12px; }
+.item {
+  display: block;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+.item:hover {
+  background: #151e2a;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.item .m { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
-  .libwrap .overlay-page{display:none;position:absolute;inset:0;background:#fff;opacity:.7;z-index:2;cursor:pointer}
-  .libwrap .overlay-summary{display:none;position:absolute;top:0;left:0;height:0;width:480px;background:#E5E5E5;opacity:.9;z-index:3}
+/* 글 본문 */
+.post {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.post .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.post img { max-width: 100%; border-radius: 10px; }
+pre {
+  background: #0b1117;
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 10px;
+  overflow: auto;
+}
 
-  .clearfix::after{content:"";display:block;clear:both}
-  .libwrap li.book, .libwrap .book .cover, .libwrap .book .cover img{ box-sizing:content-box }
+/* ===== Jabas Library (도서관 테마 적용) ===== */
+.libwrap {
+  position: relative;
+  /* 신비로운 오라 효과 */
+  box-shadow: 0 0 50px 10px rgba(0, 0, 0, 0.2) inset;
+  padding: 20px;
+  background: rgba(16, 23, 30, 0.4);
+  border-radius: 14px;
+}
+.libwrap ul.library {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  width: 100%;
+}
+.libwrap li.book {
+  position: relative;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 10px;
+  float: left;
+  width: 140px;
+  height: 224px;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.libwrap .book:hover { background-color: rgba(255, 255, 255, 0.05); }
+.libwrap .book.selected { z-index: 4; }
+.libwrap .book.selected:hover, .libwrap li.book.selected:active { background-color: transparent; }
 
-  /* ===== 진단 카드 ===== */
-  .empty {margin:24px 0;padding:16px;border:1px solid var(--line);background:#0f151c;border-radius:12px}
-  .empty h3{margin:0 0 8px;font-size:16px}
-  .empty code{background:#0b1117;border:1px solid var(--line);padding:2px 6px;border-radius:6px}
-  .empty ul{margin:10px 0 0 18px}
+/* 책 표지 */
+.libwrap .book .cover {
+  cursor: pointer;
+  width: 140px;
+  height: 224px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
+  transition: box-shadow var(--transition-speed) ease;
+}
+.libwrap .book .cover img {
+  background: var(--panel);
+  width: 140px;
+  height: 224px;
+  border: 0 solid transparent;
+  transition: all var(--transition-speed) ease-in-out;
+  filter: saturate(1.1) brightness(0.9);
+}
+.libwrap .book:hover .cover img {
+  filter: saturate(1.3) brightness(1.1);
+}
 
-  /* ===== Whisper Debug v2 ===== */
-  .dbg-pill{display:none;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
-    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-    backdrop-filter: blur(12px) saturate(1.15); -webkit-backdrop-filter: blur(12px) saturate(1.15);
-    color:#dfe7ef;cursor:pointer;opacity:.85;transition:transform .18s ease,opacity .18s ease,box-shadow .18s ease,border-color .18s ease; margin-left:auto}
-  .dbg-pill:hover{transform:translateY(-1px);opacity:1;border-color:rgba(255,255,255,.22);box-shadow:0 8px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08)}
-  .dbg-pill svg{width:16px;height:16px;opacity:.95}
-  .dbg-pill .txt{font-size:12px;letter-spacing:.01em;opacity:.9}
-  .dbg-pill.badge::after{content:"";width:7px;height:7px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 0 4px rgba(255,107,107,.22);margin-left:2px;animation:dbg-ping 1.1s ease-out 1}
-  @keyframes dbg-ping{0%{transform:scale(.8);opacity:0}25%{opacity:1}100%{transform:scale(2.2);opacity:0}}
+.libwrap .book.selected .cover { position: absolute; top: 10px; }
+.libwrap .book.selected.left-side.first .cover, .libwrap .book.selected.right-side .cover { left: 10px; right: auto; }
+.libwrap .book.selected.right-side.last .cover, .libwrap .book.selected.left-side .cover { left: auto; right: 10px; }
 
-  #dbgDrawer{position:fixed;z-index:100;display:none;min-width:360px;width:min(720px,92vw);max-height:62vh;overflow:auto;border-radius:14px;border:1px solid rgba(255,255,255,.14);
-    background:rgba(14,20,28,.68);backdrop-filter: blur(14px) saturate(1.1);-webkit-backdrop-filter: blur(14px) saturate(1.1);box-shadow:0 18px 50px rgba(0,0,0,.45)}
-  #dbgDrawer.open{display:block}
-  #dbgDrawer header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
-  #dbgDrawer header h4{margin:0;font-size:12px;opacity:.85;letter-spacing:.02em;text-transform:uppercase}
-  #dbgDrawer .sp{flex:1}
-  #dbgDrawer header button{padding:6px 8px;font-size:12px;border-radius:8px;cursor:pointer;border:1px solid #2a3a46;background:#0f1821;color:#cfe1f0}
-  #dbgDrawer pre{margin:0;padding:10px 12px;background:transparent;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+/* 요약 패널 */
+.libwrap li.book .summary {
+  display: none;
+  cursor: default;
+  position: absolute;
+  top: 10px;
+  z-index: 4;
+  padding: 20px;
+  width: 450px;
+  height: 0;
+  overflow: hidden;
+  background: rgba(14, 20, 28, 0.9); /* 반투명 패널 */
+  color: var(--text);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+}
+.libwrap .summary h1 {
+  font-size: 26px;
+  line-height: 32px;
+  margin: 0 0 4px;
+  color: var(--highlight-text);
+  text-shadow: 0 0 10px var(--accent);
+}
+.libwrap .summary h2 {
+  font-weight: 400;
+  font-style: italic;
+  font-size: 20px;
+  margin: 0 0 12px;
+  padding: 0 0 12px;
+  border-bottom: 2px dotted rgba(255, 255, 255, 0.1);
+}
+.libwrap .summary p {
+  font-size: 16px;
+  line-height: 22px;
+  margin: 0;
+}
+.libwrap .summary .mini { list-style: none; margin: 10px 0 0; padding: 0; }
+.libwrap .summary .mini li { margin: 0 0 6px; }
+.libwrap .summary .mini a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.libwrap .summary .mini a:hover { text-decoration: underline; }
+
+.libwrap .left-side .summary { left: 160px; border-right: 10px solid rgba(255, 255, 255, 0.1); }
+.libwrap .left-side.first .summary { left: 320px; }
+.libwrap .right-side .summary { left: -480px; border-left: 10px solid rgba(255, 255, 255, 0.1); }
+.libwrap .right-side.last .summary { left: -640px; }
+
+/* 오버레이 */
+.libwrap .overlay-page {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2;
+  cursor: pointer;
+  transition: opacity 0.5s ease;
+}
+.libwrap .overlay-summary {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 0;
+  width: 480px;
+  background: transparent;
+  z-index: 3;
+}
+
+.clearfix::after { content: ""; display: block; clear: both; }
+
+/* ===== 진단 카드 ===== */
+.empty {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 12px;
+}
+.empty h3 { margin: 0 0 8px; font-size: 16px; }
+.empty code {
+  background: #0b1117;
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.empty ul { margin: 10px 0 0 18px; }
+
+/* ===== Whisper Debug v2 ===== */
+.dbg-pill {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  color: #dfe7ef;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  margin-left: auto;
+}
+.dbg-pill:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.dbg-pill svg { width: 16px; height: 16px; opacity: 0.95; }
+.dbg-pill .txt { font-size: 12px; letter-spacing: 0.01em; opacity: 0.9; }
+.dbg-pill.badge::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.22);
+  margin-left: 2px;
+  animation: dbg-ping 1.1s ease-out 1;
+}
+@keyframes dbg-ping {
+  0% { transform: scale(0.8); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+#dbgDrawer {
+  position: fixed;
+  z-index: 100;
+  display: none;
+  min-width: 360px;
+  width: min(720px, 92vw);
+  max-height: 62vh;
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(14, 20, 28, 0.68);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+#dbgDrawer.open { display: block; }
+#dbgDrawer header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#dbgDrawer header h4 {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+#dbgDrawer .sp { flex: 1; }
+#dbgDrawer header button {
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #2a3a46;
+  background: #0f1821;
+  color: #cfe1f0;
+}
+#dbgDrawer pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: transparent;
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+}
 </style>
 </head>
 <body>
@@ -119,7 +371,8 @@
 
 <section id="dbgDrawer">
   <header>
-    <h4>디버그</h4><span class="sp"></span>
+    <h4>디버그</h4>
+    <span class="sp"></span>
     <button id="wCopy">복사</button>
     <button id="wClear">지움</button>
     <button id="wHealth">헬스</button>
@@ -128,34 +381,343 @@
 </section>
 
 <script>
-/* ===== jQuery는 $ 유지, 바닐라는 qs() 사용 ===== */
-const qs = (s)=>document.querySelector(s);
-
-/* ===== 경로/기본 ===== */
-const BASE = (function(){ const p=location.pathname; return /\/$/.test(p)?p:p.replace(/[^/]+$/,'/'); })();
-const DATA_URL  = BASE + 'data/posts.json';
+/* ===== 전역 변수 및 유틸 함수 ===== */
+const qs = (s) => document.querySelector(s);
+const BASE = (function() { const p = location.pathname; return /\/$/.test(p) ? p : p.replace(/[^/]+$/, '/'); })();
+const DATA_URL = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
+const animSpeed = 750;
 
-/* 홈 버튼 */
-(() => {
-  const el = qs('#homeBtn'); if (!el) return;
-  const explicit = (el.dataset.home || '').trim();
-  const fallback = new URL('../', location.href).href;
-  el.href = explicit || fallback;
-})();
-qs('#backBtn')?.addEventListener('click', () => {
-  if (history.length > 1) history.back(); else qs('#homeBtn').click();
-});
+let ALL = [], CATS = {}, library = [], LAST_ERR = '';
+
+const d = (x) => x ? new Date(x).toISOString().slice(0, 10) : '';
+const esc = (s) => String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+async function ffetch(url, opt = {}, tag = 'fetch') {
+  try {
+    const r = await fetch(url, opt);
+    dbg('INFO', `HTTP ${tag} ${r.status}`, url);
+    if (!r.ok) throw new Error(`${tag} HTTP ${r.status}`);
+    return r;
+  } catch (err) {
+    dbg('WARN', `${tag} 실패`, (err && err.message) || String(err));
+    LAST_ERR = (err && err.message) || String(err);
+    throw err;
+  }
+}
+
+function placeholderCover() {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='280' height='448' style='background:#1a202c;border:2px solid #3d4a5b;border-radius:6px;'>
+    <rect width='100%' height='100%' fill='%231a202c' style='filter:contrast(0.9) brightness(0.95);'/>
+    <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Pretendard, system-ui' font-size='18' fill='%238e9ab2'>No Cover</text>
+    <text x='50%' y='65%' dominant-baseline='middle' text-anchor='middle' font-family='Pretendard, system-ui' font-size='10' fill='%238e9ab2'>마법서 표지 없음</text>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+function coverCandidates(nameOrSlug, cover) {
+  const out = [];
+  const add = (u) => { if (u && !out.includes(u)) out.push(u); };
+  const noSlash = (s) => (s || '').replace(/^\//, '');
+
+  if (cover) { add(cover); add(BASE + noSlash(cover)); }
+
+  const raw = String(nameOrSlug || '').trim();
+  const dashed = raw.replace(/\s+/g, '-').replace(/[\/\\?#%:*|"<>]/g, '-');
+  const undersc = raw.replace(/\s+/g, '_').replace(/[\/\\?#%:*|"<>]/g, '_');
+  const bases = [raw, dashed, undersc];
+  const roots = [BASE + 'assets/covers/', '/assets/covers/'];
+  const exts = ['jpg', 'png', 'webp', 'jpeg'];
+  const suffixes = ['','-cover','-커버','_cover','_커버',' 표지','-표지','_표지'];
+
+  for (const root of roots) {
+    for (const base of bases) {
+      for (const suf of suffixes) {
+        for (const ext of exts) {
+          add(root + base + suf + '.' + ext);
+        }
+      }
+    }
+  }
+
+  add(placeholderCover());
+  return out;
+}
+
+function Book(cover, title, author, abstract) {
+  this.cover = cover;
+  this.title = title;
+  this.author = author;
+  this.abstract = abstract;
+  library.push(this);
+}
+
+function buildLibraryFromPosts() {
+  CATS = {};
+  ALL.forEach(p => {
+    const c = p.category || '기타';
+    (CATS[c] ||= { name: c, posts: [] }).posts.push(p);
+  });
+  library.length = 0;
+  Object.keys(CATS).sort((a, b) => a.localeCompare(b, 'ko')).forEach(cat => {
+    const posts = CATS[cat].posts;
+    const newest = posts.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const cand = coverCandidates(cat, newest?.cover);
+    const bk = new Book(cand[0] || placeholderCover(), cat, '', posts.length + '개의 글');
+    bk._cat = cat;
+    bk._coverCands = cand;
+  });
+}
+
+function showDiag(title, lines = []) {
+  const box = qs('#diag');
+  box.classList.remove('hidden');
+  box.innerHTML = `<h3>${esc(title)}</h3>
+  <div style="font-size:13px;opacity:.9">BASE: <code>${esc(BASE)}</code><br>DATA_URL: <code>${esc(DATA_URL)}</code><br>주소: <code>${esc(location.pathname)}</code></div>
+  ${lines.length ? `<ul>${lines.map(s => `<li>${esc(s)}`).join('')}</ul>` : ''}
+  ${LAST_ERR ? `<div style="margin-top:8px;color:#ffb3b3">오류: ${esc(LAST_ERR)}</div>` : ''}`;
+}
+
+function renderCats() {
+  qs('#title').textContent = '분류 전체보기';
+  qs('#viewCats').classList.remove('hidden');
+  qs('#viewList').classList.add('hidden');
+  qs('#viewPost').classList.add('hidden');
+
+  const $lib = document.querySelector('#viewCats ul.library');
+  $lib.innerHTML = '';
+
+  const classlist = ['left-side first', 'left-side', 'left-side', 'right-side', 'right-side', 'right-side last'];
+  library.forEach(bk => {
+    let html = `<li class="book ${classlist[0]}" data-cat="${esc(bk._cat)}">`;
+    html += `<div class="cover"><img src="${esc(placeholderCover())}" data-cands='${esc(JSON.stringify(bk._coverCands || []))}' alt="${esc(bk.title)}"/></div>`;
+    html += `<div class="summary"></div></li>`;
+    $lib.insertAdjacentHTML('beforeend', html);
+    const cn = classlist.shift();
+    classlist.push(cn);
+  });
+
+  document.querySelectorAll('#viewCats li.book').forEach(li => {
+    const cat = li.dataset.cat;
+    const list = (CATS[cat]?.posts || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+    const s = li.querySelector('.summary');
+    let html = `<h1>${esc(cat)}</h1><h2>최근 글</h2><ul class="mini">`;
+    list.forEach(p => html += `<li><a href="#/post/${encodeURIComponent(p.slug)}">${esc(p.title)}</a> <small>· ${esc(d(p.date))}</small></li>`);
+    html += `</ul><p style="margin-top:8px"><a href="#/category/${encodeURIComponent(cat)}">이 카테고리 전체 보기 →</a></p>`;
+    s.innerHTML = html;
+  });
+
+  if (library.length === 0) {
+    const tips = [];
+    if (location.protocol === 'file:') tips.push('로컬 파일(file://)에서는 fetch가 막혀요. 임시 서버: python -m http.server');
+    tips.push('posts.json 경로 확인 → ' + DATA_URL);
+    tips.push('폴더 구조: /blog/index.html, /blog/data/posts.json, /blog/posts/*.md');
+    showDiag('불러올 카테고리가 없습니다.', tips);
+  }
+
+  // 이미지 로딩 로직 실행
+  initLazyCovers();
+}
+
+function renderList(cat) {
+  qs('#title').textContent = cat;
+  qs('#viewCats').classList.add('hidden');
+  qs('#viewList').classList.remove('hidden');
+  qs('#viewPost').classList.add('hidden');
+
+  const list = ALL.filter(p => (p.category || '기타') === cat).sort((a, b) => new Date(b.date) - new Date(a.date));
+  qs('#viewList').innerHTML = list.length
+    ? list.map(p => `<a class="item" href="#/post/${encodeURIComponent(p.slug)}"><div class="t">${esc(p.title)}</div><div class="m">${d(p.date)} · ${esc(p.summary || '')}</div></a>`).join('')
+    : '<p class="m">글이 없습니다.</p>';
+}
+
+async function renderPost(slug) {
+  qs('#viewCats').classList.add('hidden');
+  qs('#viewList').classList.add('hidden');
+  qs('#viewPost').classList.remove('hidden');
+
+  const m = ALL.find(p => p.slug === slug) || { title: slug };
+  qs('#title').textContent = m.category || '게시글';
+  qs('#pTitle').textContent = m.title;
+  qs('#pMeta').textContent = [m.category, d(m.date)].filter(Boolean).join(' · ');
+  qs('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
+
+  try {
+    const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
+    const r = await ffetch(url, { cache: 'no-cache' }, 'post-md:' + slug);
+    const md = await r.text();
+    const body = md.replace(/^---[\s\S]*?---\s*/, '');
+    qs('#pBody').innerHTML = marked.parse(body, { mangle: false, headerIds: true });
+    qs('#pBody').querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+    document.title = m.title + ' - 블로그';
+  } catch (e) {
+    LAST_ERR = (e && e.message) ? e.message : String(e || '');
+    qs('#pBody').innerHTML = '<p class="m">게시글을 찾을 수 없습니다.</p>';
+  }
+}
+
+function route() {
+  try {
+    const mPost = location.hash.match(/^#\/post\/(.+)$/);
+    const mCat = location.hash.match(/^#\/category\/(.+)$/);
+    if (mPost) return renderPost(decodeURIComponent(mPost[1]));
+    if (mCat) return renderList(decodeURIComponent(mCat[1]));
+    return renderCats();
+  } catch (err) {
+    dbg('ERROR', 'route 실패', String(err));
+  }
+}
+window.addEventListener('hashchange', route);
+
+/* ===== Lazy cover with IntersectionObserver ===== */
+function initLazyCovers() {
+  const getCands = (img) => {
+    try {
+      const arr = JSON.parse(img.getAttribute('data-cands') || '[]');
+      return [...new Set(arr)];
+    } catch { return []; }
+  };
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const img = e.target;
+      if (img.dataset._started) return;
+      img.dataset._started = '1';
+
+      const cands = getCands(img);
+      let i = -1;
+      const advance = () => {
+        i += 1;
+        if (i < cands.length) {
+          const u = cands[i];
+          dbg('INFO', 'img try', u);
+          img.src = u;
+          return;
+        }
+        img.onerror = img.onload = null;
+        img.src = placeholderCover();
+        dbg('WARN', 'img 후보 전부 실패 - placeholder');
+      };
+
+      img.onload = () => { dbg('INFO', 'img ok', img.currentSrc || img.src); img.onerror = img.onload = null; };
+      img.onerror = () => { dbg('WARN', 'img fail', img.src); setTimeout(advance, 50); };
+
+      advance();
+      io.unobserve(img);
+    });
+  }, { rootMargin: '200px' });
+
+  document.querySelectorAll('#viewCats .library img[data-cands]').forEach(img => io.observe(img));
+}
+
+/* ===== Jabas 애니메이션 (수정) ===== */
+function attachAnimations() {
+  const $lib = $('.libwrap .library');
+  const $overlayPage = $('.libwrap .overlay-page');
+  const $overlaySummary = $('.libwrap .overlay-summary');
+
+  function isBottomRow($sel) {
+    const tops = $('.libwrap li.book').map((i, el) => $(el).position().top).get();
+    if (tops.length === 0) return false;
+    const maxTop = Math.max.apply(null, tops);
+    return Math.abs($sel.position().top - maxTop) < 1;
+  }
+  function positionTop($sel) { $('html, body').animate({ scrollTop: $sel.offset().top }, animSpeed); }
+  function overlayVertPos($sel) {
+    const left = Math.round($sel.position().left);
+    if (left < 100) return '160px'; // 1열, 2열
+    if (left < 300) return '160px';
+    if (left < 500) return '320px'; // 3열
+    if (left < 700) return '480px'; // 4열
+    if (left < 900) return '640px'; // 5열
+    return '160px';
+  }
+
+  function selectAnimation($li) {
+    if ($li.hasClass('animating') || $li.hasClass('selected')) return;
+    dbg('INFO', 'select', $li.data('cat'));
+    $li.addClass('animating selected');
+
+    const $cover = $li.find('.cover');
+    const $img = $li.find('.cover img');
+    const $summary = $li.find('.summary');
+
+    $cover.stop().animate({ width: '300px', height: '468px' }, { duration: animSpeed });
+    $img.stop().animate({ width: '280px', height: '448px', borderWidth: '10px' }, { duration: animSpeed });
+
+    if (isBottomRow($li)) { $lib.css('paddingBottom', '234px'); }
+    positionTop($li);
+
+    $overlayPage.fadeIn(animSpeed);
+    const px = overlayVertPos($li);
+    $overlaySummary.css('left', px).show().animate({ height: '100%' }, {
+      duration: animSpeed,
+      step: (now, fx) => {
+        if (fx.prop === 'height' && now > 200 && $summary.height() < 450) {
+          if (!$summary.is(':animated')) {
+            $summary.show().animate({ height: '450px' }, { duration: animSpeed / 2 });
+          }
+        }
+      },
+      complete: () => $li.removeClass('animating')
+    });
+  }
+
+  function deselectAnimation($li) {
+    if (!$li.length) return;
+    if ($li.hasClass('animating')) return;
+    dbg('INFO', 'deselect', $li.data('cat'));
+    $li.addClass('animating');
+
+    const $cover = $li.find('.cover');
+    const $img = $li.find('.cover img');
+    const $summary = $li.find('.summary');
+
+    $summary.stop().animate({ height: '0px' }, { duration: animSpeed / 2, complete: () => $summary.hide() });
+    $cover.stop().animate({ width: '140px', height: '224px' }, { duration: animSpeed });
+    $img.stop().animate({ width: '140px', height: '224px', borderWidth: '0px' }, {
+      duration: animSpeed, complete: () => $li.removeClass('selected animating')
+    });
+
+    $lib.stop().animate({ paddingBottom: '10px' }, { duration: animSpeed });
+    $overlayPage.fadeOut(animSpeed);
+    $overlaySummary.stop().animate({ height: '0px' }, { duration: animSpeed, complete: () => $overlaySummary.hide() });
+  }
+
+  $('.libwrap').on('click', 'li.book', function() {
+    const $current = $('.libwrap li.book.selected');
+    const $me = $(this);
+    if ($me.is($current)) return;
+    if ($current.length) {
+      deselectAnimation($current);
+      setTimeout(() => selectAnimation($me), 40);
+    } else {
+      selectAnimation($me);
+    }
+  });
+
+  $('.libwrap').on('click', '.book .cover', function(e) {
+    const $li = $(this).closest('li.book');
+    if ($li.hasClass('selected')) {
+      e.stopPropagation();
+      deselectAnimation($li);
+    }
+  });
+
+  $('.libwrap .overlay-page').on('click', () => deselectAnimation($('.libwrap li.book.selected')));
+  $(document).on('keydown', (e) => { if (e.key === 'Escape') deselectAnimation($('.libwrap li.book.selected')); });
+}
 
 /* ===== Whisper Debug v2 ===== */
-(function glassDebuggerStealth(){
+(function glassDebuggerStealth() {
   const CFG = {
-    force: /(?:\?|&)debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__')==='1',
-    showOn: ['ERROR','WARN'],
+    force: /(?:\?|&)debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__') === '1',
+    showOn: ['ERROR', 'WARN'],
     autoOpenOn: ['ERROR'],
     buffer: 300
   };
-  const header = document.querySelector('main > header'); if (!header) return;
+  const header = document.querySelector('main > header');
+  if (!header) return;
 
   const pill = document.createElement('button');
   pill.className = 'dbg-pill';
@@ -163,8 +725,8 @@ qs('#backBtn')?.addEventListener('click', () => {
   pill.title = 'Alt+D (디버그)';
   pill.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-         fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M8 2v3M16 2v3"/><path d="M12 4v2"/>
       <rect x="7" y="6" width="10" height="14" rx="5"/>
       <path d="M5 10h14M19 14h1M4 14h1"/>
@@ -177,417 +739,110 @@ qs('#backBtn')?.addEventListener('click', () => {
   const out = drawer.querySelector('#wLog');
   const buf = [];
 
-  function placeDrawer(){
+  function placeDrawer() {
     const r = header.getBoundingClientRect();
     drawer.style.top = (r.bottom + 8) + 'px';
     drawer.style.right = Math.max(16, (innerWidth - r.right) + 16) + 'px';
   }
-  function openDrawer(open){
+  function openDrawer(open) {
     drawer.classList.toggle('open', !!open);
-    if (open){
+    if (open) {
       placeDrawer();
       out.textContent = buf.join('\n');
       out.scrollTop = out.scrollHeight;
     }
   }
   addEventListener('resize', placeDrawer);
-  addEventListener('scroll', placeDrawer, { passive:true });
+  addEventListener('scroll', placeDrawer, { passive: true });
 
-  pill.addEventListener('click', ()=> openDrawer(!drawer.classList.contains('open')));
-  drawer.querySelector('#wCopy').addEventListener('click', ()=> navigator.clipboard.writeText(out.textContent || buf.join('\n')));
-  drawer.querySelector('#wClear').addEventListener('click', ()=>{ buf.length=0; out.textContent=''; });
-  drawer.querySelector('#wHealth').addEventListener('click', ()=>{ if (typeof runHealthCheck==='function') runHealthCheck(); });
+  pill.addEventListener('click', () => openDrawer(!drawer.classList.contains('open')));
+  drawer.querySelector('#wCopy').addEventListener('click', () => navigator.clipboard.writeText(out.textContent || buf.join('\n')));
+  drawer.querySelector('#wClear').addEventListener('click', () => { buf.length = 0; out.textContent = ''; });
+  drawer.querySelector('#wHealth').addEventListener('click', () => { if (typeof runHealthCheck === 'function') runHealthCheck(); });
 
-  addEventListener('keydown', (e)=>{
-    if (e.altKey && (e.key==='d' || e.key==='D')){
-      if (!CFG.force && pill.style.display==='none'){
-        localStorage.setItem('__blog_debug__','1'); location.replace(location.href); return;
+  addEventListener('keydown', (e) => {
+    if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+      if (!CFG.force && pill.style.display === 'none') {
+        localStorage.setItem('__blog_debug__', '1');
+        location.replace(location.href);
+        return;
       }
       openDrawer(!drawer.classList.contains('open'));
     }
   });
 
-  const line = (t,m,x)=>`[${new Date().toLocaleTimeString()}] ${t.padEnd(7)} │ ${m}${x?` │ ${x}`:''}`;
-  const write = (s)=>{
-    buf.push(s); if (buf.length>CFG.buffer) buf.shift();
+  const line = (t, m, x) => `[${new Date().toLocaleTimeString()}] ${t.padEnd(7)} │ ${m}${x ? ` │ ${x}` : ''}`;
+  const write = (s) => {
+    buf.push(s);
+    if (buf.length > CFG.buffer) buf.shift();
     if (CFG.force || drawer.classList.contains('open')) {
       out.textContent = buf.join('\n');
       out.scrollTop = out.scrollHeight;
     }
   };
-  const ensurePillVisible = ()=>{ if (pill.style.display==='none') pill.style.display='inline-flex'; };
-  const pulse = ()=>{ pill.classList.remove('badge'); void pill.offsetWidth; pill.classList.add('badge'); };
+  const ensurePillVisible = () => { if (pill.style.display === 'none') pill.style.display = 'inline-flex'; };
+  const pulse = () => { pill.classList.remove('badge'); void pill.offsetWidth; pill.classList.add('badge'); };
 
   const orig = window.dbg;
-  window.dbg = function(type, msg, extra){
-    (type==='ERROR'?console.error:console.log)('[Blog]', type, msg, extra||'');
-    const s = line(type,msg,extra); write(s);
-    if (CFG.force || CFG.showOn.includes(type)){ ensurePillVisible(); if (CFG.showOn.includes(type)) pulse(); }
+  window.dbg = function(type, msg, extra) {
+    (type === 'ERROR' ? console.error : console.log)('[Blog]', type, msg, extra || '');
+    const s = line(type, msg, extra);
+    write(s);
+    if (CFG.force || CFG.showOn.includes(type)) {
+      ensurePillVisible();
+      if (CFG.showOn.includes(type)) pulse();
+    }
     if (CFG.autoOpenOn.includes(type) && !drawer.classList.contains('open')) openDrawer(true);
-    if (typeof orig==='function'){ try{ orig(type,msg,extra); }catch{} }
+    if (typeof orig === 'function') {
+      try { orig(type, msg, extra); } catch {}
+    }
   };
 })();
 
-/* ===== 유틸 ===== */
-const d  = (x)=>x?new Date(x).toISOString().slice(0,10):'';
-const esc= (s)=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-let LAST_ERR = '';
-
-async function ffetch(url, opt={}, tag='fetch'){
-  try{
-    const r = await fetch(url, opt);
-    dbg('INFO', `HTTP ${tag} ${r.status}`, url);
-    if (!r.ok) throw new Error(`${tag} HTTP ${r.status}`);
-    return r;
-  }catch(err){
-    dbg('WARN', `${tag} 실패`, (err&&err.message)||String(err));
-    throw err;
-  }
-}
-
-function placeholderCover(){
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='280' height='448'>
-    <rect width='100%' height='100%' fill='%23e8e8e8'/>
-    <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='12' fill='%23666'>no cover</text>
-  </svg>`;
-  return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
-}
-
-function coverCandidates(nameOrSlug, cover){
-  const out = []; const add = (u)=>{ if(u && !out.includes(u)) out.push(u); }; const noSlash=(s)=>(s||'').replace(/^\//,'');
-  if (cover){ add(cover); add(BASE + noSlash(cover)); }
-  const raw=String(nameOrSlug||'').trim();
-  const rawEnc=encodeURIComponent(raw);
-  const dashed=raw.replace(/\s+/g,'-').replace(/[\/\\?#%:*|"<>]/g,'-');
-  const undersc=raw.replace(/\s+/g,'_').replace(/[\/\\?#%:*|"<>]/g,'_');
-  const nospace=raw.replace(/\s+/g,'');
-  const lower=raw.toLowerCase();
-  const suffixes=['',' cover',' 커버','-cover','-커버','_cover','_커버',' 표지','-표지','_표지'];
-  const bases=[raw,rawEnc,dashed,undersc,nospace,lower];
-  const roots=[BASE+'assets/covers/','/assets/covers/'];
-  const exts=['jpg','png','webp','jpeg'];
-  for(const root of roots){ for(const base of bases){ for(const suf of suffixes){ for(const ext of exts){ add(root+base+suf+'.'+ext); }}}}
-  add(placeholderCover()); return out;
-}
-
-/* ===== 데이터 ===== */
-let ALL=[], CATS={}, library=[];
-function Book(cover,title,author,abstract){ this.cover=cover; this.title=title; this.author=author; this.abstract=abstract; library.push(this); }
-function buildLibraryFromPosts(){
-  CATS = {};
-  ALL.forEach(p => { const c=p.category||'기타'; (CATS[c] ||= {name:c,posts:[]}).posts.push(p); });
-  library.length = 0;
-  Object.keys(CATS).sort((a,b)=>a.localeCompare(b,'ko')).forEach(cat=>{
-    const posts=CATS[cat].posts;
-    const newest=posts.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-    const cand=coverCandidates(cat, newest?.cover);
-    const bk=new Book(cand[0]||placeholderCover(), cat, '', posts.length+'개의 글');
-    bk._cat=cat; bk._coverCands=cand;
-  });
-}
-
-/* ===== 진단 카드 ===== */
-function showDiag(title, lines=[]){
-  const box = qs('#diag');
-  box.classList.remove('hidden');
-  box.innerHTML = `<h3>${esc(title)}</h3>
-  <div style="font-size:13px;opacity:.9">BASE: <code>${esc(BASE)}</code><br>DATA_URL: <code>${esc(DATA_URL)}</code><br>주소: <code>${esc(location.pathname)}</code></div>
-  ${lines.length? `<ul>${lines.map(s=>`<li>${esc(s)}`).join('')}</ul>`:''}
-  ${LAST_ERR? `<div style="margin-top:8px;color:#ffb3b3">오류: ${esc(LAST_ERR)}</div>`:''}`;
-}
-
-/* ===== 렌더: 책장 ===== */
-function renderCats(){
-  qs('#title').textContent='분류 전체보기';
-  qs('#viewCats').classList.remove('hidden');
-  qs('#viewList').classList.add('hidden');
-  qs('#viewPost').classList.add('hidden');
-
-  const $lib = document.querySelector('#viewCats ul.library');
-  $lib.innerHTML='';
-
-  const classlist = ['left-side first','left-side','left-side','right-side','right-side','right-side last'];
-  library.forEach(bk=>{
-    let html = `<li class="book ${classlist[0]}" data-cat="${esc(bk._cat)}">`;
-    html += `<div class="cover"><img src="${esc(placeholderCover())}" data-cands='${esc(JSON.stringify(bk._coverCands||[]))}' alt="${esc(bk.title)}"/></div>`;
-    html += `<div class="summary"></div></li>`;
-    $lib.insertAdjacentHTML('beforeend', html);
-    const cn=classlist.shift(); classlist.push(cn);
-  });
-
-  document.querySelectorAll('#viewCats li.book').forEach(li=>{
-    const cat = li.dataset.cat;
-    const list = (CATS[cat]?.posts||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-    const s = li.querySelector('.summary');
-    let html = `<h1>${esc(cat)}</h1><h2>최근 글</h2><ul class="mini">`;
-    list.forEach(p=> html += `<li><a href="#/post/${encodeURIComponent(p.slug)}">${esc(p.title)}</a> <small>· ${esc(d(p.date))}</small></li>`);
-    html += `</ul><p style="margin-top:8px"><a href="#/category/${encodeURIComponent(cat)}">이 카테고리 전체 보기 →</a></p>`;
-    s.innerHTML = html;
-  });
-
-  if (library.length === 0){
-    const tips = [];
-    if (location.protocol === 'file:') tips.push('로컬 파일(file://)에서는 fetch가 막혀요. 임시 서버: python -m http.server');
-    tips.push('posts.json 경로 확인 → '+DATA_URL);
-    tips.push('폴더 구조: /blog/index.html, /blog/data/posts.json, /blog/posts/*.md');
-    showDiag('불러올 카테고리가 없습니다.', tips);
-  }
-}
-
-/* ===== 렌더: 카테고리 목록 ===== */
-function renderList(cat){
-  qs('#title').textContent=cat;
-  qs('#viewCats').classList.add('hidden');
-  qs('#viewList').classList.remove('hidden');
-  qs('#viewPost').classList.add('hidden');
-
-  const list = ALL.filter(p => (p.category||'기타')===cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  qs('#viewList').innerHTML = list.length
-    ? list.map(p=>`<a class="item" href="#/post/${encodeURIComponent(p.slug)}"><div class="t">${esc(p.title)}</div><div class="m">${d(p.date)} · ${esc(p.summary||'')}</div></a>`).join('')
-    : '<p class="m">글이 없습니다.</p>';
-}
-
-/* ===== 렌더: 본문 ===== */
-async function renderPost(slug){
-  qs('#viewCats').classList.add('hidden');
-  qs('#viewList').classList.add('hidden');
-  qs('#viewPost').classList.remove('hidden');
-
-  const m = ALL.find(p=>p.slug===slug) || {title:slug};
-  qs('#title').textContent = m.category || '';
-  qs('#pTitle').textContent = m.title;
-  qs('#pMeta').textContent = [m.category,d(m.date)].filter(Boolean).join(' · ');
-  qs('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
-
-  try{
-    const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
-    const r = await ffetch(url,{cache:'no-cache'}, 'post-md:'+slug);
-    const md = await r.text();
-    const body = md.replace(/^---[\s\S]*?---\s*/, '');
-    qs('#pBody').innerHTML = marked.parse(body,{mangle:false,headerIds:true});
-    qs('#pBody').querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
-    document.title = m.title + ' - Blog';
-  }catch(e){
-    LAST_ERR = (e && e.message) ? e.message : String(e||'');
-    qs('#pBody').innerHTML = '<p class="m">게시글을 찾을 수 없습니다.</p>';
-  }
-}
-
-/* ===== 라우팅 ===== */
-function route(){
-  try{
-    const mPost=location.hash.match(/^#\/post\/(.+)$/);
-    const mCat =location.hash.match(/^#\/category\/(.+)$/);
-    if(mPost) return renderPost(decodeURIComponent(mPost[1]));
-    if(mCat)  return renderList(decodeURIComponent(mCat[1]));
-    return renderCats();
-  }catch(err){
-    dbg('ERROR','route 실패', String(err));
-  }
-}
-window.addEventListener('hashchange', route);
-
-/* ===== Lazy cover ===== */
-function initLazyCovers(){
-  const getCands = (img) => {
-    try{
-      const arr = JSON.parse(img.getAttribute('data-cands') || '[]');
-      return [...new Set(arr)];
-    }catch{ return []; }
-  };
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if (!e.isIntersecting) return;
-      const img = e.target;
-      if (img.dataset._started) return;
-      img.dataset._started = '1';
-
-      const cands = getCands(img);
-      let i = -1;
-      const advance = () => {
-        i += 1;
-        if (i < cands.length){ const u = cands[i]; dbg('INFO','img try', u); img.src = u; return; }
-        img.onerror = img.onload = null;
-        img.src = placeholderCover();
-        dbg('WARN','img 후보 전부 실패 — placeholder');
-      };
-      img.onload  = () => { dbg('INFO','img ok', img.currentSrc||img.src); img.onerror = img.onload = null; };
-      img.onerror = () => { dbg('WARN','img fail', img.src); setTimeout(advance, 50); };
-
-      advance();
-      io.unobserve(img);
-    });
-  }, { rootMargin: '200px' });
-
-  document.querySelectorAll('#viewCats .library img[data-cands]').forEach(img => io.observe(img));
-}
-
-/* ===== Jabas 애니메이션 ===== */
-function attachAnimations(){
-  const animSpeed = 750;
-  const $lib = $('.libwrap .library');
-  const $overlayPage = $('.libwrap .overlay-page');
-  const $overlaySummary = $('.libwrap .overlay-summary');
-
-  function isBottomRow($sel){
-    const tops = $('.libwrap li.book').map((i,el)=>$(el).position().top).get();
-    const maxTop = Math.max.apply(null, tops);
-    return Math.abs($sel.position().top - maxTop) < 1;
-  }
-  function positionTop($sel){ $('html, body').animate({ scrollTop: $sel.offset().top }, animSpeed); }
-  function overlayVertPos($sel){
-    const left = Math.round($sel.position().left);
-    switch(left){
-      case 0: return '320px';
-      case 160: return '320px';
-      case 320: return '480px';
-      case 480: return '0px';
-      case 640: return '160px';
-      case 800: return '160px';
-      default: return '0px';
-    }
-  }
-
-  function selectAnimation($li){
-    if ($li.hasClass('animating') || $li.hasClass('selected')) return;
-    dbg('INFO','select', $li.data('cat'));
-    $li.addClass('animating selected');
-
-    const $cover = $li.find('.cover');
-    const $img = $li.find('.cover img');
-    const $summary = $li.find('.summary');
-
-    $cover.stop().animate({ width:'300px', height:'468px' }, { duration:animSpeed });
-    $img.stop().animate({ width:'280px', height:'448px', borderWidth:'10px' }, { duration:animSpeed });
-
-    if (isBottomRow($li)){ $lib.css('paddingBottom','234px'); }
-    positionTop($li);
-
-    $overlayPage.show();
-    const px = overlayVertPos($li);
-    $overlaySummary.css('left',px);
-
-    const ht = $('.libwrap').outerHeight();
-    const pos = $li.position();
-    const start = pos.top + 30;
-    const speed = Math.round((animSpeed/ht) * 450);
-
-    $overlaySummary.show().animate({ height: ht + 'px' },{
-      duration: animSpeed, easing:'linear',
-      step: (now,fx)=>{
-        if (now > start && fx.prop==='height'){
-          if(!$summary.is(':animated') && $summary.height() < 450){
-            $summary.show().animate({ height:'450px' }, { duration:speed, easing:'linear' });
-          }
-        }
-      },
-      complete: ()=> $li.removeClass('animating')
-    });
-  }
-
-  function deselectAnimation($li){
-    if (!$li.length) return;
-    if ($li.hasClass('animating')) return;
-    dbg('INFO','deselect', $li.data('cat'));
-    $li.addClass('animating');
-
-    const $cover = $li.find('.cover');
-    const $img = $li.find('.cover img');
-    const $summary = $li.find('.summary');
-
-    $summary.stop();
-    $cover.stop().animate({ width:'140px', height:'224px' }, { duration:animSpeed });
-    $img.stop().animate({ width:'140px', height:'224px', borderWidth:'0px' }, {
-      duration:animSpeed, complete: ()=>{ $li.removeClass('selected animating'); }
-    });
-
-    $lib.stop().animate({ paddingBottom:'10px' }, { duration:animSpeed });
-
-    const ht = $overlaySummary.height();
-    const pos = $li.position();
-    const start = pos.top + 480;
-    const speed = Math.round((animSpeed/ht) * $summary.height());
-
-    $overlaySummary.stop().animate({ height:'0px' },{
-      duration:animSpeed, easing:'linear',
-      step: (now,fx)=>{
-        if (now < start && fx.prop==='height'){
-          if(!$summary.is(':animated') && $summary.height() > 0){
-            $summary.animate({ height:'0px' }, { duration:speed, easing:'linear', complete: ()=>{ $summary.hide(); } });
-          }
-        }
-      },
-      complete: ()=>{ $overlayPage.hide(); $summary.hide(); $overlaySummary.hide(); $li.removeClass('animating'); }
-    });
-  }
-
-  $('.libwrap').on('click', 'li.book', function(){
-    const $current = $('.libwrap li.book.selected');
-    const $me = $(this);
-    if ($me.is($current)) return;
-    if ($current.length){
-      deselectAnimation($current);
-      setTimeout(()=> selectAnimation($me), 40);
-    } else {
-      selectAnimation($me);
-    }
-  });
-
-  $('.libwrap').on('click', '.book .cover', function(e){
-    const $li = $(this).closest('li.book');
-    if ($li.hasClass('selected')) { e.stopPropagation(); deselectAnimation($li); }
-  });
-
-  $('.libwrap .overlay-page').on('click', ()=> deselectAnimation($('.libwrap li.book.selected')));
-  $(document).on('keydown', (e)=>{ if (e.key === 'Escape') deselectAnimation($('.libwrap li.book.selected')); });
-}
-
 /* ===== 헬스체크 ===== */
-async function runHealthCheck(){
-  dbg('INFO','— 헬스체크 시작 —');
-  try{
-    const r = await ffetch(DATA_URL,{cache:'no-store'},'posts.json');
+async function runHealthCheck() {
+  dbg('INFO', '— 헬스체크 시작 —');
+  try {
+    const r = await ffetch(DATA_URL, { cache: 'no-store' }, 'posts.json');
     const j = await r.json();
-    dbg('INFO',`posts.json ok, posts=${(j.posts||[]).length}`);
-    if ((j.posts||[]).length){
+    dbg('INFO', `posts.json ok, posts=${(j.posts || []).length}`);
+    if ((j.posts || []).length) {
       const first = j.posts[0];
       const mdURL = POSTS_DIR + encodeURIComponent(first.slug) + '.md';
-      try{ await ffetch(mdURL,{cache:'no-store'},'first-md'); dbg('INFO','first md ok', mdURL); }catch{}
+      try { await ffetch(mdURL, { cache: 'no-store' }, 'first-md'); dbg('INFO', 'first md ok', mdURL); } catch {}
       const cat = first.category || '기타';
-      const cand = coverCandidates(cat, first.cover||'')[0];
-      try{ await ffetch(cand,{cache:'no-store'},'cover-test'); dbg('INFO','cover candidate ok', cand); }catch{}
+      const cand = coverCandidates(cat, first.cover || '')[0];
+      try { await ffetch(cand, { cache: 'no-store' }, 'cover-test'); dbg('INFO', 'cover candidate ok', cand); } catch {}
     }
-  }catch{}
-  dbg('INFO','— 헬스체크 완료 —');
+  } catch {}
+  dbg('INFO', '— 헬스체크 완료 —');
 }
 
 /* ===== 부팅 ===== */
-(async function init(){
-  if (location.protocol === 'file:'){
+(async function init() {
+  if (location.protocol === 'file:') {
     showDiag('로컬 파일 모드(file://)에서는 데이터 로드가 차단돼요.', [
       '터미널에서: python -m http.server 8000',
       '그리고 http://localhost:8000/ 로 접속하세요.'
     ]);
-    dbg('WARN','file:// 환경 — fetch 차단될 수 있음');
+    dbg('WARN', 'file:// 환경 - fetch 차단될 수 있음');
   }
-  try{
-    const r = await ffetch(DATA_URL,{cache:'no-cache'},'posts.json');
+  try {
+    const r = await ffetch(DATA_URL, { cache: 'no-cache' }, 'posts.json');
     const j = await r.json();
-    ALL = (j.posts||[]).map(p=>({...p,category:p.category||'기타'}));
+    ALL = (j.posts || []).map(p => ({...p, category: p.category || '기타'}));
     if (!Array.isArray(j.posts)) throw new Error('posts.json에 "posts" 배열이 없습니다.');
-    dbg('INFO',`로드된 posts: ${ALL.length}`);
-  }catch(e){
-    LAST_ERR = (e && e.message) ? e.message : String(e||'');
+    dbg('INFO', `로드된 posts: ${ALL.length}`);
+  } catch (e) {
+    LAST_ERR = (e && e.message) ? e.message : String(e || '');
     ALL = [];
   }
 
   buildLibraryFromPosts();
-  renderCats();
-  initLazyCovers();
   attachAnimations();
   route();
 
-  if (/[?&]debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__')==='1') {
+  if (/[?&]debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__') === '1') {
     runHealthCheck();
   }
 })();
