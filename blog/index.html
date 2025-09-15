@@ -25,7 +25,7 @@
   --muted: #a8b3bf;
   --accent: #2c5282; /* 신비로운 도서관 컨셉을 위한 포인트 색상 */
   --highlight-text: #b3c5e8; /* 강조 텍스트 색상 */
-  --transition-speed: 0.4s;
+  --transition-speed: 0.2s; /* 애니메이션 속도 단축 */
 }
 
 /* 폰트, 기본 레이아웃 */
@@ -93,7 +93,6 @@ a.btn:hover, button.btn:hover {
 /* ===== Jabas Library (도서관 테마 적용) ===== */
 .libwrap {
   position: relative;
-  /* 신비로운 오라 효과 */
   box-shadow: 0 0 50px 10px rgba(0, 0, 0, 0.2) inset;
   padding: 20px;
   background: rgba(16, 23, 30, 0.4);
@@ -132,10 +131,10 @@ a.btn:hover, button.btn:hover {
   transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
 }
 .libwrap .book.selected .cover {
-  transform: scale(2.14); /* 300/140 = 2.14 */
+  transform: scale(2.14);
 }
 .libwrap .book.selected .cover img {
-  border: 10px solid transparent; /* 애니메이션 개선 */
+  border: 10px solid transparent;
   transition: transform var(--transition-speed) ease, border-width var(--transition-speed) ease;
 }
 .libwrap .book .cover img {
@@ -151,8 +150,6 @@ a.btn:hover, button.btn:hover {
 }
 
 .libwrap .book.selected .cover { position: absolute; top: 10px; }
-.libwrap .book.selected.left-side.first .cover, .libwrap .book.selected.right-side .cover { left: 10px; right: auto; }
-.libwrap .book.selected.right-side.last .cover, .libwrap .book.selected.left-side .cover { left: auto; right: 10px; }
 
 /* 요약 패널 */
 .libwrap li.book .summary {
@@ -165,12 +162,12 @@ a.btn:hover, button.btn:hover {
   width: 450px;
   height: 0;
   overflow: hidden;
-  background: rgba(14, 20, 28, 0.9); /* 반투명 패널 */
+  background: rgba(14, 20, 28, 0.9);
   color: var(--text);
   border-radius: 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
-  transition: height 0.4s ease;
+  transition: height 0.2s ease; /* 애니메이션 속도 단축 */
 }
 .libwrap .summary h1 {
   font-size: 26px;
@@ -201,10 +198,19 @@ a.btn:hover, button.btn:hover {
 }
 .libwrap .summary .mini a:hover { text-decoration: underline; }
 
-.libwrap .left-side .summary { left: 160px; border-right: 10px solid rgba(255, 255, 255, 0.1); }
-.libwrap .left-side.first .summary { left: 320px; }
-.libwrap .right-side .summary { left: -480px; border-left: 10px solid rgba(255, 255, 255, 0.1); }
-.libwrap .right-side.last .summary { left: -640px; }
+.libwrap .book.summary-left .cover {
+  right: 10px; left: auto;
+}
+.libwrap .book.summary-left .summary {
+  left: -480px; border-left: 10px solid rgba(255, 255, 255, 0.1);
+}
+
+.libwrap .book.summary-right .cover {
+  left: 10px; right: auto;
+}
+.libwrap .book.summary-right .summary {
+  left: 160px; border-right: 10px solid rgba(255, 255, 255, 0.1);
+}
 
 /* 오버레이 */
 .libwrap .overlay-page {
@@ -234,10 +240,10 @@ a.btn:hover, button.btn:hover {
   display: flex;
   position: relative;
   width: 100%;
-  max-width: 1000px; /* 책 너비 조정 */
+  max-width: 1000px;
   margin: 0 auto;
   border-radius: 12px;
-  background: #141b24; /* 어두운 종이 느낌 */
+  background: #141b24;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   border: 1px solid var(--line);
   overflow: hidden;
@@ -447,7 +453,7 @@ const qs = (s) => document.querySelector(s);
 const BASE = (function() { const p = location.pathname; return /\/$/.test(p) ? p : p.replace(/[^/]+$/, '/'); })();
 const DATA_URL = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
-const animSpeed = 400; // 애니메이션 속도
+const animSpeed = 200; // 애니메이션 속도를 더 빠르게
 
 let ALL = [], CATS = {}, library = [], LAST_ERR = '';
 
@@ -548,14 +554,13 @@ function renderCats() {
   const $lib = document.querySelector('#viewCats ul.library');
   $lib.innerHTML = '';
 
-  const classlist = ['left-side first', 'left-side', 'left-side', 'right-side', 'right-side', 'right-side last'];
-  library.forEach(bk => {
-    let html = `<li class="book ${classlist[0]}" data-cat="${esc(bk._cat)}">`;
+  library.forEach((bk, i) => {
+    const isFirstBook = i === 0;
+    const summaryPosition = isFirstBook ? 'summary-right' : 'summary-left';
+    let html = `<li class="book ${summaryPosition}" data-cat="${esc(bk._cat)}">`;
     html += `<div class="cover"><img src="${esc(placeholderCover())}" data-cands='${esc(JSON.stringify(bk._coverCands || []))}' alt="${esc(bk.title)}"/></div>`;
     html += `<div class="summary"></div></li>`;
     $lib.insertAdjacentHTML('beforeend', html);
-    const cn = classlist.shift();
-    classlist.push(cn);
   });
 
   document.querySelectorAll('#viewCats li.book').forEach(li => {
@@ -601,7 +606,7 @@ async function renderPost(slug) {
   qs('#pTitle').textContent = m.title;
   qs('#pMeta').textContent = [m.category, d(m.date)].filter(Boolean).join(' · ');
   qs('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
-  qs('#pRightBody').innerHTML = ''; // 오른쪽 페이지 초기화
+  qs('#pRightBody').innerHTML = '';
 
   try {
     const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
@@ -610,19 +615,14 @@ async function renderPost(slug) {
     const body = md.replace(/^---[\s\S]*?---\s*/, '');
     const html = marked.parse(body, { mangle: false, headerIds: true });
 
-    // HTML 내용을 페이지로 분할
     const content = $(`<div>${html}</div>`);
-    const leftPage = content.html(); // 임시로 전체를 왼쪽 페이지에
-    
-    // 페이지 분할 로직 (예시: 콘텐츠 길이 기반)
-    // 실제로는 더 복잡한 로직이 필요하지만, 여기서는 단순화
     if (content.text().length > 1000) {
       const parts = splitContent(content);
       qs('#pBody').innerHTML = parts.left;
       qs('#pRightBody').innerHTML = parts.right;
     } else {
       qs('#pBody').innerHTML = html;
-      qs('#pRightBody').innerHTML = ''; // 내용이 적으면 오른쪽 페이지 비워두기
+      qs('#pRightBody').innerHTML = '';
     }
     
     qs('#pBody').querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
@@ -636,7 +636,6 @@ async function renderPost(slug) {
   }
 }
 
-// 콘텐츠를 좌우 페이지로 나누는 함수 (간단한 예시)
 function splitContent(content) {
     const elements = content.children();
     let leftHtml = '';
@@ -653,7 +652,7 @@ function splitContent(content) {
         } else {
             if (isLeft) {
                 isLeft = false;
-                leftHtml += el.outerHTML; // 마지막 요소는 왼쪽 페이지에 남김
+                leftHtml += el.outerHTML;
             } else {
                 rightHtml += el.outerHTML;
             }
@@ -721,7 +720,6 @@ function initLazyCovers() {
 function attachAnimations() {
   const $lib = $('.libwrap .library');
   const $overlayPage = $('.libwrap .overlay-page');
-  const $overlaySummary = $('.libwrap .overlay-summary');
 
   function isBottomRow($sel) {
     const tops = $('.libwrap li.book').map((i, el) => $(el).position().top).get();
@@ -729,21 +727,19 @@ function attachAnimations() {
     const maxTop = Math.max.apply(null, tops);
     return Math.abs($sel.position().top - maxTop) < 1;
   }
-  function positionTop($sel) { $('html, body').animate({ scrollTop: $sel.offset().top }, animSpeed); }
+  function positionTop($sel) { $('html, body').animate({ scrollTop: $sel.offset().top - 20 }, animSpeed); }
 
   function selectAnimation($li) {
     if ($li.hasClass('animating') || $li.hasClass('selected')) return;
     dbg('INFO', 'select', $li.data('cat'));
     $li.addClass('animating selected');
 
-    const $cover = $li.find('.cover');
     const $summary = $li.find('.summary');
 
     $li.addClass('zoomed');
     $li.find('.cover img').css('border-width', '10px');
     
     $overlayPage.fadeIn(animSpeed);
-    $summary.css({ 'left': $cover.parent().hasClass('right-side') ? '-480px' : '160px' });
     $summary.css({ 'height': '450px' }).show();
     
     if (isBottomRow($li)) {
@@ -930,7 +926,6 @@ async function runHealthCheck() {
   attachAnimations();
   route();
 
-  // 버튼 이벤트 리스너를 init 함수 안으로 이동
   qs('#homeBtn').addEventListener('click', (e) => {
     e.preventDefault();
     location.href = './';
