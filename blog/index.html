@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>보관된 도서</title>
+<title>보관된 도서목록</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='90' font-size='90'>📜</text></svg>">
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,12 +23,11 @@
   --line: #1e2732;
   --text: #e7edf3;
   --muted: #a8b3bf;
-  --accent: #2c5282; /* 신비로운 도서관 컨셉을 위한 포인트 색상 */
-  --highlight-text: #b3c5e8; /* 강조 텍스트 색상 */
-  --transition-speed: 0.2s; /* 애니메이션 속도 단축 */
+  --accent: #2c5282;
+  --highlight-text: #b3c5e8;
+  --transition-speed: 0.2s;
 }
 
-/* 폰트, 기본 레이아웃 */
 body {
   margin: 0;
   background: var(--bg);
@@ -44,7 +43,6 @@ main {
   min-height: calc(100vh - 56px);
 }
 
-/* 헤더 및 버튼 */
 main > header {
   display: flex;
   gap: 8px;
@@ -71,7 +69,6 @@ a.btn:hover, button.btn:hover {
 
 .hidden { display: none !important; }
 
-/* 글 목록 */
 .list { display: grid; gap: 12px; }
 .item {
   display: block;
@@ -124,6 +121,7 @@ a.btn:hover, button.btn:hover {
 
 /* 책 표지 */
 .libwrap .book .cover {
+  position: relative;
   cursor: pointer;
   width: 140px;
   height: 224px;
@@ -157,7 +155,7 @@ a.btn:hover, button.btn:hover {
   cursor: default;
   position: absolute;
   top: 10px;
-  z-index: 4;
+  z-index: 5; /* 패널을 더 위로 */
   padding: 20px;
   width: 450px;
   height: 0;
@@ -167,7 +165,7 @@ a.btn:hover, button.btn:hover {
   border-radius: 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
-  transition: height 0.2s ease; /* 애니메이션 속도 단축 */
+  transition: height 0.2s ease, left 0.2s ease, right 0.2s ease;
 }
 .libwrap .summary h1 {
   font-size: 26px;
@@ -198,18 +196,28 @@ a.btn:hover, button.btn:hover {
 }
 .libwrap .summary .mini a:hover { text-decoration: underline; }
 
+/* 책 위치 & 요약 패널 위치 동적 제어 */
 .libwrap .book.summary-left .cover {
   right: 10px; left: auto;
 }
 .libwrap .book.summary-left .summary {
-  left: -480px; border-left: 10px solid rgba(255, 255, 255, 0.1);
+  left: -480px;
+  border-left: 10px solid rgba(255, 255, 255, 0.1);
 }
 
 .libwrap .book.summary-right .cover {
   left: 10px; right: auto;
 }
 .libwrap .book.summary-right .summary {
-  left: 160px; border-right: 10px solid rgba(255, 255, 255, 0.1);
+  left: 160px;
+  border-right: 10px solid rgba(255, 255, 255, 0.1);
+}
+
+.libwrap .book.selected.summary-right .summary {
+  left: 160px;
+}
+.libwrap .book.selected.summary-left .summary {
+  left: -480px;
 }
 
 /* 오버레이 */
@@ -453,7 +461,7 @@ const qs = (s) => document.querySelector(s);
 const BASE = (function() { const p = location.pathname; return /\/$/.test(p) ? p : p.replace(/[^/]+$/, '/'); })();
 const DATA_URL = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
-const animSpeed = 200; // 애니메이션 속도를 더 빠르게
+const animSpeed = 200;
 
 let ALL = [], CATS = {}, library = [], LAST_ERR = '';
 
@@ -463,7 +471,7 @@ const esc = (s) => String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&
 async function ffetch(url, opt = {}, tag = 'fetch') {
   try {
     const r = await fetch(url, opt);
-    dbg('INFO', `HTTP ${tag} ${r.status}`, url);
+    dbg('INFO', `HTTP ${r.status}`, url);
     if (!r.ok) throw new Error(`${tag} HTTP ${r.status}`);
     return r;
   } catch (err) {
@@ -555,8 +563,7 @@ function renderCats() {
   $lib.innerHTML = '';
 
   library.forEach((bk, i) => {
-    const isFirstBook = i === 0;
-    const summaryPosition = isFirstBook ? 'summary-right' : 'summary-left';
+    const summaryPosition = (i === 0) ? 'summary-right' : 'summary-left';
     let html = `<li class="book ${summaryPosition}" data-cat="${esc(bk._cat)}">`;
     html += `<div class="cover"><img src="${esc(placeholderCover())}" data-cands='${esc(JSON.stringify(bk._coverCands || []))}' alt="${esc(bk.title)}"/></div>`;
     html += `<div class="summary"></div></li>`;
