@@ -90,23 +90,6 @@ a.btn:hover, button.btn:hover {
 }
 .item .m { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
-/* 글 본문 */
-.post {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel);
-}
-.post .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
-.post img { max-width: 100%; border-radius: 10px; }
-pre {
-  background: #0b1117;
-  border: 1px solid var(--line);
-  padding: 12px;
-  border-radius: 10px;
-  overflow: auto;
-}
-
 /* ===== Jabas Library (도서관 테마 적용) ===== */
 .libwrap {
   position: relative;
@@ -246,6 +229,71 @@ pre {
 
 .clearfix::after { content: ""; display: block; clear: both; }
 
+/* ===== '펼쳐진 책' UI: Post Page 스타일 ===== */
+.post {
+  display: flex;
+  position: relative;
+  width: 100%;
+  max-width: 1000px; /* 책 너비 조정 */
+  margin: 0 auto;
+  border-radius: 12px;
+  background: #141b24; /* 어두운 종이 느낌 */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  transform: perspective(2000px) rotateY(0deg);
+  transform-origin: center center;
+  transition: transform 0.8s ease-in-out;
+}
+.post-page {
+  position: relative;
+  width: 50%;
+  padding: 30px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.post-page.left-page {
+  border-right: 1px solid var(--line);
+}
+.post-page.left-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15px;
+  height: 100%;
+  background: linear-gradient(to right, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+}
+.post-page.right-page {
+  border-left: 1px solid var(--line);
+}
+.post-page.right-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 15px;
+  height: 100%;
+  background: linear-gradient(to left, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+}
+.post .meta { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.post h2 { font-size: 24px; margin-top: 0; }
+.post h3 { font-size: 20px; }
+.post h4 { font-size: 18px; }
+.post h1, .post h2, .post h3, .post h4 { color: var(--highlight-text); }
+.post p { text-align: justify; }
+
+/* 코드 블록, 인용 등 */
+pre {
+  background: #0b1117;
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 10px;
+  overflow: auto;
+}
+
 /* ===== 진단 카드 ===== */
 .empty {
   margin: 24px 0;
@@ -370,10 +418,15 @@ pre {
 
   <div id="viewList" class="list hidden" aria-label="글 목록"></div>
 
-  <section id="viewPost" class="post hidden" aria-label="글 본문">
-    <h2 id="pTitle"></h2>
-    <div id="pMeta" class="meta"></div>
-    <article id="pBody"></article>
+  <section id="viewPost" class="post hidden">
+    <div class="post-page left-page">
+      <h2 id="pTitle"></h2>
+      <div id="pMeta" class="meta"></div>
+      <article id="pBody"></article>
+    </div>
+    <div class="post-page right-page">
+      <div id="pRightBody" class="post-content"></div>
+    </div>
   </section>
 </main>
 
@@ -548,19 +601,66 @@ async function renderPost(slug) {
   qs('#pTitle').textContent = m.title;
   qs('#pMeta').textContent = [m.category, d(m.date)].filter(Boolean).join(' · ');
   qs('#pBody').innerHTML = '<p class="m">불러오는 중…</p>';
+  qs('#pRightBody').innerHTML = ''; // 오른쪽 페이지 초기화
 
   try {
     const url = POSTS_DIR + encodeURIComponent(slug) + '.md';
     const r = await ffetch(url, { cache: 'no-cache' }, 'post-md:' + slug);
     const md = await r.text();
     const body = md.replace(/^---[\s\S]*?---\s*/, '');
-    qs('#pBody').innerHTML = marked.parse(body, { mangle: false, headerIds: true });
+    const html = marked.parse(body, { mangle: false, headerIds: true });
+
+    // HTML 내용을 페이지로 분할
+    const content = $(`<div>${html}</div>`);
+    const leftPage = content.html(); // 임시로 전체를 왼쪽 페이지에
+    
+    // 페이지 분할 로직 (예시: 콘텐츠 길이 기반)
+    // 실제로는 더 복잡한 로직이 필요하지만, 여기서는 단순화
+    if (content.text().length > 1000) {
+      const parts = splitContent(content);
+      qs('#pBody').innerHTML = parts.left;
+      qs('#pRightBody').innerHTML = parts.right;
+    } else {
+      qs('#pBody').innerHTML = html;
+      qs('#pRightBody').innerHTML = ''; // 내용이 적으면 오른쪽 페이지 비워두기
+    }
+    
     qs('#pBody').querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+    qs('#pRightBody').querySelectorAll('pre code').forEach(b => hljs.highlightElement(b));
+
     document.title = m.title + ' - 블로그';
   } catch (e) {
     LAST_ERR = (e && e.message) ? e.message : String(e || '');
     qs('#pBody').innerHTML = '<p class="m">게시글을 찾을 수 없습니다.</p>';
+    qs('#pRightBody').innerHTML = '';
   }
+}
+
+// 콘텐츠를 좌우 페이지로 나누는 함수 (간단한 예시)
+function splitContent(content) {
+    const elements = content.children();
+    let leftHtml = '';
+    let rightHtml = '';
+    let isLeft = true;
+    let totalLength = content.text().length;
+    let currentLength = 0;
+    
+    elements.each((i, el) => {
+        const elLength = $(el).text().length;
+        if (currentLength + elLength < totalLength / 2 || isLeft) {
+            leftHtml += el.outerHTML;
+            currentLength += elLength;
+        } else {
+            if (isLeft) {
+                isLeft = false;
+                leftHtml += el.outerHTML; // 마지막 요소는 왼쪽 페이지에 남김
+            } else {
+                rightHtml += el.outerHTML;
+            }
+        }
+    });
+
+    return { left: leftHtml, right: rightHtml };
 }
 
 function route() {
@@ -639,16 +739,13 @@ function attachAnimations() {
     const $cover = $li.find('.cover');
     const $summary = $li.find('.summary');
 
-    // CSS transition을 이용해 자연스러운 애니메이션 처리
     $li.addClass('zoomed');
     $li.find('.cover img').css('border-width', '10px');
     
-    // 요약 패널 애니메이션
     $overlayPage.fadeIn(animSpeed);
     $summary.css({ 'left': $cover.parent().hasClass('right-side') ? '-480px' : '160px' });
     $summary.css({ 'height': '450px' }).show();
     
-    // 레이아웃 밀림 보정
     if (isBottomRow($li)) {
       $lib.css('paddingBottom', '234px');
     }
@@ -670,7 +767,6 @@ function attachAnimations() {
     $li.removeClass('zoomed');
     $li.find('.cover img').css('border-width', '0px');
     
-    // 요약 패널 숨김
     $summary.css({ 'height': '0' });
     $overlayPage.fadeOut(animSpeed);
     $lib.stop().animate({ paddingBottom: '10px' }, { duration: animSpeed });
@@ -685,11 +781,11 @@ function attachAnimations() {
     const $current = $('.libwrap li.book.selected');
     const $me = $(this);
     if ($me.is($current)) {
-      deselectAnimation($me);
+      deselectAnimation($current);
     } else {
       if ($current.length) {
         deselectAnimation($current);
-        setTimeout(() => selectAnimation($me), animSpeed); // 이전 애니메이션이 끝난 후 시작
+        setTimeout(() => selectAnimation($me), animSpeed);
       } else {
         selectAnimation($me);
       }
@@ -833,6 +929,17 @@ async function runHealthCheck() {
   buildLibraryFromPosts();
   attachAnimations();
   route();
+
+  // 버튼 이벤트 리스너를 init 함수 안으로 이동
+  qs('#homeBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    location.href = './';
+  });
+
+  qs('#backBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.history.back();
+  });
 
   if (/[?&]debug=1\b/.test(location.search) || localStorage.getItem('__blog_debug__') === '1') {
     runHealthCheck();
