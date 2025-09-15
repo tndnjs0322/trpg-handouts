@@ -5,88 +5,297 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>블로그</title>
 
-<!-- libs -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<link href='https://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic' rel='stylesheet' type='text/css'>
 
 <style>
-:root{--bg:#0d141b;--panel:#10171e;--line:#1e2732;--text:#e7edf3;--muted:#a8b3bf;--accent:#5aa0ff}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-main{max-width:1040px;margin:28px auto;padding:0 16px;min-height:calc(100vh - 56px)}
-main>header{display:flex;gap:8px;align-items:center;margin-bottom:12px;position:relative}
-a.btn,button.btn{border:1px solid var(--line);background:#0b1117;color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none;cursor:pointer}
-a.btn:hover,button.btn:hover{background:#151e2a}
-
-/* ====== Library(카테고리) ====== */
-.libwrap{position:relative;padding:20px;background:rgba(16,23,30,.4);border-radius:14px;overflow:hidden}
-.libwrap ul.library{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
-.libwrap li.book{position:relative;width:140px;height:224px;cursor:pointer}
-.libwrap .book .cover{width:140px;height:224px;box-shadow:3px 3px 10px rgba(0,0,0,.5)}
-.libwrap .book .cover img{width:100%;height:100%;object-fit:cover;background:#0f1720;border:0}
-
-/* 패널(요약) */
-#summaryPanel{
-  position:absolute;left:50%;top:0;transform:translate(-50%,-12px);
-  display:flex;gap:18px;opacity:0;pointer-events:none;
-  width:min(880px,92vw);background:rgba(14,20,28,.9);
-  border:1px solid rgba(255,255,255,.08);border-radius:10px;
-  box-shadow:0 18px 60px rgba(0,0,0,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:opacity .28s ease, transform .28s ease;
-}
-#summaryPanel.active{opacity:1;transform:translate(-50%,16px);pointer-events:auto}
-#summaryPanel .panel-cover{width:200px;height:316px;border-radius:8px;overflow:hidden;flex-shrink:0}
-#summaryPanel .panel-cover img{width:100%;height:100%;object-fit:cover}
-#summaryPanel .panel-content{padding:14px 14px 14px 0;min-width:0}
-#summaryPanel h1{margin:0 0 6px 0;font-size:26px}
-#summaryPanel h2{margin:0 0 12px 0;font-size:18px;font-weight:400;opacity:.85;border-bottom:1px dashed rgba(255,255,255,.15);padding-bottom:10px}
-#summaryPanel .mini{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
-#summaryPanel .mini a{color:var(--accent);text-decoration:none}
-#summaryPanel .mini a:hover{text-decoration:underline}
-#panelClose{
-  position:absolute;right:10px;top:8px;border:1px solid rgba(255,255,255,.12);
-  background:#0f1620;color:#cfe1ff;border-radius:8px;padding:4px 8px;cursor:pointer
+/* 주신 CSS 코드를 기반으로 재구성 및 조정 */
+/*-----------------------------------------------------------------------------*/
+/* BASIC LAYOUT */
+/*-----------------------------------------------------------------------------*/
+body {
+    width: 960px;
+    margin: 0 auto;
+    font-family: 'pt sans', sans-serif;
+    background-color: #f0f0f0; /* 밝은 배경 유지 */
 }
 
-/* 배경 딤(시각만, 클릭 통과) */
-#panelBackdrop{
-  position:absolute;inset:0;display:none;background:rgba(0,0,0,.18);
-  backdrop-filter:blur(1.5px);pointer-events:none; /* ✅ 클릭 통과 */
+main {
+    max-width: 960px;
+    margin: 28px auto;
+    padding: 0 16px;
+    min-height: calc(100vh - 56px);
 }
-#panelBackdrop.show{display:block}
+main > header {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 5; /* 헤더가 다른 요소 위에 오도록 조정 */
+}
 
-/* ===== 목록/본문 ===== */
-.hidden{display:none!important}
-.list{display:grid;gap:12px}
-.item{display:block;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-decoration:none}
-.item .m{color:var(--muted);font-size:12px;margin-top:4px}
-.post{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
-.post .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
-.post img{max-width:100%;border-radius:10px}
-pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:10px;overflow:auto}
+/*-----------------------------------------------------------------------------*/
+/* LIBRARY LIST */
+/*-----------------------------------------------------------------------------*/
+ul.library {
+    margin: 0;
+    padding: 0 0 10px 0;
+    list-style-type: none;
+    overflow: hidden;
+}
 
-/* ===== 디버그 pill / drawer ===== */
-.dbg-pill{display:none;align-items:center;gap:6px;margin-left:auto;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);backdrop-filter:blur(12px);color:#dfe7ef}
-.dbg-pill svg{width:16px;height:16px}
-.dbg-pill.badge::after{content:"";width:7px;height:7px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 0 4px rgba(255,107,107,.22);margin-left:2px}
-#dbgDrawer{position:fixed;right:16px;top:76px;display:none;min-width:360px;width:min(720px,92vw);max-height:62vh;overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(14,20,28,.7);backdrop-filter:blur(14px)}
-#dbgDrawer.open{display:block}
-#dbgDrawer header{display:flex;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
-#dbgDrawer header h4{margin:0;font-size:12px;opacity:.85}
-#dbgDrawer header .sp{flex:1}
-#dbgDrawer header button{padding:6px 8px;border:1px solid #2a3a46;background:#0f1821;color:#cfe1f0;border-radius:8px}
-#dbgDrawer pre{margin:0;padding:10px}
+li.book {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 10px;
+    float: left;
+    width: 140px;
+    height: 224px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    z-index: 1; /* 기본 책 z-index */
+}
+
+/* hover & active */
+.book:hover { background-color: #E5E5E5; }
+.book:active { background-color: #D9D9D9; }
+
+/* 선택된 책은 z-index를 높여 가장 위에 오도록 하고, 커버 애니메이션 적용 */
+li.book.selected {
+    z-index: 4;
+}
+
+/*-----------------------------------------------------------------------------*/
+/* BOOK COVERS */
+/*-----------------------------------------------------------------------------*/
+.book .cover {
+    width: 140px;
+    height: 224px;
+    box-shadow: 3px 3px 5px rgba(0,0,0,.3);
+}
+
+.book .cover img {
+    background-color: #e5e5e5;
+    width: 140px;
+    height: 224px;
+    border: 0px solid #FFFFFF;
+    transition: transform 0.3s ease-out, border-width 0.3s ease-out; /* 애니메이션 부드럽게 */
+}
+
+/* 선택된 책 표지 확대 및 테두리 */
+.book.selected .cover img {
+    transform: scale(1.4); /* 이미지 자체를 확대 */
+    border-width: 5px; /* 테두리 추가 */
+    border-color: #AAAAAA; /* 테두리 색상 */
+}
+
+
+/*-----------------------------------------------------------------------------*/
+/* SUMMARY ABSTRACTS */
+/*-----------------------------------------------------------------------------*/
+#summaryPanel {
+    position: absolute; /* 절대 위치 */
+    display: flex;
+    gap: 18px;
+    opacity: 0;
+    pointer-events: none; /* 클릭 비활성화 */
+    width: 600px; /* 고정 너비 조정 */
+    max-width: 90vw; /* 모바일 대응 */
+    background: #E5E5E5;
+    border: 1px solid #D9D9D9;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4); /* 그림자 조정 */
+    transition: opacity .28s ease, transform .28s ease;
+    z-index: 10; /* 가장 위에 오도록 조정 */
+    transform: translate(-50%, -10px); /* 초기 위치 조정 (숨겨진 상태) */
+}
+#summaryPanel.active {
+    opacity: 1;
+    pointer-events: auto; /* 클릭 활성화 */
+    transform: translate(-50%, 0); /* 나타날 때의 위치 */
+}
+
+#summaryPanel .panel-cover{
+  width: 160px; /* 패널 내 이미지 크기 조정 */
+  height: 256px; /* 패널 내 이미지 크기 조정 */
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 4px rgba(0,0,0,.2);
+}
+#summaryPanel .panel-cover img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#summaryPanel .panel-content{
+  padding: 14px 14px 14px 0;
+  min-width: 0;
+}
+#summaryPanel h1, #summaryPanel h2, #summaryPanel p {
+  cursor: text;
+}
+#summaryPanel h1 {
+  font-size: 28px; /* 폰트 크기 조정 */
+  line-height: 34px;
+  margin: 0 0 4px 0;
+  padding: 0;
+}
+#summaryPanel h2 {
+  font-weight: normal;
+  font-style: italic;
+  font-size: 20px; /* 폰트 크기 조정 */
+  margin: 0 0 10px 0;
+  padding: 0 0 10px 0;
+  border-bottom: 1px dotted #BBBBBB; /* 테두리 조정 */
+}
+#summaryPanel p {
+  font-size: 16px; /* 폰트 크기 조정 */
+  line-height: 22px;
+  margin: 0;
+  padding: 0;
+}
+#summaryPanel .panel-content ul.mini {
+    margin: 10px 0;
+    padding-left: 20px;
+    list-style-type: disc;
+}
+#summaryPanel .panel-content ul.mini li {
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+#summaryPanel .panel-content ul.mini a {
+    color: #333;
+    text-decoration: none;
+}
+#summaryPanel .panel-content ul.mini a:hover {
+    text-decoration: underline;
+}
+
+/* PAGE OVERLAYS - 제거 (display: none 처리) */
+.overlay-page {
+    display: none !important;
+}
+
+
+/* 기존 CSS에서 필요한 부분 조정 */
+.hidden { display: none !important }
+.list { display: grid; gap: 12px; }
+.item {
+    display: block;
+    padding: 14px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    background: #fff;
+    color: #333;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.item .m { color: #999; font-size: 12px; margin-top: 4px; }
+.post {
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    background: #fff;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.post .meta { color: #999; font-size: 12px; margin-bottom: 12px; }
+.post img { max-width: 100%; border-radius: 10px; }
+pre {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 10px;
+    overflow: auto;
+}
+
+/* 버튼 스타일 재정의 */
+a.btn, button.btn {
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #333;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+a.btn:hover, button.btn:hover {
+  background: #e9e9e9;
+  transform: scale(1.05);
+}
+#backBtn::before { content: '← '; }
+
+/* Debug drawer and pill */
+.dbg-pill {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    color: #333;
+}
+.dbg-pill svg { width: 16px; height: 16px; stroke: #555; }
+.dbg-pill.badge::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    box-shadow: 0 0 0 4px rgba(255,107,107,.22);
+    margin-left: 2px;
+}
+#dbgDrawer {
+    position: fixed;
+    right: 16px;
+    top: 76px;
+    display: none;
+    min-width: 360px;
+    width: min(720px, 92vw);
+    max-height: 62vh;
+    overflow: auto;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(14px);
+}
+#dbgDrawer.open { display: block; }
+#dbgDrawer header {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid #ddd;
+}
+#dbgDrawer header h4 { margin: 0; font-size: 12px; opacity: .85; color: #333; }
+#dbgDrawer header .sp { flex: 1; }
+#dbgDrawer header button {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    color: #333;
+    border-radius: 8px;
+}
+#dbgDrawer pre { margin: 0; padding: 10px; color: #333; }
+
 </style>
 </head>
 <body>
 <main>
   <header>
-    <!-- ✅ 자리만 교체: 뒤로 → 홈 (기능은 그대로) -->
     <button id="backBtn" class="btn" type="button">뒤로</button>
-    <a id="homeBtn" class="btn" href="../" data-home="">← 홈</a>
-
+    <a id="homeBtn" class="btn" href="../" data-home="">홈</a>
     <h1 id="title" style="margin:0 0 0 8px;font-size:18px">분류 전체보기</h1>
     <button id="dbgPill" class="dbg-pill" title="Alt+D (디버그)">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="6" width="10" height="14" rx="5"/><path d="M5 10h14"/></svg>
@@ -94,24 +303,17 @@ pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:1
     </button>
   </header>
 
-  <!-- 카테고리 = 책장 -->
-  <section id="viewCats" class="libwrap">
-    <div id="panelBackdrop"></div>
+  <div class="content">
     <ul class="library"></ul>
+  </div>
 
-    <div id="summaryPanel" aria-live="polite">
-      <button id="panelClose" type="button">닫기</button>
-      <div class="panel-cover"><img alt=""></div>
-      <div class="panel-content"></div>
-    </div>
-
-    <div id="diag" class="hidden" style="margin-top:12px"></div>
-  </section>
-
-  <!-- 글 목록 -->
+  <div id="summaryPanel">
+    <div class="panel-cover"><img alt=""></div>
+    <div class="panel-content"></div>
+  </div>
+  
   <div id="viewList" class="list hidden" aria-label="글 목록"></div>
 
-  <!-- 본문 -->
   <section id="viewPost" class="post hidden" aria-label="글 본문">
     <h2 id="pTitle"></h2>
     <div id="pMeta" class="meta"></div>
@@ -119,7 +321,6 @@ pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:1
   </section>
 </main>
 
-<!-- Debug drawer -->
 <section id="dbgDrawer" role="dialog" aria-modal="true" aria-label="디버그">
   <header>
     <h4>디버그</h4><span class="sp"></span>
@@ -133,7 +334,7 @@ pre{background:#0b1117;border:1px solid var(--line);padding:12px;border-radius:1
 <script>
 /* ===== Paths ===== */
 const BASE = (function(){ const p=location.pathname; return /\/$/.test(p)?p:p.replace(/[^/]+$/,'/'); })();
-const DATA_URL  = BASE + 'data/posts.json';
+const DATA_URL = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
 
 /* ===== Debug (pill+drawer, 에러때만 은은히 표시) ===== */
@@ -192,7 +393,13 @@ async function ffetch(url,opt={},tag='fetch'){
 
 /* ===== Data → Library ===== */
 let ALL=[], CATS={}, library=[];
-function Book(cover,title,author,abstract){ this.cover=cover; this.title=title; this.author=author; this.abstract=abstract; library.push(this); }
+function Book(cover,title,author,abstract) {
+    this.cover = cover;
+    this.title = title;
+    this.author = author;
+    this.abstract = abstract;
+    library.push(this);
+}
 function buildLibrary(){
   CATS={};
   ALL.forEach(p=>{ const c=p.category||'기타'; (CATS[c] ||= {name:c,posts:[]}).posts.push(p); });
@@ -206,14 +413,15 @@ function buildLibrary(){
 }
 
 /* ===== Library render & panel ===== */
-let openCat=null;
+let openCat = null;
+let openBookEl = null;
+
 function renderCats(){
   $('#title').textContent='분류 전체보기';
-  $('#viewCats').classList.remove('hidden');
+  $('.content').classList.remove('hidden');
   $('#viewList').classList.add('hidden');
   $('#viewPost').classList.add('hidden');
-
-  const ul=$('#viewCats ul.library'); ul.innerHTML='';
+  const ul=$('.library'); ul.innerHTML='';
   library.forEach(bk=>{
     ul.insertAdjacentHTML('beforeend',
       `<li class="book" data-cat="${esc(bk._cat)}">
@@ -223,58 +431,128 @@ function renderCats(){
   });
   initLazyCovers();
 }
-function panelFor(cat){
-  const posts=(CATS[cat]?.posts||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-  const bk=library.find(b=>b._cat===cat)||{};
-  const cover=(bk._coverCands && bk._coverCands[0])||placeholderCover();
-  $('#summaryPanel .panel-cover img').src=cover;
-  let html=`<h1>${esc(cat)}</h1><h2>최근 글</h2><ul class="mini">`;
-  posts.forEach(p=>html+=`<li><a href="#/post/${encodeURIComponent(p.slug)}">${esc(p.title)}</a> <small>· ${esc(d(p.date))}</small></li>`);
-  html+=`</ul><p style="margin-top:10px"><a href="#/category/${encodeURIComponent(cat)}">이 카테고리 전체 보기 →</a></p>`;
-  $('#summaryPanel .panel-content').innerHTML=html;
-}
-function openPanel(cat){
-  openCat=cat; panelFor(cat);
-  $('#summaryPanel').classList.add('active');
-  $('#panelBackdrop').classList.add('show'); /* 시각만 */
-}
-function closePanel(){
-  openCat=null;
-  $('#summaryPanel').classList.remove('active');
-  $('#panelBackdrop').classList.remove('show');
+
+function panelFor(cat, bookEl) {
+    const posts=(CATS[cat]?.posts||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+    const bk=library.find(b=>b._cat===cat)||{};
+    const cover=(bk._coverCands && bk._coverCands[0])||placeholderCover();
+    
+    $('#summaryPanel .panel-cover img').src = cover;
+    let html = `<h1>${esc(cat)}</h1><h2>최근 글</h2>`; // 'by' 제거, '최근 글' 추가
+    html += `<p style="font-size: 14px; color: #666;">총 ${posts.length}개의 글</p>`; // 총 글 개수 표시
+    html += `<ul class="mini">`;
+    posts.forEach(p => html += `<li><a href="#/post/${encodeURIComponent(p.slug)}">${esc(p.title)}</a> <small>· ${esc(d(p.date))}</small></li>`);
+    html += `</ul><p style="margin-top:10px"><a href="#/category/${encodeURIComponent(cat)}">이 카테고리 전체 보기 →</a></p>`;
+    $('#summaryPanel .panel-content').innerHTML = html;
 }
 
-/* 클릭: 같은 책 재클릭 → 닫힘, 다른 책 → 내용 교체/열기 */
-$('#viewCats').addEventListener('click', (e)=>{
-  const li=e.target.closest('li.book'); if(!li) return;
-  const cat=li.dataset.cat;
-  const opened=$('#summaryPanel').classList.contains('active');
-  if (opened && openCat===cat){ closePanel(); }
-  else if (opened){ openPanel(cat); } else { openPanel(cat); }
+
+function openPanel(cat, bookEl) {
+    const summaryPanel = $('#summaryPanel');
+
+    if (openBookEl === bookEl) {
+        // 이미 열려있는 같은 책을 다시 클릭하면 닫기
+        closePanel();
+        return;
+    }
+    
+    // 다른 책을 클릭하면 기존 패널 닫고 새로 열기
+    closePanel();
+    openCat = cat;
+    openBookEl = bookEl;
+
+    panelFor(cat, bookEl); // 데이터 로드 및 패널 내용 업데이트
+    
+    const bookRect = bookEl.getBoundingClientRect();
+    const coverRect = bookEl.querySelector('.cover').getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // 요약 패널 위치 조정: 클릭한 책 표지 근처에 오도록 조정
+    // 책 표지 오른쪽에서 약간 떨어진 위치에 패널 왼쪽을 맞춤
+    summaryPanel.style.left = (bookRect.left + window.scrollX + coverRect.width + 30) + 'px';
+    summaryPanel.style.top = (bookRect.top + window.scrollY) + 'px';
+    
+    // 뷰포트 경계를 벗어나지 않도록 조정 (선택 사항)
+    const panelWidth = summaryPanel.offsetWidth;
+    const panelHeight = summaryPanel.offsetHeight;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let targetLeft = bookRect.left + window.scrollX + coverRect.width + 30;
+    let targetTop = bookRect.top + window.scrollY;
+
+    if (targetLeft + panelWidth > viewportWidth - 20) { // 오른쪽 경계 초과 시 왼쪽으로 이동
+        targetLeft = bookRect.left + window.scrollX - panelWidth - 30;
+    }
+    if (targetTop + panelHeight > viewportHeight + window.scrollY - 20) { // 아래쪽 경계 초과 시 위로 이동 (혹은 적절히)
+        targetTop = viewportHeight + window.scrollY - panelHeight - 20;
+    }
+    if (targetTop < window.scrollY + 20) { // 위쪽 경계 초과 시 아래로 이동
+        targetTop = window.scrollY + 20;
+    }
+
+    summaryPanel.style.left = targetLeft + 'px';
+    summaryPanel.style.top = targetTop + 'px';
+
+    summaryPanel.classList.add('active'); // 패널 활성화
+    
+    bookEl.classList.add('selected'); // 선택된 책 스타일 적용
+    bookEl.style.zIndex = 4; // 선택된 책을 맨 위로
+}
+
+function closePanel() {
+    if (!openBookEl) return;
+    
+    const summaryPanel = $('#summaryPanel');
+    
+    summaryPanel.classList.remove('active'); // 패널 비활성화
+
+    // 선택된 책 스타일 원래대로 되돌리기
+    openBookEl.classList.remove('selected');
+    openBookEl.style.zIndex = 'auto';
+    openBookEl.querySelector('img').style.transform = 'scale(1)';
+
+    openBookEl = null;
+    openCat = null;
+}
+
+/* 클릭 이벤트 핸들러: 패널 외부 클릭 시 닫기 */
+document.addEventListener('click', (e) => {
+    const li = e.target.closest('li.book');
+    const summaryPanel = $('#summaryPanel');
+    const isClickInsidePanel = summaryPanel.contains(e.target);
+
+    if (li) {
+        // 책 표지 클릭 시
+        const cat = li.dataset.cat;
+        openPanel(cat, li);
+    } else if (!isClickInsidePanel && summaryPanel.classList.contains('active')) {
+        // 패널 외부를 클릭했고 패널이 활성화 상태일 때
+        closePanel();
+    }
 });
-$('#panelClose').addEventListener('click', closePanel);
+
 document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closePanel(); });
 
 /* ===== 카테고리 → 글 목록 ===== */
 function renderList(cat){
+  closePanel();
   $('#title').textContent=cat;
-  $('#viewCats').classList.add('hidden');
+  $('.content').classList.add('hidden');
   $('#viewList').classList.remove('hidden');
   $('#viewPost').classList.add('hidden');
   const list=ALL.filter(p=>(p.category||'기타')===cat).sort((a,b)=>new Date(b.date)-new Date(a.date));
   $('#viewList').innerHTML=list.length
     ? list.map(p=>`<a class="item" href="#/post/${encodeURIComponent(p.slug)}"><div class="t">${esc(p.title)}</div><div class="m">${esc(d(p.date))} · ${esc(p.summary||'')}</div></a>`).join('')
     : '<p class="m">글이 없습니다.</p>';
-  closePanel();
 }
 
 /* ===== 게시글 ===== */
 async function renderPost(slug){
-  $('#viewCats').classList.add('hidden');
+  closePanel();
+  $('.content').classList.add('hidden');
   $('#viewList').classList.add('hidden');
   $('#viewPost').classList.remove('hidden');
-  closePanel();
-
   const m=ALL.find(p=>p.slug===slug)||{title:slug};
   $('#title').textContent=m.category||'게시글';
   $('#pTitle').textContent=m.title;
@@ -298,7 +576,7 @@ function route(){
   const mPost=location.hash.match(/^#\/post\/(.+)$/);
   const mCat =location.hash.match(/^#\/category\/(.+)$/);
   if(mPost) return renderPost(decodeURIComponent(mPost[1]));
-  if(mCat)  return renderList(decodeURIComponent(mCat[1]));
+  if(mCat)  return renderList(decodeURIComponent(mCat[1]));
   return renderCats();
 }
 addEventListener('hashchange', route);
@@ -317,7 +595,7 @@ function initLazyCovers(){
       next(); io.unobserve(img);
     });
   },{rootMargin:'200px'});
-  document.querySelectorAll('#viewCats .library img[data-cands]').forEach(img=>io.observe(img));
+  document.querySelectorAll('.library img[data-cands]').forEach(img=>io.observe(img));
 }
 
 /* ===== 헬스체크 ===== */
