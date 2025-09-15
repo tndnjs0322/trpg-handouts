@@ -465,10 +465,8 @@ function openPanel(cat, bookEl) {
     
     const bookRect = bookEl.getBoundingClientRect();
     const coverRect = bookEl.querySelector('.cover').getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
     // 요약 패널 위치 조정: 클릭한 책 표지 근처에 오도록 조정
-    // 책 표지 오른쪽에서 약간 떨어진 위치에 패널 왼쪽을 맞춤
     summaryPanel.style.left = (bookRect.left + window.scrollX + coverRect.width + 30) + 'px';
     summaryPanel.style.top = (bookRect.top + window.scrollY) + 'px';
     
@@ -481,13 +479,13 @@ function openPanel(cat, bookEl) {
     let targetLeft = bookRect.left + window.scrollX + coverRect.width + 30;
     let targetTop = bookRect.top + window.scrollY;
 
-    if (targetLeft + panelWidth > viewportWidth - 20) { // 오른쪽 경계 초과 시 왼쪽으로 이동
+    if (targetLeft + panelWidth > viewportWidth + window.scrollX - 20) {
         targetLeft = bookRect.left + window.scrollX - panelWidth - 30;
     }
-    if (targetTop + panelHeight > viewportHeight + window.scrollY - 20) { // 아래쪽 경계 초과 시 위로 이동 (혹은 적절히)
+    if (targetTop + panelHeight > viewportHeight + window.scrollY - 20) {
         targetTop = viewportHeight + window.scrollY - panelHeight - 20;
     }
-    if (targetTop < window.scrollY + 20) { // 위쪽 경계 초과 시 아래로 이동
+    if (targetTop < window.scrollY + 20) {
         targetTop = window.scrollY + 20;
     }
 
@@ -516,19 +514,21 @@ function closePanel() {
     openCat = null;
 }
 
-/* 클릭 이벤트 핸들러: 패널 외부 클릭 시 닫기 */
+/* 클릭 이벤트 핸들러: 이제 책을 클릭할 때만 작동 */
 document.addEventListener('click', (e) => {
     const li = e.target.closest('li.book');
-    const summaryPanel = $('#summaryPanel');
-    const isClickInsidePanel = summaryPanel.contains(e.target);
+    const isClickInsidePanel = e.target.closest('#summaryPanel');
 
     if (li) {
         // 책 표지 클릭 시
         const cat = li.dataset.cat;
         openPanel(cat, li);
-    } else if (!isClickInsidePanel && summaryPanel.classList.contains('active')) {
-        // 패널 외부를 클릭했고 패널이 활성화 상태일 때
-        closePanel();
+    } else if (isClickInsidePanel) {
+        // 패널 내부를 클릭하면 아무것도 하지 않음 (기능 유지)
+        return;
+    } else {
+        // 그 외 모든 클릭 (빈 공간 포함)에는 아무것도 하지 않음
+        return;
     }
 });
 
