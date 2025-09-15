@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>블로그</title>
+<title>보관된 도서</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='90' font-size='90'>📜</text></svg>">
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,7 +25,7 @@
   --muted: #a8b3bf;
   --accent: #2c5282; /* 신비로운 도서관 컨셉을 위한 포인트 색상 */
   --highlight-text: #b3c5e8; /* 강조 텍스트 색상 */
-  --transition-speed: 0.75s;
+  --transition-speed: 0.4s;
 }
 
 /* 폰트, 기본 레이아웃 */
@@ -146,12 +146,19 @@ pre {
   width: 140px;
   height: 224px;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
-  transition: box-shadow var(--transition-speed) ease;
+  transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+.libwrap .book.selected .cover {
+  transform: scale(2.14); /* 300/140 = 2.14 */
+}
+.libwrap .book.selected .cover img {
+  border: 10px solid transparent; /* 애니메이션 개선 */
+  transition: transform var(--transition-speed) ease, border-width var(--transition-speed) ease;
 }
 .libwrap .book .cover img {
   background: var(--panel);
-  width: 140px;
-  height: 224px;
+  width: 100%;
+  height: 100%;
   border: 0 solid transparent;
   transition: all var(--transition-speed) ease-in-out;
   filter: saturate(1.1) brightness(0.9);
@@ -180,6 +187,7 @@ pre {
   border-radius: 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
+  transition: height 0.4s ease;
 }
 .libwrap .summary h1 {
   font-size: 26px;
@@ -386,7 +394,7 @@ const qs = (s) => document.querySelector(s);
 const BASE = (function() { const p = location.pathname; return /\/$/.test(p) ? p : p.replace(/[^/]+$/, '/'); })();
 const DATA_URL = BASE + 'data/posts.json';
 const POSTS_DIR = BASE + 'posts/';
-const animSpeed = 750;
+const animSpeed = 400; // 애니메이션 속도
 
 let ALL = [], CATS = {}, library = [], LAST_ERR = '';
 
@@ -407,7 +415,7 @@ async function ffetch(url, opt = {}, tag = 'fetch') {
 }
 
 function placeholderCover() {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='280' height='448' style='background:#1a202c;border:2px solid #3d4a5b;border-radius:6px;'>
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='280' height='448' style='background:%231a202c;border:2px solid %233d4a5b;border-radius:6px;'>
     <rect width='100%' height='100%' fill='%231a202c' style='filter:contrast(0.9) brightness(0.95);'/>
     <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Pretendard, system-ui' font-size='18' fill='%238e9ab2'>No Cover</text>
     <text x='50%' y='65%' dominant-baseline='middle' text-anchor='middle' font-family='Pretendard, system-ui' font-size='10' fill='%238e9ab2'>마법서 표지 없음</text>
@@ -515,7 +523,6 @@ function renderCats() {
     showDiag('불러올 카테고리가 없습니다.', tips);
   }
 
-  // 이미지 로딩 로직 실행
   initLazyCovers();
 }
 
@@ -623,15 +630,6 @@ function attachAnimations() {
     return Math.abs($sel.position().top - maxTop) < 1;
   }
   function positionTop($sel) { $('html, body').animate({ scrollTop: $sel.offset().top }, animSpeed); }
-  function overlayVertPos($sel) {
-    const left = Math.round($sel.position().left);
-    if (left < 100) return '160px'; // 1열, 2열
-    if (left < 300) return '160px';
-    if (left < 500) return '320px'; // 3열
-    if (left < 700) return '480px'; // 4열
-    if (left < 900) return '640px'; // 5열
-    return '160px';
-  }
 
   function selectAnimation($li) {
     if ($li.hasClass('animating') || $li.hasClass('selected')) return;
@@ -639,28 +637,26 @@ function attachAnimations() {
     $li.addClass('animating selected');
 
     const $cover = $li.find('.cover');
-    const $img = $li.find('.cover img');
     const $summary = $li.find('.summary');
 
-    $cover.stop().animate({ width: '300px', height: '468px' }, { duration: animSpeed });
-    $img.stop().animate({ width: '280px', height: '448px', borderWidth: '10px' }, { duration: animSpeed });
-
-    if (isBottomRow($li)) { $lib.css('paddingBottom', '234px'); }
+    // CSS transition을 이용해 자연스러운 애니메이션 처리
+    $li.addClass('zoomed');
+    $li.find('.cover img').css('border-width', '10px');
+    
+    // 요약 패널 애니메이션
+    $overlayPage.fadeIn(animSpeed);
+    $summary.css({ 'left': $cover.parent().hasClass('right-side') ? '-480px' : '160px' });
+    $summary.css({ 'height': '450px' }).show();
+    
+    // 레이아웃 밀림 보정
+    if (isBottomRow($li)) {
+      $lib.css('paddingBottom', '234px');
+    }
     positionTop($li);
 
-    $overlayPage.fadeIn(animSpeed);
-    const px = overlayVertPos($li);
-    $overlaySummary.css('left', px).show().animate({ height: '100%' }, {
-      duration: animSpeed,
-      step: (now, fx) => {
-        if (fx.prop === 'height' && now > 200 && $summary.height() < 450) {
-          if (!$summary.is(':animated')) {
-            $summary.show().animate({ height: '450px' }, { duration: animSpeed / 2 });
-          }
-        }
-      },
-      complete: () => $li.removeClass('animating')
-    });
+    setTimeout(() => {
+      $li.removeClass('animating');
+    }, animSpeed);
   }
 
   function deselectAnimation($li) {
@@ -669,38 +665,34 @@ function attachAnimations() {
     dbg('INFO', 'deselect', $li.data('cat'));
     $li.addClass('animating');
 
-    const $cover = $li.find('.cover');
-    const $img = $li.find('.cover img');
     const $summary = $li.find('.summary');
 
-    $summary.stop().animate({ height: '0px' }, { duration: animSpeed / 2, complete: () => $summary.hide() });
-    $cover.stop().animate({ width: '140px', height: '224px' }, { duration: animSpeed });
-    $img.stop().animate({ width: '140px', height: '224px', borderWidth: '0px' }, {
-      duration: animSpeed, complete: () => $li.removeClass('selected animating')
-    });
-
-    $lib.stop().animate({ paddingBottom: '10px' }, { duration: animSpeed });
+    $li.removeClass('zoomed');
+    $li.find('.cover img').css('border-width', '0px');
+    
+    // 요약 패널 숨김
+    $summary.css({ 'height': '0' });
     $overlayPage.fadeOut(animSpeed);
-    $overlaySummary.stop().animate({ height: '0px' }, { duration: animSpeed, complete: () => $overlaySummary.hide() });
+    $lib.stop().animate({ paddingBottom: '10px' }, { duration: animSpeed });
+
+    setTimeout(() => {
+      $li.removeClass('selected animating');
+      $summary.hide();
+    }, animSpeed);
   }
 
   $('.libwrap').on('click', 'li.book', function() {
     const $current = $('.libwrap li.book.selected');
     const $me = $(this);
-    if ($me.is($current)) return;
-    if ($current.length) {
-      deselectAnimation($current);
-      setTimeout(() => selectAnimation($me), 40);
+    if ($me.is($current)) {
+      deselectAnimation($me);
     } else {
-      selectAnimation($me);
-    }
-  });
-
-  $('.libwrap').on('click', '.book .cover', function(e) {
-    const $li = $(this).closest('li.book');
-    if ($li.hasClass('selected')) {
-      e.stopPropagation();
-      deselectAnimation($li);
+      if ($current.length) {
+        deselectAnimation($current);
+        setTimeout(() => selectAnimation($me), animSpeed); // 이전 애니메이션이 끝난 후 시작
+      } else {
+        selectAnimation($me);
+      }
     }
   });
 
