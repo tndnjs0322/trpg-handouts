@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>TRPG 일정 — Neverending Cthulhu</title>
 
+<!-- 모든 링크를 같은 탭에서 열기 -->
 <base target="_self">
 
 <style>
@@ -26,6 +27,8 @@
     display:flex; flex-direction:column;
   }
   .wrap{max-width:1220px; width:100%; margin:24px auto; padding:0 16px; flex:1; display:flex; flex-direction:column;}
+
+  /* Glass Toolbar */
   .toolbar{
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
     background: rgba(var(--white), var(--alpha));
@@ -35,6 +38,8 @@
     -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
     margin-bottom:16px; box-shadow: var(--shadow-md);
   }
+
+  /* 버튼 */
   .btn{
     appearance:none; user-select:none; -webkit-tap-highlight-color: transparent;
     display:inline-flex; align-items:center; gap:10px;
@@ -57,6 +62,8 @@
     border-color: rgba(76,141,169,.55); color:#0b1519;
   }
   .btn--brand:hover{ box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 12px 26px rgba(76,141,169,.35) }
+
+  /* 뷰 탭(Pill) */
   .pill{
     display:inline-flex; gap:6px; padding:6px;
     background: rgba(255,255,255,.10);
@@ -75,13 +82,16 @@
   }
   .pill button:hover{ transform: translateY(-1px) }
   .toolbar .spacer{ flex:1 }
+
+  /* 캘린더 카드 */
   .card{
     background: rgba(15, 28, 33, .55); border:1px solid rgba(255,255,255,.08); border-radius:18px;
-    backdrop-filter:saturate(140%) blur(var(--blur));
-    -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
+    backdrop-filter:saturate(140%) blur(var(--blur)); -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
     box-shadow: var(--shadow-lg); padding:12px; flex:1; display:flex; min-height: 680px;
   }
   #cal{height:100%; width:100%}
+
+  /* TUI v2 약간의 톤 맞춤 */
   .toastui-calendar-day-name{background:rgba(255,255,255,.06); border-bottom:1px solid var(--line); color:var(--muted)}
   .toastui-calendar-grid-cell{border-color:var(--line)}
   .toastui-calendar-panel + .toastui-calendar-panel .toastui-calendar-grid-cell{border-top-color:var(--line)}
@@ -95,6 +105,7 @@
 <body>
   <div class="wrap">
     <div class="toolbar">
+      <!-- 홈 / 뒤로 -->
       <button class="btn btn--ghost" id="home" aria-label="홈">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
         <span>홈</span>
@@ -104,6 +115,7 @@
         <span>뒤로</span>
       </button>
 
+      <!-- 뷰 탭 -->
       <div class="pill" role="tablist" aria-label="뷰 선택" style="margin-left:8px">
         <button data-view="month" aria-pressed="true">월간</button>
         <button data-view="week"  aria-pressed="false">주간</button>
@@ -112,10 +124,12 @@
 
       <div class="spacer"></div>
 
+      <!-- JSON 공유(옵션 B) -->
       <button class="btn btn--ghost" id="reload-json" title="리포의 events.json 다시 읽기">불러오기</button>
       <button class="btn btn--ghost" id="export-json" title="현재 일정을 events.json로 다운로드">내보내기</button>
       <button class="btn btn--brand" id="quick-add" title="빠른 일정 추가">새 일정</button>
 
+      <!-- 네비게이션 -->
       <button class="btn btn--ghost" id="prev" aria-label="이전">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
         <span>이전</span>
@@ -132,213 +146,239 @@
     </div>
   </div>
 
-  <!-- 초기화 스크립트: TUI가 준비될 때까지 기다렸다가 실행 -->
-  <script>
-    function getProjectHome(){
-      const seg = location.pathname.split('/').filter(Boolean);
-      return seg.length >= 1 ? ('/' + seg[0] + '/') : '/';
-    }
-    const HOME_URL = getProjectHome();
+<!-- ========= TUI Calendar 로더: jsDelivr → unpkg → 로컬 ========= -->
+<script>
+(function(){
+  const CSS_CANDIDATES = [
+    'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css',
+    'https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css',
+    './vendor/toastui/toastui-calendar.min.css' // ← 리포에 복사해 둔 로컬
+  ];
+  const JS_CANDIDATES = [
+    'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js',
+    'https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js',
+    './vendor/toastui/toastui-calendar.min.js' // ← 리포에 복사해 둔 로컬
+  ];
 
-    // TUI 준비 대기 유틸(최대 8초)
-    function waitForToastUI(timeoutMs = 8000){
-      return new Promise((resolve, reject)=>{
-        const start = performance.now();
-        const tid = setInterval(()=>{
-          if (window.toastui?.Calendar){
-            clearInterval(tid); resolve();
-          }else if (performance.now() - start > timeoutMs){
-            clearInterval(tid); reject(new Error('toastui load timeout'));
-          }
-        }, 50);
-      });
-    }
-
-    (async function init(){
-      // 키 처리/홈·뒤로는 바로 활성화
-      window.addEventListener('keydown', (e) => {
-        if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-        if (e.key === 'h' || e.key === 'H') { e.preventDefault(); location.href = HOME_URL; }
-        if (e.key === 'b' || e.key === 'B') { e.preventDefault(); history.length > 1 ? history.back() : location.href = HOME_URL; }
-      });
-      document.getElementById('home').onclick = () => location.href = HOME_URL;
-      document.getElementById('back').onclick = () => (history.length > 1 ? history.back() : location.href = HOME_URL);
-
-      try{
-        await waitForToastUI(); // ⬅️ 여기서 TUI가 로드될 때까지 대기
-      }catch{
-        document.getElementById('cal').innerHTML =
-          '⚠️ 캘린더 로드 실패(네트워크/차단 확인). 사내망이면 cdn.jsdelivr.net / unpkg.com 허용 또는 <code>schedule/vendor/toastui/</code>에 파일을 넣어주세요.';
-        return;
-      }
-
-      const cal = new toastui.Calendar('#cal', {
-        defaultView:'month',
-        theme:{
-          common:{ backgroundColor:'transparent',
-            gridSelection:{ backgroundColor:'rgba(76,141,169,.14)', border:'1px solid rgba(76,141,169,.45)' },
-            saturday:{ color:'#9fc7d6' }, dayName:{ color:'#a8bcc6' }, today:{ color:'#86d2c7' }
-          },
-          month:{ dayName:{ backgroundColor:'rgba(255,255,255,.06)' },
-                  dayCell:{ borderLeft:'1px solid var(--line)', borderBottom:'1px solid var(--line)' } },
-          week:{ dayName:{ backgroundColor:'rgba(255,255,255,.06)', borderBottom:'1px solid var(--line)' },
-                 nowIndicatorPast:{ border:'1px solid var(--brand)' },
-                 nowIndicatorBullet:{ backgroundColor:'var(--brand)' },
-                 nowIndicatorToday:{ border:'1px solid var(--brand)' } }
-        },
-        usageStatistics:false,
-        month:{ startDayOfWeek:1 },
-        week:{ startDayOfWeek:1, hourStart:8, hourEnd:24 },
-        calendars:[
-          { id:'session', name:'세션', color:'#0b1519', backgroundColor:'#4C8DA9' },
-          { id:'prep',    name:'프렙',  color:'#0b1519', backgroundColor:'#86D2C7' },
-          { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
-        ],
-      });
-
-      const btns = document.querySelectorAll('[data-view]');
-      function setView(v){
-        btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view===v)));
-        cal.changeView(v, true);
-      }
-      btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
-      document.getElementById('prev').onclick  = () => cal.prev();
-      document.getElementById('next').onclick  = () => cal.next();
-      document.getElementById('today').onclick = () => cal.today();
-
-      window.__cal_instance = cal;
-
-      async function loadFromRepo(cal) {
-        const url = new URL('events.json', location.href);
-        url.searchParams.set('v', Date.now());
-        try {
-          const res = await fetch(url.toString(), { cache: 'no-store' });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const raw = await res.json();
-          const data = raw.map(e => ({
-            ...e,
-            start: e.start ? new Date(e.start) : null,
-            end:   e.end   ? new Date(e.end)   : null,
-          }));
-          cal.clear?.();
-          cal.createEvents?.(data);
-        } catch (err) {
-          console.error('events.json 로드 실패:', err);
-          alert('⚠️ events.json을 불러오지 못했습니다.\n파일이 존재하는지, 경로가 맞는지 확인해 주세요.');
-        }
-      }
-      function serializeEvents(cal) {
-        return cal.getEvents().map(e => ({
-          id: e.id,
-          calendarId: e.calendarId,
-          title: e.title || '',
-          start: e.start ? new Date(e.start).toISOString() : null,
-          end:   e.end   ? new Date(e.end).toISOString()   : null,
-          category: e.category || (e.isAllday ? 'allday' : 'time'),
-        }));
-      }
-      function downloadJSON(filename, dataObj) {
-        const blob = new Blob([JSON.stringify(dataObj, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click();
-        a.remove(); URL.revokeObjectURL(url);
-      }
-      async function quickAdd(cal) {
-        const title = prompt('제목을 입력하세요 (예: 세션 Ep.03)');
-        if (!title) return;
-        const startStr = prompt('시작 (예: 2025-09-22 19:30 혹은 2025-09-22)');
-        if (!startStr) return;
-        const endStr = prompt('끝 (예: 2025-09-22 22:30 / 종일이면 비워두기)', '');
-        const parseDT = (s) => {
-          if (!s) return null;
-          if (/\d{2}:\d{2}/.test(s)) {
-            const [d, t] = s.split(/\s+/);
-            return new Date(d + 'T' + t + ':00');
-          } else {
-            return new Date(s);
-          }
-        };
-        const start = parseDT(startStr);
-        const end = endStr ? parseDT(endStr) : null;
-        const isAllDay = !!(startStr && !/\d{2}:\d{2}/.test(startStr) && !endStr);
-        const evt = {
-          id: crypto.randomUUID(),
-          calendarId: 'session',
-          title,
-          start,
-          end: end || (isAllDay ? start : new Date(start.getTime() + 2*60*60*1000)),
-          category: isAllDay ? 'allday' : 'time',
-        };
-        cal.createEvents?.([evt]);
-        localStorage.setItem('events:autosave', JSON.stringify(serializeEvents(cal)));
-        if (confirm('추가 완료! 지금 내보내기(다운로드) 할까요?\n(schedule/events.json에 업로드/커밋하면 공유됩니다)')) {
-          downloadJSON('events.json', serializeEvents(cal));
-        }
-      }
-      function wireButtons(cal) {
-        document.getElementById('reload-json')?.addEventListener('click', () => loadFromRepo(cal));
-        document.getElementById('export-json')?.addEventListener('click', () => {
-          downloadJSON('events.json', serializeEvents(cal));
-          alert('events.json을 다운로드했습니다.\n리포의 schedule/events.json에 업로드/커밋하세요.');
-        });
-        document.getElementById('quick-add')?.addEventListener('click', () => quickAdd(cal));
-
-        const save = () => localStorage.setItem('events:autosave', JSON.stringify(serializeEvents(cal)));
-        const raw = localStorage.getItem('events:autosave');
-        if (raw) {
-          try {
-            const data = JSON.parse(raw).map(e => ({
-              ...e,
-              start: e.start ? new Date(e.start) : null,
-              end:   e.end   ? new Date(e.end)   : null,
-            }));
-            if (data.length) cal.createEvents?.(data);
-          } catch {}
-        }
-        cal.on?.('afterCreateEvent', save);
-        cal.on?.('afterUpdateEvent', save);
-        cal.on?.('afterDeleteEvent', save);
-      }
-      wireButtons(cal);
-      loadFromRepo(cal);
-    })();
-  </script>
-
-  <!-- 폴백 로더(순서: jsDelivr → unpkg → 로컬) -->
-  <script>
-  (async function loadToastUI(){
-    const CSS = [
-      'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css',
-      'https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css',
-      './vendor/toastui/toastui-calendar.min.css'
-    ];
-    const JS = [
-      'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js',
-      'https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js',
-      './vendor/toastui/toastui-calendar.min.js'
-    ];
-    const add = (tag, attrs) => new Promise((res,rej)=>{
-      const el = document.createElement(tag);
-      Object.assign(el, attrs);
-      el.onload = () => res(attrs.href || attrs.src);
-      el.onerror= () => rej(attrs.href || attrs.src);
-      document.head.appendChild(el);
+  function loadCSS(url){
+    return new Promise((resolve,reject)=>{
+      const link = document.createElement('link');
+      link.rel='stylesheet'; link.href=url;
+      link.onload=()=>resolve(url);
+      link.onerror=()=>reject(new Error('CSS fail: '+url));
+      document.head.appendChild(link);
     });
-    const trySeq = async (list, maker) => {
-      let last;
-      for (const u of list){ try { return await maker(u); } catch(e){ last=e; } }
-      throw last || new Error('all failed');
-    };
-    try {
-      await trySeq(CSS, href => add('link', { rel:'stylesheet', href }));
-      await trySeq(JS,  src  => add('script', { src, defer:true }));
-    } catch {
-      const mount = document.getElementById('cal') || document.body;
-      mount.innerHTML = '⚠️ 캘린더 라이브러리를 어떤 CDN/로컬에서도 불러오지 못했습니다.<br>사내망이면 cdn.jsdelivr.net / unpkg.com 허용 또는 <code>schedule/vendor/toastui/</code>에 파일을 넣어주세요.';
+  }
+  function loadJS(url){
+    return new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src=url; s.defer=true;
+      s.onload=()=>resolve(url);
+      s.onerror=()=>reject(new Error('JS fail: '+url));
+      document.head.appendChild(s);
+    });
+  }
+  async function trySeq(list, loader){
+    const errors=[];
+    for (const u of list){
+      try { await loader(u); return {ok:u}; }
+      catch(e){ errors.push(e.message); }
     }
+    return {errors};
+  }
+
+  // 전역 Promise: 로더가 끝나면 resolve
+  window.__toastuiReady = (async () => {
+    const css = await trySeq(CSS_CANDIDATES, loadCSS);
+    const js  = await trySeq(JS_CANDIDATES,  loadJS);
+
+    if (css.errors) console.warn('[ToastUI CSS failed]', css.errors);
+    if (js.errors)  console.warn('[ToastUI JS failed]',  js.errors);
+
+    if (!window.toastui || !toastui.Calendar) {
+      throw new Error('ToastUI not available after load attempts');
+    }
+    return true;
   })();
-  </script>
+})();
+</script>
+
+<!-- ========= 캘린더 초기화(로더 완료 후 실행) ========= -->
+<script>
+(function(){
+  function getProjectHome(){
+    const seg = location.pathname.split('/').filter(Boolean);
+    return seg.length >= 1 ? '/' + seg[0] + '/' : '/';
+  }
+  const HOME_URL = getProjectHome();
+
+  function serializeEvents(cal) {
+    return cal.getEvents().map(e => ({
+      id: e.id,
+      calendarId: e.calendarId,
+      title: e.title || '',
+      start: e.start ? new Date(e.start).toISOString() : null,
+      end:   e.end   ? new Date(e.end).toISOString()   : null,
+      category: e.category || (e.isAllday ? 'allday' : 'time'),
+    }));
+  }
+
+  async function loadFromRepo(cal) {
+    const url = new URL('events.json', location.href);
+    url.searchParams.set('v', Date.now()); // 캐시 방지
+    const res = await fetch(url.toString(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.json();
+    const data = raw.map(e => ({
+      ...e,
+      start: e.start ? new Date(e.start) : null,
+      end:   e.end   ? new Date(e.end)   : null,
+    }));
+    cal.clear?.();
+    cal.createEvents?.(data);
+  }
+
+  function downloadJSON(filename, dataObj) {
+    const blob = new Blob([JSON.stringify(dataObj, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    a.remove(); URL.revokeObjectURL(url);
+  }
+
+  async function quickAdd(cal) {
+    const title = prompt('제목을 입력하세요 (예: 세션 Ep.03)');
+    if (!title) return;
+    const startStr = prompt('시작 (예: 2025-09-22 19:30 혹은 2025-09-22)');
+    if (!startStr) return;
+    const endStr = prompt('끝 (예: 2025-09-22 22:30 / 종일이면 비워두기)', '');
+
+    const parseDT = (s) => {
+      if (!s) return null;
+      if (/\d{2}:\d{2}/.test(s)) {
+        const [d, t] = s.split(/\s+/);
+        return new Date(d + 'T' + t + ':00');
+      }
+      return new Date(s);
+    };
+
+    const start = parseDT(startStr);
+    const end = endStr ? parseDT(endStr) : null;
+    const isAllDay = !!(startStr && !/\d{2}:\d{2}/.test(startStr) && !endStr);
+
+    const evt = {
+      id: crypto.randomUUID(),
+      calendarId: 'session',
+      title,
+      start,
+      end: end || (isAllDay ? start : new Date(start.getTime() + 2*60*60*1000)),
+      category: isAllDay ? 'allday' : 'time',
+    };
+
+    cal.createEvents?.([evt]);
+    localStorage.setItem('events:autosave', JSON.stringify(serializeEvents(cal)));
+
+    if (confirm('추가 완료! 지금 내보내기(다운로드) 할까요?\n(리포의 schedule/events.json에 업로드/커밋하면 공유됩니다)')) {
+      downloadJSON('events.json', serializeEvents(cal));
+    }
+  }
+
+  function wireButtons(cal){
+    // 홈/뒤로
+    document.getElementById('home').onclick  = () => location.href = HOME_URL;
+    document.getElementById('back').onclick  = () => (history.length > 1 ? history.back() : location.href = HOME_URL);
+
+    // 뷰 전환 + 날짜 네비
+    const btns = document.querySelectorAll('[data-view]');
+    const setView = (v) => {
+      btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view===v)));
+      cal.changeView(v, true);
+    };
+    btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+    document.getElementById('prev').onclick  = () => cal.prev();
+    document.getElementById('next').onclick  = () => cal.next();
+    document.getElementById('today').onclick = () => cal.today();
+
+    // JSON 버튼
+    document.getElementById('reload-json')?.addEventListener('click', async () => {
+      try { await loadFromRepo(cal); }
+      catch (e){ alert('⚠️ events.json 로드 실패: ' + e.message); }
+    });
+    document.getElementById('export-json')?.addEventListener('click', () => {
+      downloadJSON('events.json', serializeEvents(cal));
+      alert('events.json을 다운로드했습니다.\n리포의 schedule/events.json에 업로드/커밋하세요.');
+    });
+    document.getElementById('quick-add')?.addEventListener('click', () => quickAdd(cal));
+
+    // 로컬 오토세이브 복원 + 변경 시 자동 저장
+    const raw = localStorage.getItem('events:autosave');
+    if (raw) {
+      try {
+        const data = JSON.parse(raw).map(e => ({
+          ...e,
+          start: e.start ? new Date(e.start) : null,
+          end:   e.end   ? new Date(e.end)   : null,
+        }));
+        if (data.length) cal.createEvents?.(data);
+      } catch {}
+    }
+    const save = () => localStorage.setItem('events:autosave', JSON.stringify(serializeEvents(cal)));
+    cal.on?.('afterCreateEvent', save);
+    cal.on?.('afterUpdateEvent', save);
+    cal.on?.('afterDeleteEvent', save);
+  }
+
+  // 로더가 끝난 뒤에만 초기화
+  window.addEventListener('DOMContentLoaded', async () => {
+    const mount = document.getElementById('cal');
+    try {
+      await window.__toastuiReady;
+    } catch (e) {
+      mount.innerHTML = '⚠️ 캘린더 라이브러리를 어떤 CDN/로컬에서도 불러오지 못했습니다.<br>사내망이면 cdn.jsdelivr.net / unpkg.com 허용 또는 <code>schedule/vendor/toastui/</code>에 파일을 넣어주세요.';
+      console.error(e);
+      return;
+    }
+
+    // toastui.Calendar 준비 완료
+    const cal = new toastui.Calendar('#cal', {
+      defaultView:'month',
+      theme: {
+        common: {
+          backgroundColor: 'transparent',
+          gridSelection: { backgroundColor:'rgba(76,141,169,.14)', border:'1px solid rgba(76,141,169,.45)' },
+          saturday: { color: '#9fc7d6' },
+          dayName: { color: '#a8bcc6' },
+          today: { color: '#86d2c7' },
+        },
+        month: {
+          dayName: { backgroundColor:'rgba(255,255,255,.06)' },
+          dayCell: { borderLeft:'1px solid var(--line)', borderBottom:'1px solid var(--line)' },
+          weekend: { backgroundColor:'transparent' },
+          today: { color: '#86d2c7' },
+        },
+        week: {
+          dayName: { backgroundColor:'rgba(255,255,255,.06)', borderBottom:'1px solid var(--line)' },
+          nowIndicatorPast: { border: '1px solid var(--brand)' },
+          nowIndicatorBullet: { backgroundColor: 'var(--brand)' },
+          nowIndicatorToday: { border: '1px solid var(--brand)' },
+        },
+      },
+      usageStatistics:false,
+      month:{ startDayOfWeek:1 },
+      week:{ startDayOfWeek:1, hourStart:8, hourEnd:24 },
+      calendars:[
+        { id:'session', name:'세션', color:'#0b1519', backgroundColor:'#4C8DA9' },
+        { id:'prep',    name:'프렙',  color:'#0b1519', backgroundColor:'#86D2C7' },
+        { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
+      ],
+    });
+
+    wireButtons(cal);
+    // events.json 자동 로드(있으면)
+    try { await loadFromRepo(cal); } catch {}
+  });
+})();
+</script>
 </body>
 </html>
