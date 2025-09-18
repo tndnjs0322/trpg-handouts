@@ -5,21 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>TRPG 일정 — Neverending Cthulhu</title>
 
+<!-- 모든 링크를 같은 탭에서 열기 -->
+<base target="_self">
+
 <!-- TUI Calendar v2 CSS (CDN) -->
 <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
 
 <style>
   :root{
-    --bg:#0d1a1f;          /* 배경(메인 사이트 톤) */
-    --ink:#e6eef2;         /* 본문 글자 */
-    --muted:#a8bcc6;       /* 보조 텍스트 */
-    --line:#1f2b31;        /* 보더 */
-    --brand:#4C8DA9;       /* 브랜드(오늘/인디케이터) */
-    --brand-weak:#0f2a33;  /* 브랜드 서피스 */
-    --accent:#86d2c7;      /* 하이라이트 */
-    --white:255 255 255;   /* glass 배경용 RGB */
-    --alpha:.22;           /* 유리 투명도 */
-    --blur:14px;           /* 블러 강도 */
+    --bg:#0d1a1f; --ink:#e6eef2; --muted:#a8bcc6; --line:#1f2b31;
+    --brand:#4C8DA9; --brand-weak:#0f2a33; --accent:#86d2c7;
+    --white:255 255 255; --alpha:.22; --blur:14px;
     --shadow-lg: 0 12px 28px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.25);
     --shadow-md: 0 8px 18px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18);
   }
@@ -33,11 +29,7 @@
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo","Malgun Gothic","맑은 고딕", sans-serif;
     display:flex; flex-direction:column;
   }
-  .wrap{
-    max-width:1220px; width:100%;
-    margin:24px auto; padding:0 16px;
-    flex:1; display:flex; flex-direction:column;
-  }
+  .wrap{max-width:1220px; width:100%; margin:24px auto; padding:0 16px; flex:1; display:flex; flex-direction:column;}
 
   /* Glass Toolbar */
   .toolbar{
@@ -47,30 +39,11 @@
     border-radius:18px; padding:12px;
     backdrop-filter:saturate(140%) blur(var(--blur));
     -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
-    margin-bottom:16px;
-    box-shadow: var(--shadow-md);
+    margin-bottom:16px; box-shadow: var(--shadow-md);
   }
 
-  /* 뷰 탭(Pill) */
-  .pill{
-    display:inline-flex; gap:6px; padding:6px;
-    background: rgba(255,255,255,.10);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:999px;
-  }
-  .pill button{
-    border:0; background:transparent; color:var(--muted);
-    padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer;
-    transition: all .18s cubic-bezier(.22,.8,.2,1);
-  }
-  .pill button[aria-pressed="true"]{
-    background: linear-gradient(180deg, rgba(76,141,169,.20), rgba(76,141,169,.12));
-    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 0 0 1px rgba(255,255,255,.10) inset;
-    color:var(--ink);
-  }
-  .pill button:hover{ transform: translateY(-1px) }
-
-  /* 버튼(이전/오늘/다음) */
+  /* 좌측 네비(홈/백) */
+  .navgroup{display:flex; gap:10px; align-items:center}
   .btn{
     appearance:none; user-select:none; -webkit-tap-highlight-color: transparent;
     display:inline-flex; align-items:center; gap:10px;
@@ -90,25 +63,39 @@
   .btn--ghost{ background: rgba(255,255,255,.06); }
   .btn--brand{
     background: linear-gradient(180deg, rgba(76,141,169,.55), rgba(76,141,169,.35));
-    border-color: rgba(76,141,169,.55);
-    color:#0b1519;
+    border-color: rgba(76,141,169,.55); color:#0b1519;
   }
-  .btn--brand:hover{
-    box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 12px 26px rgba(76,141,169,.35);
+  .btn--brand:hover{ box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 12px 26px rgba(76,141,169,.35) }
+
+  /* 뷰 탭(Pill) */
+  .pill{
+    display:inline-flex; gap:6px; padding:6px;
+    background: rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:999px;
   }
+  .pill button{
+    border:0; background:transparent; color:var(--muted);
+    padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer;
+    transition: all .18s cubic-bezier(.22,.8,.2,1);
+  }
+  .pill button[aria-pressed="true"]{
+    background: linear-gradient(180deg, rgba(76,141,169,.20), rgba(76,141,169,.12));
+    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 0 0 1px rgba(255,255,255,.10) inset;
+    color:var(--ink);
+  }
+  .pill button:hover{ transform: translateY(-1px) }
   .toolbar .spacer{ flex:1 }
 
-  /* 카드(달력) */
+  /* 캘린더 카드 */
   .card{
     background: rgba(15, 28, 33, .55); border:1px solid rgba(255,255,255,.08); border-radius:18px;
     backdrop-filter:saturate(140%) blur(var(--blur)); -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
-    box-shadow: var(--shadow-lg);
-    padding:12px;
-    flex:1; display:flex; min-height: 680px;
+    box-shadow: var(--shadow-lg); padding:12px; flex:1; display:flex; min-height: 680px;
   }
   #cal{height:100%; width:100%}
 
-  /* TUI v2 hooks for dark */
+  /* TUI v2 hooks */
   .toastui-calendar-day-name{background:rgba(255,255,255,.06); border-bottom:1px solid var(--line); color:var(--muted)}
   .toastui-calendar-grid-cell{border-color:var(--line)}
   .toastui-calendar-panel + .toastui-calendar-panel .toastui-calendar-grid-cell{border-top-color:var(--line)}
@@ -122,12 +109,28 @@
 <body>
   <div class="wrap">
     <div class="toolbar">
-      <div class="pill" role="tablist" aria-label="뷰 선택">
+      <!-- 홈 / 뒤로 -->
+      <div class="navgroup">
+        <button class="btn btn--ghost" id="home" aria-label="홈">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>홈</span>
+        </button>
+        <button class="btn btn--ghost" id="back" aria-label="뒤로가기">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+          <span>뒤로</span>
+        </button>
+      </div>
+
+      <!-- 뷰 탭 -->
+      <div class="pill" role="tablist" aria-label="뷰 선택" style="margin-left:8px">
         <button data-view="month" aria-pressed="true">월간</button>
         <button data-view="week"  aria-pressed="false">주간</button>
         <button data-view="day"   aria-pressed="false">일간</button>
       </div>
+
       <div class="spacer"></div>
+
+      <!-- 네비게이션 -->
       <button class="btn btn--ghost" id="prev" aria-label="이전">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
         <span>이전</span>
@@ -147,8 +150,35 @@
   <!-- TUI Calendar v2 JS (CDN) -->
   <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js" defer></script>
   <script>
+    // GitHub Pages 프로젝트 홈 URL 자동 계산 (repo명이 바뀌어도 동작)
+    function getProjectHome(){
+      // ex) https://tndnjs0322.github.io/trpg-handouts/schedule/
+      // pathname: /trpg-handouts/schedule/
+      const seg = location.pathname.split('/').filter(Boolean);
+      // user.github.io라면 첫 세그먼트가 repo
+      if (seg.length >= 1) return '/' + seg[0] + '/';
+      return '/';
+    }
+    const HOME_URL = getProjectHome();
+
     window.addEventListener('DOMContentLoaded', () => {
-      // CDN이 차단된 환경이면 안내만 출력
+      // 링크 새탭 방지(안전망): 기존 _blank 있으면 _self로 교체
+      document.querySelectorAll('a[target="_blank"]').forEach(a => a.setAttribute('target','_self'));
+
+      // 홈/뒤로 버튼
+      const homeBtn = document.getElementById('home');
+      const backBtn = document.getElementById('back');
+      homeBtn.onclick = () => location.href = HOME_URL;
+      backBtn.onclick = () => (history.length > 1 ? history.back() : location.href = HOME_URL);
+
+      // 키보드 단축키: H=홈, B=뒤로
+      window.addEventListener('keydown', (e) => {
+        if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+        if (e.key === 'h' || e.key === 'H') { e.preventDefault(); location.href = HOME_URL; }
+        if (e.key === 'b' || e.key === 'B') { e.preventDefault(); history.length > 1 ? history.back() : location.href = HOME_URL; }
+      });
+
+      // 캘린더 로드
       if (!window.toastui || !toastui.Calendar) {
         document.getElementById('cal').innerHTML =
           '⚠️ 캘린더 로드 실패(네트워크/차단 확인). 사내망이면 uicdn.toast.com 허용 필요';
@@ -187,13 +217,6 @@
           { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
         ],
       });
-
-      // 샘플 이벤트(룩 확인용) — 필요 없으면 삭제해도 됨
-      cal.createEvents([
-        { id:'e1', calendarId:'session', title:'〈장막 도시〉 Ep.03', start:'2025-09-20T19:30:00+09:00', end:'2025-09-20T22:30:00+09:00', category:'time' },
-        { id:'e2', calendarId:'prep',    title:'프렙: 핸아웃 교정',   start:'2025-09-18T21:00:00+09:00', end:'2025-09-18T22:00:00+09:00', category:'time' },
-        { id:'e3', calendarId:'off',     title:'휴식',               start:'2025-09-22', end:'2025-09-22', category:'allday' }
-      ]);
 
       // 뷰 전환 + 네비게이션
       const btns = document.querySelectorAll('[data-view]');
