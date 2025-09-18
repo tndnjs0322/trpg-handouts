@@ -8,8 +8,9 @@
 <!-- 모든 링크를 같은 탭에서 열기 -->
 <base target="_self">
 
-<!-- TUI Calendar v2 CSS (CDN) -->
-<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+<!-- ✅ TUI Calendar v2 CSS/JS (jsDelivr, 정확히 한 번만) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js" defer></script>
 
 <style>
   :root{
@@ -42,7 +43,6 @@
     margin-bottom:16px; box-shadow: var(--shadow-md);
   }
 
-  /* 좌측 네비(홈/백) */
   .navgroup{display:flex; gap:10px; align-items:center}
   .btn{
     appearance:none; user-select:none; -webkit-tap-highlight-color: transparent;
@@ -67,7 +67,6 @@
   }
   .btn--brand:hover{ box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 12px 26px rgba(76,141,169,.35) }
 
-  /* 뷰 탭(Pill) */
   .pill{
     display:inline-flex; gap:6px; padding:6px;
     background: rgba(255,255,255,.10);
@@ -87,7 +86,6 @@
   .pill button:hover{ transform: translateY(-1px) }
   .toolbar .spacer{ flex:1 }
 
-  /* 캘린더 카드 */
   .card{
     background: rgba(15, 28, 33, .55); border:1px solid rgba(255,255,255,.08); border-radius:18px;
     backdrop-filter:saturate(140%) blur(var(--blur)); -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
@@ -109,7 +107,6 @@
 <body>
   <div class="wrap">
     <div class="toolbar">
-      <!-- 홈 / 뒤로 -->
       <div class="navgroup">
         <button class="btn btn--ghost" id="home" aria-label="홈">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -121,7 +118,6 @@
         </button>
       </div>
 
-      <!-- 뷰 탭 -->
       <div class="pill" role="tablist" aria-label="뷰 선택" style="margin-left:8px">
         <button data-view="month" aria-pressed="true">월간</button>
         <button data-view="week"  aria-pressed="false">주간</button>
@@ -130,7 +126,6 @@
 
       <div class="spacer"></div>
 
-      <!-- 네비게이션 -->
       <button class="btn btn--ghost" id="prev" aria-label="이전">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
         <span>이전</span>
@@ -147,87 +142,77 @@
     </div>
   </div>
 
-  <!-- TUI Calendar v2 JS (CDN) -->
-  <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js" defer></script>
   <script>
-    // GitHub Pages 프로젝트 홈 URL 자동 계산 (repo명이 바뀌어도 동작)
     function getProjectHome(){
-      // ex) https://tndnjs0322.github.io/trpg-handouts/schedule/
-      // pathname: /trpg-handouts/schedule/
       const seg = location.pathname.split('/').filter(Boolean);
-      // user.github.io라면 첫 세그먼트가 repo
-      if (seg.length >= 1) return '/' + seg[0] + '/';
-      return '/';
+      return seg.length >= 1 ? '/' + seg[0] + '/' : '/';
     }
     const HOME_URL = getProjectHome();
 
     window.addEventListener('DOMContentLoaded', () => {
-      // 링크 새탭 방지(안전망): 기존 _blank 있으면 _self로 교체
       document.querySelectorAll('a[target="_blank"]').forEach(a => a.setAttribute('target','_self'));
 
-      // 홈/뒤로 버튼
-      const homeBtn = document.getElementById('home');
-      const backBtn = document.getElementById('back');
-      homeBtn.onclick = () => location.href = HOME_URL;
-      backBtn.onclick = () => (history.length > 1 ? history.back() : location.href = HOME_URL);
+      document.getElementById('home').onclick = () => location.href = HOME_URL;
+      document.getElementById('back').onclick = () => (history.length > 1 ? history.back() : location.href = HOME_URL);
 
-      // 키보드 단축키: H=홈, B=뒤로
       window.addEventListener('keydown', (e) => {
         if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
         if (e.key === 'h' || e.key === 'H') { e.preventDefault(); location.href = HOME_URL; }
         if (e.key === 'b' || e.key === 'B') { e.preventDefault(); history.length > 1 ? history.back() : location.href = HOME_URL; }
       });
 
-      // 캘린더 로드
+      // ✅ toastui가 준비됐는지 안전 확인 (defer로 거의 즉시 OK)
       if (!window.toastui || !toastui.Calendar) {
-        document.getElementById('cal').innerHTML =
-          '⚠️ 캘린더 로드 실패(네트워크/차단 확인). 사내망이면 uicdn.toast.com 허용 필요';
-        return;
+        let waited = 0;
+        const t = setInterval(() => {
+          if (window.toastui && toastui.Calendar) {
+            clearInterval(t);
+            init();
+          } else if ((waited += 50) > 2000) {
+            clearInterval(t);
+            document.getElementById('cal').textContent =
+              '⚠️ TUI 초기화 실패: 네트워크/차단 또는 콘솔 오류 확인';
+          }
+        }, 50);
+      } else {
+        init();
       }
 
-      const cal = new toastui.Calendar('#cal', {
-        defaultView:'month',
-        theme: {
-          common: {
-            backgroundColor: 'transparent',
-            gridSelection: { backgroundColor:'rgba(76,141,169,.14)', border:'1px solid rgba(76,141,169,.45)' },
-            saturday: { color: '#9fc7d6' },
-            dayName: { color: '#a8bcc6' },
-            today: { color: '#86d2c7' },
-          },
-          month: {
-            dayName: { backgroundColor:'rgba(255,255,255,.06)' },
-            dayCell: { borderLeft:'1px solid var(--line)', borderBottom:'1px solid var(--line)' },
-            weekend: { backgroundColor:'transparent' },
-            today: { color: '#86d2c7' },
-          },
-          week: {
-            dayName: { backgroundColor:'rgba(255,255,255,.06)', borderBottom:'1px solid var(--line)' },
-            nowIndicatorPast: { border: '1px solid var(--brand)' },
-            nowIndicatorBullet: { backgroundColor: 'var(--brand)' },
-            nowIndicatorToday: { border: '1px solid var(--brand)' },
-          },
-        },
-        usageStatistics:false,
-        month:{ startDayOfWeek:1 },
-        week:{ startDayOfWeek:1, hourStart:8, hourEnd:24 },
-        calendars:[
-          { id:'session', name:'세션', color:'#0b1519', backgroundColor:'#4C8DA9' },
-          { id:'prep',    name:'프렙',  color:'#0b1519', backgroundColor:'#86D2C7' },
-          { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
-        ],
-      });
+      function init(){
+        const cal = new toastui.Calendar('#cal', {
+          defaultView:'month',
+          usageStatistics:false,
+          month:{ startDayOfWeek:1 },
+          week:{ startDayOfWeek:1, hourStart:8, hourEnd:24 },
+          calendars:[
+            { id:'session', name:'세션', color:'#0b1519', backgroundColor:'#4C8DA9' },
+            { id:'prep',    name:'프렙',  color:'#0b1519', backgroundColor:'#86D2C7' },
+            { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
+          ],
+          theme:{
+            common:{ backgroundColor:'transparent',
+              gridSelection:{ backgroundColor:'rgba(76,141,169,.14)', border:'1px solid rgba(76,141,169,.45)' },
+              saturday:{ color:'#9fc7d6' }, dayName:{ color:'#a8bcc6' }, today:{ color:'#86d2c7' } },
+            month:{ dayName:{ backgroundColor:'rgba(255,255,255,.06)' },
+                    dayCell:{ borderLeft:'1px solid var(--line)', borderBottom:'1px solid var(--line)' },
+                    weekend:{ backgroundColor:'transparent' }, today:{ color:'#86d2c7' } },
+            week:{ dayName:{ backgroundColor:'rgba(255,255,255,.06)', borderBottom:'1px solid var(--line)' },
+                   nowIndicatorPast:{ border:'1px solid var(--brand)' },
+                   nowIndicatorBullet:{ backgroundColor:'var(--brand)' },
+                   nowIndicatorToday:{ border:'1px solid var(--brand)' } }
+          }
+        });
 
-      // 뷰 전환 + 네비게이션
-      const btns = document.querySelectorAll('[data-view]');
-      function setView(v){
-        btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view===v)));
-        cal.changeView(v, true);
+        const btns = document.querySelectorAll('[data-view]');
+        const setView = (v)=>{
+          btns.forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===v)));
+          cal.changeView(v, true);
+        };
+        btns.forEach(b=>b.addEventListener('click', ()=>setView(b.dataset.view)));
+        document.getElementById('prev').onclick  = () => cal.prev();
+        document.getElementById('next').onclick  = () => cal.next();
+        document.getElementById('today').onclick = () => cal.today();
       }
-      btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
-      document.getElementById('prev').onclick  = () => cal.prev();
-      document.getElementById('next').onclick  = () => cal.next();
-      document.getElementById('today').onclick = () => cal.today();
     });
   </script>
 </body>
