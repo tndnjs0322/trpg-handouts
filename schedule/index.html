@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TRPG 일정 — Neverending Cthulhu</title>
+
+<!-- TUI Calendar v2 CSS (CDN) -->
+<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+
+<style>
+  :root{
+    --bg:#0d1a1f;          /* 배경(메인 사이트 톤) */
+    --ink:#e6eef2;         /* 본문 글자 */
+    --muted:#a8bcc6;       /* 보조 텍스트 */
+    --line:#1f2b31;        /* 보더 */
+    --brand:#4C8DA9;       /* 브랜드(오늘/인디케이터) */
+    --brand-weak:#0f2a33;  /* 브랜드 서피스 */
+    --accent:#86d2c7;      /* 하이라이트 */
+    --white:255 255 255;   /* glass 배경용 RGB */
+    --alpha:.22;           /* 유리 투명도 */
+    --blur:14px;           /* 블러 강도 */
+    --shadow-lg: 0 12px 28px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.25);
+    --shadow-md: 0 8px 18px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18);
+  }
+  html,body{ height:100% }
+  body{
+    margin:0; background:
+      radial-gradient(900px 500px at 70% -10%, rgba(76,141,169,.18), transparent 60%),
+      radial-gradient(700px 400px at 5% 110%, rgba(134,210,199,.12), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo","Malgun Gothic","맑은 고딕", sans-serif;
+    display:flex; flex-direction:column;
+  }
+  .wrap{
+    max-width:1220px; width:100%;
+    margin:24px auto; padding:0 16px;
+    flex:1; display:flex; flex-direction:column;
+  }
+
+  /* Glass Toolbar */
+  .toolbar{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    background: rgba(var(--white), var(--alpha));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px; padding:12px;
+    backdrop-filter:saturate(140%) blur(var(--blur));
+    -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
+    margin-bottom:16px;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* 뷰 탭(Pill) */
+  .pill{
+    display:inline-flex; gap:6px; padding:6px;
+    background: rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:999px;
+  }
+  .pill button{
+    border:0; background:transparent; color:var(--muted);
+    padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer;
+    transition: all .18s cubic-bezier(.22,.8,.2,1);
+  }
+  .pill button[aria-pressed="true"]{
+    background: linear-gradient(180deg, rgba(76,141,169,.20), rgba(76,141,169,.12));
+    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 0 0 1px rgba(255,255,255,.10) inset;
+    color:var(--ink);
+  }
+  .pill button:hover{ transform: translateY(-1px) }
+
+  /* 버튼(이전/오늘/다음) */
+  .btn{
+    appearance:none; user-select:none; -webkit-tap-highlight-color: transparent;
+    display:inline-flex; align-items:center; gap:10px;
+    border-radius:12px; padding:10px 14px; font-weight:800; letter-spacing:.01em;
+    cursor:pointer; border:1px solid rgba(255,255,255,.08);
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+    color:var(--ink);
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, var(--shadow-md);
+    transition: transform .16s cubic-bezier(.22,.8,.2,1), box-shadow .16s, background .16s, border-color .16s;
+    backdrop-filter: saturate(140%) blur(8px);
+    -webkit-backdrop-filter: saturate(140%) blur(8px);
+  }
+  .btn svg{ width:16px; height:16px; opacity:.9 }
+  .btn:hover{ transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.1) inset, 0 10px 22px rgba(0,0,0,.35) }
+  .btn:active{ transform: translateY(0); box-shadow: none }
+  .btn:focus-visible{ outline: none; box-shadow: 0 0 0 2px rgba(134,210,199,.5), var(--shadow-md) }
+  .btn--ghost{ background: rgba(255,255,255,.06); }
+  .btn--brand{
+    background: linear-gradient(180deg, rgba(76,141,169,.55), rgba(76,141,169,.35));
+    border-color: rgba(76,141,169,.55);
+    color:#0b1519;
+  }
+  .btn--brand:hover{
+    box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 12px 26px rgba(76,141,169,.35);
+  }
+  .toolbar .spacer{ flex:1 }
+
+  /* 카드(달력) */
+  .card{
+    background: rgba(15, 28, 33, .55); border:1px solid rgba(255,255,255,.08); border-radius:18px;
+    backdrop-filter:saturate(140%) blur(var(--blur)); -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
+    box-shadow: var(--shadow-lg);
+    padding:12px;
+    flex:1; display:flex; min-height: 680px;
+  }
+  #cal{height:100%; width:100%}
+
+  /* TUI v2 hooks for dark */
+  .toastui-calendar-day-name{background:rgba(255,255,255,.06); border-bottom:1px solid var(--line); color:var(--muted)}
+  .toastui-calendar-grid-cell{border-color:var(--line)}
+  .toastui-calendar-panel + .toastui-calendar-panel .toastui-calendar-grid-cell{border-top-color:var(--line)}
+  .toastui-calendar-week-view .toastui-calendar-panel-resizer{border-color:var(--line)}
+  .toastui-calendar-time{color:var(--muted)}
+  .toastui-calendar-grid-selection{background: rgba(76,141,169,.14); border: 1px solid rgba(76,141,169,.45)}
+  .toastui-calendar-popup-container{border-radius:12px; color:#0b1519}
+  .toastui-calendar-popup-container .toastui-calendar-section-button{color:#0b1519}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="pill" role="tablist" aria-label="뷰 선택">
+        <button data-view="month" aria-pressed="true">월간</button>
+        <button data-view="week"  aria-pressed="false">주간</button>
+        <button data-view="day"   aria-pressed="false">일간</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn--ghost" id="prev" aria-label="이전">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+        <span>이전</span>
+      </button>
+      <button class="btn btn--brand" id="today"><span>오늘</span></button>
+      <button class="btn btn--ghost" id="next" aria-label="다음">
+        <span>다음</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
+      </button>
+    </div>
+
+    <div class="card">
+      <div id="cal" aria-label="TRPG 캘린더"></div>
+    </div>
+  </div>
+
+  <!-- TUI Calendar v2 JS (CDN) -->
+  <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js" defer></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      // CDN이 차단된 환경이면 안내만 출력
+      if (!window.toastui || !toastui.Calendar) {
+        document.getElementById('cal').innerHTML =
+          '⚠️ 캘린더 로드 실패(네트워크/차단 확인). 사내망이면 uicdn.toast.com 허용 필요';
+        return;
+      }
+
+      const cal = new toastui.Calendar('#cal', {
+        defaultView:'month',
+        theme: {
+          common: {
+            backgroundColor: 'transparent',
+            gridSelection: { backgroundColor:'rgba(76,141,169,.14)', border:'1px solid rgba(76,141,169,.45)' },
+            saturday: { color: '#9fc7d6' },
+            dayName: { color: '#a8bcc6' },
+            today: { color: '#86d2c7' },
+          },
+          month: {
+            dayName: { backgroundColor:'rgba(255,255,255,.06)' },
+            dayCell: { borderLeft:'1px solid var(--line)', borderBottom:'1px solid var(--line)' },
+            weekend: { backgroundColor:'transparent' },
+            today: { color: '#86d2c7' },
+          },
+          week: {
+            dayName: { backgroundColor:'rgba(255,255,255,.06)', borderBottom:'1px solid var(--line)' },
+            nowIndicatorPast: { border: '1px solid var(--brand)' },
+            nowIndicatorBullet: { backgroundColor: 'var(--brand)' },
+            nowIndicatorToday: { border: '1px solid var(--brand)' },
+          },
+        },
+        usageStatistics:false,
+        month:{ startDayOfWeek:1 },
+        week:{ startDayOfWeek:1, hourStart:8, hourEnd:24 },
+        calendars:[
+          { id:'session', name:'세션', color:'#0b1519', backgroundColor:'#4C8DA9' },
+          { id:'prep',    name:'프렙',  color:'#0b1519', backgroundColor:'#86D2C7' },
+          { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
+        ],
+      });
+
+      // 샘플 이벤트(룩 확인용) — 필요 없으면 삭제해도 됨
+      cal.createEvents([
+        { id:'e1', calendarId:'session', title:'〈장막 도시〉 Ep.03', start:'2025-09-20T19:30:00+09:00', end:'2025-09-20T22:30:00+09:00', category:'time' },
+        { id:'e2', calendarId:'prep',    title:'프렙: 핸아웃 교정',   start:'2025-09-18T21:00:00+09:00', end:'2025-09-18T22:00:00+09:00', category:'time' },
+        { id:'e3', calendarId:'off',     title:'휴식',               start:'2025-09-22', end:'2025-09-22', category:'allday' }
+      ]);
+
+      // 뷰 전환 + 네비게이션
+      const btns = document.querySelectorAll('[data-view]');
+      function setView(v){
+        btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view===v)));
+        cal.changeView(v, true);
+      }
+      btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+      document.getElementById('prev').onclick  = () => cal.prev();
+      document.getElementById('next').onclick  = () => cal.next();
+      document.getElementById('today').onclick = () => cal.today();
+    });
+  </script>
+</body>
+</html>
