@@ -3,15 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>잃어버린 연대기 - 일정 캘린더</title>
+<title>네버엔딩 크툴루 1호점 일정 캘린더</title>
 
-<!-- ★ 버전 고정: TUI Calendar v2.1.3 (UMD) + date/time picker -->
+<!-- CSS는 보통 막히지 않으므로 기본 CDN만 사용 -->
 <link rel="stylesheet" href="https://uicdn.toast.com/calendar/2.1.3/toastui-calendar.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/tui.date-picker/4.3.3/tui-date-picker.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/tui.time-picker/2.1.5/tui-time-picker.min.css" />
 
 <style>
-  /* 라이트/다크 변수 */
   :root{
     --bg:#0b1217; --panel:#0f161c; --ink:#c7d1d9; --muted:#9fb0bd;
     --line:rgba(255,255,255,.10); --line-strong:rgba(255,255,255,.16);
@@ -26,7 +25,6 @@
   }
   html{color-scheme:dark}
   :root[data-theme="light"] html{color-scheme:light}
-
   body{margin:0;background:var(--bg);color:var(--ink);
        font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
   header{
@@ -42,14 +40,12 @@
   }
   button:hover,.btn:hover{ background:var(--btnh) }
   #range{ color:var(--muted); font-size:.9rem }
-
-  /* 캘린더 박스 높이 보장 */
   #calendar{
     height:calc(100vh - 64px); min-height:680px;
     background:var(--panel); border:1px solid var(--line-strong); border-radius:14px; margin:12px; overflow:hidden;
   }
 
-  /* 캘린더 내부 라이트/다크 오버라이드 */
+  /* 캘린더 내부까지 라이트/다크 반영 */
   #calendar [class^="toastui-calendar-"], #calendar [class*=" toastui-calendar-"]{ color:var(--ink) }
   #calendar .toastui-calendar-panel, #calendar .toastui-calendar-layout,
   #calendar .toastui-calendar-month, #calendar .toastui-calendar-week{ background:var(--panel) }
@@ -85,25 +81,74 @@
 
   <div id="calendar"></div>
 
-  <!-- ★ UMD만 사용: 모듈(import) 쓰지 말 것! (중복 금지) -->
-  <script src="https://uicdn.toast.com/tui.date-picker/4.3.3/tui-date-picker.min.js"></script>
-  <script src="https://uicdn.toast.com/tui.time-picker/2.1.5/tui-time-picker.min.js"></script>
-  <script src="https://uicdn.toast.com/calendar/2.1.3/toastui-calendar.min.js"></script>
-
+  <!-- ===== 동적 로더: 3개 CDN → 로컬 폴백 순서로 재시도 ===== -->
   <script>
-    // 전역(UMD) 확인: window.toastui.Calendar
-    const CalendarGlobal = window.toastui?.Calendar || window.tui?.Calendar;
-    if (!CalendarGlobal) {
-      alert('캘린더 라이브러리를 불러오지 못했습니다. 네트워크/차단을 확인하세요.');
-    } else {
-      boot();
-    }
+    (function loadCalendarLibs(){
+      const queues = [
+        // date-picker
+        [
+          "https://uicdn.toast.com/tui.date-picker/4.3.3/tui-date-picker.min.js",
+          "https://cdn.jsdelivr.net/npm/tui-date-picker@4.3.3/dist/tui-date-picker.min.js",
+          "https://unpkg.com/tui-date-picker@4.3.3/dist/tui-date-picker.min.js",
+          "./vendor/tui-date-picker.min.js"
+        ],
+        // time-picker
+        [
+          "https://uicdn.toast.com/tui.time-picker/2.1.5/tui-time-picker.min.js",
+          "https://cdn.jsdelivr.net/npm/tui-time-picker@2.1.5/dist/tui-time-picker.min.js",
+          "https://unpkg.com/tui-time-picker@2.1.5/dist/tui-time-picker.min.js",
+          "./vendor/tui-time-picker.min.js"
+        ],
+        // calendar (중요)
+        [
+          "https://uicdn.toast.com/calendar/2.1.3/toastui-calendar.min.js",
+          "https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js",
+          "https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js",
+          "./vendor/toastui-calendar.min.js"
+        ],
+      ];
 
+      function loadOne(urls, cb, i=0){
+        if(i >= urls.length) return cb(new Error("all urls failed"));
+        const s = document.createElement('script');
+        s.src = urls[i]; s.defer = true;
+        s.onload = () => cb(null);
+        s.onerror = () => { s.remove(); loadOne(urls, cb, i+1); };
+        document.head.appendChild(s);
+      }
+      // 순차 로드
+      loadOne(queues[0], (e1)=>{
+        loadOne(queues[1], (e2)=>{
+          loadOne(queues[2], (e3)=>{
+            if (e3) fail("캘린더 라이브러리를 불러오지 못했습니다. (CDN/네트워크/차단 확인)");
+            else boot(); // ✅ 모두 로드됨
+          });
+        });
+      });
+
+      function fail(msg){
+        console.error(msg);
+        const box = document.createElement('div');
+        box.style.cssText = 'position:fixed;left:12px;bottom:12px;max-width:560px;background:#111827;color:#fff;padding:12px 14px;border-radius:10px;z-index:99999';
+        box.textContent = msg + '  (uBlock/기업망 필터가 막을 수 있어요)';
+        document.body.appendChild(box);
+      }
+    })();
+  </script>
+
+  <!-- ===== 실제 초기화 ===== -->
+  <script>
     function boot(){
+      const Calendar = window.toastui?.Calendar || window.tui?.Calendar;
+      if (!Calendar) {
+        console.error('Calendar global not found');
+        return;
+      }
+
       const el = document.getElementById('calendar');
       let compact = (document.documentElement.dataset.compact === '1');
 
-      const calendar = new CalendarGlobal(el, {
+      const calendar = new Calendar(el, {
         defaultView: 'month',
         usageStatistics: false,
         useFormPopup: true,
@@ -113,7 +158,7 @@
         week:  { workweek:true, narrowWeekend:true, showNowIndicator:true, hourStart: compact ? 9 : 8, hourEnd: compact ? 19 : 21 }
       });
 
-      // 로컬 저장
+      // 로컬 저장 (간단)
       const KEY='toastui_v2_events';
       let state=[]; try{ state=JSON.parse(localStorage.getItem(KEY)||'[]')||[] }catch(_){}
       if (state.length) calendar.createEvents(state);
@@ -129,7 +174,7 @@
       calendar.on('beforeUpdateEvent', ({event,changes})=>{ calendar.updateEvent(event.id,event.calendarId,changes); upsert({...event,...changes}); });
       calendar.on('beforeDeleteEvent', ({id,calendarId})=>{ calendar.deleteEvent(id,calendarId); remove(id,calendarId); });
 
-      // 범위 표시 & 내비
+      // 범위/내비
       const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const range=()=>{ const s=calendar.getDateRangeStart(),e=calendar.getDateRangeEnd(); document.getElementById('range').textContent=`${fmt(s)} ~ ${fmt(e)}`; };
       range();
@@ -165,6 +210,10 @@
       // 안전 렌더
       const safe=()=>{ try{ calendar.render(); }catch(_){} };
       addEventListener('load', safe); new ResizeObserver(safe).observe(el);
+
+      // 미리보기 1개(보이는지 확인용): 원하면 지워도 됨
+      const now = new Date();
+      calendar.createEvents([{ id:'demo', calendarId:'default', title:'미리보기', start:new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10), end:new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11), category:'time' }]);
     }
   </script>
 </body>
