@@ -3,14 +3,40 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>네버엔딩 크툴루 1호점 일정 캘린더</title>
+<title>일정 캘린더</title>
 
-<!-- CSS는 보통 막히지 않으므로 기본 CDN만 사용 -->
-<link rel="stylesheet" href="https://uicdn.toast.com/calendar/2.1.3/toastui-calendar.min.css" />
-<link rel="stylesheet" href="https://uicdn.toast.com/tui.date-picker/4.3.3/tui-date-picker.min.css" />
-<link rel="stylesheet" href="https://uicdn.toast.com/tui.time-picker/2.1.5/tui-time-picker.min.css" />
+<!-- ✅ CSS: jsDelivr → unpkg → (선택)로컬 vendor 폴백 -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css"
+      onerror="this.onerror=null; this.href='https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css';">
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tui-date-picker@4.3.3/dist/tui-date-picker.min.css"
+      onerror="this.onerror=null; this.href='https://unpkg.com/tui-date-picker@4.3.3/dist/tui-date-picker.min.css';">
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tui-time-picker@2.1.5/dist/tui-time-picker.min.css"
+      onerror="this.onerror=null; this.href='https://unpkg.com/tui-time-picker@2.1.5/dist/tui-time-picker.min.css';">
+
+<!-- 마지막 CSS 폴백: 로컬 vendor/ (선택) -->
+<script>
+  addEventListener('error', e => {
+    const href = e?.target?.href || '';
+    if (!href) return;
+    if (href.includes('unpkg.com')) {
+      const map = {
+        'toastui-calendar.min.css': './vendor/toastui-calendar.min.css',
+        'tui-date-picker.min.css':  './vendor/tui-date-picker.min.css',
+        'tui-time-picker.min.css':  './vendor/tui-time-picker.min.css',
+      };
+      const name = href.split('/').pop();
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = map[name] || '';
+      if (l.href) document.head.appendChild(l);
+    }
+  }, true);
+</script>
 
 <style>
+  /* ===== 라이트/다크 변수 ===== */
   :root{
     --bg:#0b1217; --panel:#0f161c; --ink:#c7d1d9; --muted:#9fb0bd;
     --line:rgba(255,255,255,.10); --line-strong:rgba(255,255,255,.16);
@@ -18,15 +44,17 @@
     --header:rgba(13,26,31,.9); --btn:#0e1a1f; --btnh:#0b1628;
   }
   :root[data-theme="light"]{
-    --bg:#f6f7f9; --panel:#fff; --ink:#27323a; --muted:#51606c;
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#27323a; --muted:#51606c;
     --line:rgba(0,0,0,.08); --line-strong:rgba(0,0,0,.14);
     --today:#eef6ff; --select:rgba(42,123,229,.18);
-    --header:rgba(255,255,255,.92); --btn:#fff; --btnh:#f3f4f6;
+    --header:rgba(255,255,255,.92); --btn:#ffffff; --btnh:#f3f4f6;
   }
   html{color-scheme:dark}
   :root[data-theme="light"] html{color-scheme:light}
+
   body{margin:0;background:var(--bg);color:var(--ink);
        font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
+
   header{
     position:sticky; top:0; z-index:10;
     display:flex; gap:.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap;
@@ -40,12 +68,14 @@
   }
   button:hover,.btn:hover{ background:var(--btnh) }
   #range{ color:var(--muted); font-size:.9rem }
+
+  /* 컨테이너 높이 보장 */
   #calendar{
     height:calc(100vh - 64px); min-height:680px;
     background:var(--panel); border:1px solid var(--line-strong); border-radius:14px; margin:12px; overflow:hidden;
   }
 
-  /* 캘린더 내부까지 라이트/다크 반영 */
+  /* ===== 캘린더 내부까지 라이트/다크 반영 ===== */
   #calendar [class^="toastui-calendar-"], #calendar [class*=" toastui-calendar-"]{ color:var(--ink) }
   #calendar .toastui-calendar-panel, #calendar .toastui-calendar-layout,
   #calendar .toastui-calendar-month, #calendar .toastui-calendar-week{ background:var(--panel) }
@@ -53,6 +83,7 @@
   #calendar [class*="grid-line"], #calendar [class*="grid-cell"]{ border-color:var(--line)!important }
   #calendar .toastui-calendar-week-today, #calendar .toastui-calendar-month-week-item--today{ background:var(--today) }
   #calendar .toastui-calendar-grid-selection{ background:var(--select)!important }
+  #calendar .toastui-calendar-event{ border-radius:8px; padding:2px 6px }
 
   /* 컴팩트 */
   :root[data-compact="1"] #calendar{ font-size:13px }
@@ -81,28 +112,25 @@
 
   <div id="calendar"></div>
 
-  <!-- ===== 동적 로더: 3개 CDN → 로컬 폴백 순서로 재시도 ===== -->
+  <!-- ✅ JS 동적 로더: jsDelivr → uicdn → unpkg → (선택)로컬 -->
   <script>
     (function loadCalendarLibs(){
       const queues = [
-        // date-picker
         [
-          "https://uicdn.toast.com/tui.date-picker/4.3.3/tui-date-picker.min.js",
           "https://cdn.jsdelivr.net/npm/tui-date-picker@4.3.3/dist/tui-date-picker.min.js",
+          "https://uicdn.toast.com/tui.date-picker/4.3.3/tui-date-picker.min.js",
           "https://unpkg.com/tui-date-picker@4.3.3/dist/tui-date-picker.min.js",
           "./vendor/tui-date-picker.min.js"
         ],
-        // time-picker
         [
-          "https://uicdn.toast.com/tui.time-picker/2.1.5/tui-time-picker.min.js",
           "https://cdn.jsdelivr.net/npm/tui-time-picker@2.1.5/dist/tui-time-picker.min.js",
+          "https://uicdn.toast.com/tui.time-picker/2.1.5/tui-time-picker.min.js",
           "https://unpkg.com/tui-time-picker@2.1.5/dist/tui-time-picker.min.js",
           "./vendor/tui-time-picker.min.js"
         ],
-        // calendar (중요)
         [
-          "https://uicdn.toast.com/calendar/2.1.3/toastui-calendar.min.js",
           "https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js",
+          "https://uicdn.toast.com/calendar/2.1.3/toastui-calendar.min.js",
           "https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js",
           "./vendor/toastui-calendar.min.js"
         ],
@@ -117,33 +145,24 @@
         document.head.appendChild(s);
       }
       // 순차 로드
-      loadOne(queues[0], (e1)=>{
-        loadOne(queues[1], (e2)=>{
-          loadOne(queues[2], (e3)=>{
-            if (e3) fail("캘린더 라이브러리를 불러오지 못했습니다. (CDN/네트워크/차단 확인)");
-            else boot(); // ✅ 모두 로드됨
-          });
-        });
-      });
+      loadOne(queues[0], () => loadOne(queues[1], () => loadOne(queues[2], (e)=>{
+        if (e) showFail('캘린더 라이브러리를 불러오지 못했습니다. (CDN/네트워크/차단 확인)');
+        else boot();
+      })));
 
-      function fail(msg){
-        console.error(msg);
+      function showFail(msg){
         const box = document.createElement('div');
-        box.style.cssText = 'position:fixed;left:12px;bottom:12px;max-width:560px;background:#111827;color:#fff;padding:12px 14px;border-radius:10px;z-index:99999';
-        box.textContent = msg + '  (uBlock/기업망 필터가 막을 수 있어요)';
-        document.body.appendChild(box);
+        box.style.cssText='position:fixed;left:12px;bottom:12px;max-width:560px;background:#111827;color:#fff;padding:12px 14px;border-radius:10px;z-index:99999';
+        box.textContent=msg; document.body.appendChild(box);
       }
     })();
   </script>
 
-  <!-- ===== 실제 초기화 ===== -->
+  <!-- ✅ 캘린더 초기화 -->
   <script>
     function boot(){
       const Calendar = window.toastui?.Calendar || window.tui?.Calendar;
-      if (!Calendar) {
-        console.error('Calendar global not found');
-        return;
-      }
+      if (!Calendar) return;
 
       const el = document.getElementById('calendar');
       let compact = (document.documentElement.dataset.compact === '1');
@@ -158,7 +177,7 @@
         week:  { workweek:true, narrowWeekend:true, showNowIndicator:true, hourStart: compact ? 9 : 8, hourEnd: compact ? 19 : 21 }
       });
 
-      // 로컬 저장 (간단)
+      // ── 로컬 저장 ──
       const KEY='toastui_v2_events';
       let state=[]; try{ state=JSON.parse(localStorage.getItem(KEY)||'[]')||[] }catch(_){}
       if (state.length) calendar.createEvents(state);
@@ -174,7 +193,7 @@
       calendar.on('beforeUpdateEvent', ({event,changes})=>{ calendar.updateEvent(event.id,event.calendarId,changes); upsert({...event,...changes}); });
       calendar.on('beforeDeleteEvent', ({id,calendarId})=>{ calendar.deleteEvent(id,calendarId); remove(id,calendarId); });
 
-      // 범위/내비
+      // ── 범위/내비 ──
       const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const range=()=>{ const s=calendar.getDateRangeStart(),e=calendar.getDateRangeEnd(); document.getElementById('range').textContent=`${fmt(s)} ~ ${fmt(e)}`; };
       range();
@@ -183,15 +202,15 @@
       btnNext.onclick = ()=>{ calendar.next();  range(); };
       document.querySelectorAll('button[data-view]').forEach(b=>b.onclick=()=>{ calendar.changeView(b.dataset.view); range(); });
 
-      // 라이트/다크
+      // ── 라이트/다크 토글 ──
       btnTheme.onclick=()=>{
         const next=(document.documentElement.dataset.theme==='light')?'dark':'light';
         document.documentElement.dataset.theme=next;
         calendar.render?.();
-        btnTheme.textContent = (next==='light')?'다크로':'라이트로';
+        btnTheme.textContent = (next==='light') ? '다크로' : '라이트로';
       };
 
-      // 컴팩트
+      // ── 컴팩트 토글 ──
       btnDensity.onclick=()=>{
         const on = document.documentElement.dataset.compact !== '1';
         document.documentElement.dataset.compact = on ? '1' : '0';
@@ -203,17 +222,17 @@
         btnDensity.textContent = on ? '컴팩트 끄기' : '컴팩트 켜기';
       };
 
-      // 뒤로/메인
+      // ── 뒤로/메인 ──
       btnHome.onclick=(e)=>{ e.preventDefault(); location.href='../'; };
       btnBack.onclick=()=>{ history.length>1 ? history.back() : (location.href='../'); };
 
-      // 안전 렌더
+      // ── 안전 렌더 ──
       const safe=()=>{ try{ calendar.render(); }catch(_){} };
       addEventListener('load', safe); new ResizeObserver(safe).observe(el);
 
-      // 미리보기 1개(보이는지 확인용): 원하면 지워도 됨
-      const now = new Date();
-      calendar.createEvents([{ id:'demo', calendarId:'default', title:'미리보기', start:new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10), end:new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11), category:'time' }]);
+      // 미리보기 일정(보이는지 테스트용) — 필요 없으면 지워도 됨
+      const now=new Date();
+      calendar.createEvents([{ id:'demo', calendarId:'default', title:'미리보기', start:new Date(now.getFullYear(),now.getMonth(),now.getDate(),10), end:new Date(now.getFullYear(),now.getMonth(),now.getDate(),11), category:'time' }]);
     }
   </script>
 </body>
