@@ -5,151 +5,178 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>일정 캘린더</title>
 
-  <!-- TOAST UI Calendar v2 CSS/JS (CDN) -->
+  <!-- TOAST UI Calendar CSS (공식 CDN) -->
   <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+  <!-- 기본 팝업 스타일 보강(선택): date/time picker CSS -->
+  <link rel="stylesheet" href="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.css" />
+  <link rel="stylesheet" href="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.css" />
+
   <style>
     :root { color-scheme: dark light; }
     body{
-      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
-      background:#0d1a1f; color:#e6eef2;
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
+      background:#0b1220; color:#e5e7eb;
     }
     header{
-      position:sticky; top:0; z-index:10;
-      display:flex; align-items:center; justify-content:space-between; gap:.5rem;
-      padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.12);
-      background:rgba(13,26,31,.85); backdrop-filter: blur(6px) saturate(120%);
+      display:flex; gap:.5rem; align-items:center; justify-content:space-between;
+      padding:12px 16px; border-bottom:1px solid #1f2a44; position:sticky; top:0; backdrop-filter:saturate(120%) blur(6px);
+      background:rgba(11,18,32,.8);
     }
-    .left, .right { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
-    button, .btn{
-      appearance:none; border:1px solid #334155; background:#0f172a; color:#e6eef2;
-      padding:6px 10px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:14px;
+    .left, .right{ display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    button{
+      border:1px solid #334155; background:#111827; color:#e5e7eb; padding:6px 10px; border-radius:10px; cursor:pointer;
     }
-    button:hover, .btn:hover{ background:#0b1628 }
-    #status{ font-size:.85rem; opacity:.8; border-radius:999px; padding:2px 8px; border:1px solid #334155 }
-    #calendar{ height: calc(100vh - 58px); } /* 캘린더는 높이가 꼭 필요 */
+    button:hover{ background:#0f172a; }
+    #status{ font-size:.85rem; opacity:.8 }
+    /* 캘린더는 높이가 반드시 필요합니다(공식 권장 600px+). */
+    #calendar{ height: calc(100vh - 64px); }
+    .badge{font-size:.8rem; padding:2px 8px; border-radius:999px; border:1px solid #334155}
   </style>
 </head>
 <body>
   <header>
     <div class="left">
-      <button id="btnBack" title="뒤로 (Esc / Backspace)">⟵ 뒤로</button>
-      <a class="btn" id="btnHome" href="../" title="메인으로 (H)">🏠 메인</a>
-    </div>
-    <div class="right">
       <button id="btnPrev">◀︎ 이전</button>
       <button id="btnToday">오늘</button>
       <button id="btnNext">다음 ▶︎</button>
-
+      <span id="currentRange" style="margin-left:.5rem; opacity:.85"></span>
+    </div>
+    <div class="right">
       <button data-view="month">월</button>
       <button data-view="week">주</button>
       <button data-view="day">일</button>
-      <span id="range" style="margin-left:.5rem; opacity:.85"></span>
-      <span id="status">저장됨</span>
+      <span id="status" class="badge">저장됨</span>
     </div>
   </header>
 
   <div id="calendar"></div>
 
+  <!-- TOAST UI Calendar JS (공식 CDN). 전역 객체 'tui'에 Calendar가 노출됩니다. -->
   <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js" defer></script>
+
   <script>
-    // 안전 로더: CDN이 로드되었는지 확인 후 초기화
     window.addEventListener('DOMContentLoaded', () => {
-      const boot = () => (window.tui && window.tui.Calendar) ? init() : setTimeout(boot, 30);
-      boot();
-    });
-
-    function init(){
-      const { Calendar } = tui;
-      const el = document.getElementById('calendar');
       const STORAGE_KEY = 'toastui_v2_events';
-      const statusEl = document.getElementById('status');
+      const { Calendar } = tui;  // CDN 전역에서 Calendar 추출 (공식 가이드)
+      const container = document.getElementById('calendar');
 
-      const calendar = new Calendar(el, {
+      // 초기 옵션
+      const calendar = new Calendar(container, {
         defaultView: 'month',
-        usageStatistics: false,
-        timezone: { zones: [{ timezoneName: 'Asia/Seoul', displayLabel: 'Seoul' }] },
+        usageStatistics: false, // GA 비활성화 (공식 문서 옵션)
+        timezone: {
+          zones: [{ timezoneName: 'Asia/Seoul', displayLabel: 'Seoul' }]
+        },
+        // v2: 기본 폼 팝업 & 상세 팝업 사용
         useFormPopup: true,
         useDetailPopup: true,
-        calendars: [{ id: 'default', name: '내 일정', backgroundColor: '#4f46e5', borderColor: '#4f46e5' }],
+        calendars: [
+          { id: 'default', name: '내 일정', backgroundColor: '#4f46e5', borderColor: '#4f46e5' }
+        ]
       });
 
-      // 저장된 일정 불러오기
-      let state = [];
-      try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []; } catch(e){}
-      if (state.length) calendar.createEvents(state);
+      // ────────────── localStorage 연동 ──────────────
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      if (saved.length) {
+        // 저장된 이벤트 생성
+        calendar.createEvents(saved);
+      }
 
-      const setDirty = (txt='저장됨') => {
-        statusEl.textContent = txt;
-        if (txt !== '저장됨') setTimeout(() => statusEl.textContent = '저장됨', 1000);
-      };
-      const save = () => {
+      const setDirty = (() => {
+        let timer;
+        return (text = '저장됨') => {
+          const el = document.getElementById('status');
+          el.textContent = text;
+          clearTimeout(timer);
+          if (text !== '저장됨') {
+            timer = setTimeout(() => (el.textContent = '저장됨'), 1000);
+          }
+        };
+      })();
+
+      function persist() {
+        // 이벤트 목록을 우리가 관리하는 상태로 유지
+        // 저장은 우리가 가진 saved 배열이 아니라, 캘린더에서 하나씩 getEvent로 모읍니다.
+        // getEvents가 없어서 현재 뷰 구간의 아이템만 저장되면 곤란 → 별도 상태를 유지합니다.
+      }
+
+      // 별도 상태 관리: 현재 저장분을 메모리에 유지
+      let state = Array.isArray(saved) ? saved : [];
+
+      function saveState() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        setDirty('저장 중…');
-      };
-      const upsert = (ev) => {
-        const i = state.findIndex(x => x.id === ev.id && x.calendarId === ev.calendarId);
-        if (i >= 0) state[i] = { ...state[i], ...ev }; else state.push(ev);
-      };
-      const remove = (id, calendarId) => {
-        state = state.filter(x => !(x.id === id && x.calendarId === calendarId));
-      };
+        setDirty('저장됨');
+      }
 
-      // 이벤트 생성/수정/삭제(드래그, 더블클릭, 팝업 등)
+      function upsertEventInState(e) {
+        const idx = state.findIndex(x => x.id === e.id && x.calendarId === e.calendarId);
+        if (idx >= 0) state[idx] = { ...state[idx], ...e };
+        else state.push(e);
+      }
+
+      function removeEventInState(id, calendarId) {
+        state = state.filter(x => !(x.id === id && x.calendarId === calendarId));
+      }
+
+      // ────────────── 인스턴스 이벤트(생성/수정/삭제) ──────────────
+      // v2 이벤트명: beforeCreateEvent / beforeUpdateEvent / beforeDeleteEvent
       calendar.on('beforeCreateEvent', (ev) => {
-        const id = String(Date.now()) + Math.random().toString(36).slice(2,7);
+        // 사용자가 드래그/더블클릭 등으로 생성 시 호출
+        const id = String(Date.now()) + Math.random().toString(36).slice(2, 7);
         const newEvent = {
           id,
-          calendarId: ev.calendarId || 'default',
-          title: ev.title || '새 일정',
-          start: ev.start, end: ev.end,
+          calendarId: ev.calendarId ?? 'default',
+          title: ev.title ?? '새 일정',
+          start: ev.start, // 문자열 또는 Date 허용
+          end: ev.end,
           isAllday: !!ev.isAllday,
           location: ev.location || '',
-          category: ev.isAllday ? 'allday' : 'time',
+          category: ev.isAllday ? 'allday' : 'time'
         };
         calendar.createEvents([newEvent]);
-        upsert(newEvent); save();
+        upsertEventInState(newEvent);
+        saveState();
+        setDirty('저장 중…');
       });
 
       calendar.on('beforeUpdateEvent', ({ event, changes }) => {
         calendar.updateEvent(event.id, event.calendarId, changes);
-        upsert({ ...event, ...changes }); save();
+        // 상태에도 반영
+        upsertEventInState({ ...event, ...changes });
+        saveState();
+        setDirty('저장 중…');
       });
 
       calendar.on('beforeDeleteEvent', ({ id, calendarId }) => {
         calendar.deleteEvent(id, calendarId);
-        remove(id, calendarId); save();
+        removeEventInState(id, calendarId);
+        saveState();
+        setDirty('저장 중…');
       });
 
-      // 범위 라벨 & 내비게이션
-      const rangeEl = document.getElementById('range');
-      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const updateRange = () => {
-        const s = calendar.getDateRangeStart(); const e = calendar.getDateRangeEnd();
-        rangeEl.textContent = `${fmt(s)} ~ ${fmt(e)}`;
-      };
-      updateRange();
+      // ────────────── 내비게이션/뷰 전환 ──────────────
+      const elRange = document.getElementById('currentRange');
+      function updateRangeLabel() {
+        const start = calendar.getDateRangeStart();
+        const end   = calendar.getDateRangeEnd();
+        elRange.textContent = `${start.getFullYear()}-${(start.getMonth()+1).toString().padStart(2,'0')}-${start.getDate().toString().padStart(2,'0')} ~ ${end.getFullYear()}-${(end.getMonth()+1).toString().padStart(2,'0')}-${end.getDate().toString().padStart(2,'0')}`;
+      }
+      updateRangeLabel();
 
-      document.getElementById('btnPrev').addEventListener('click', () => { calendar.prev(); updateRange(); });
-      document.getElementById('btnToday').addEventListener('click', () => { calendar.today(); updateRange(); });
-      document.getElementById('btnNext').addEventListener('click', () => { calendar.next(); updateRange(); });
+      document.getElementById('btnPrev').addEventListener('click', () => { calendar.prev(); updateRangeLabel(); });
+      document.getElementById('btnToday').addEventListener('click', () => { calendar.today(); updateRangeLabel(); });
+      document.getElementById('btnNext').addEventListener('click', () => { calendar.next(); updateRangeLabel(); });
 
-      document.querySelectorAll('button[data-view]').forEach(b=>{
-        b.addEventListener('click', () => { calendar.changeView(b.dataset.view); updateRange(); });
+      document.querySelectorAll('button[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          calendar.changeView(btn.dataset.view);
+          updateRangeLabel();
+        });
       });
 
-      // 뒤로/메인
-      const goHome = () => location.href = '../';
-      const goBack = () => (history.length > 1) ? history.back() : goHome();
-      document.getElementById('btnHome').addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
-      document.getElementById('btnBack').addEventListener('click', goBack);
-
-      // 단축키: H=메인, Esc/Backspace=뒤로, T=오늘
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'h' || e.key === 'H') { e.preventDefault(); goHome(); }
-        else if (e.key === 'Escape' || e.key === 'Backspace') { e.preventDefault(); goBack(); }
-        else if (e.key.toLowerCase() === 't') { e.preventDefault(); calendar.today(); updateRange(); }
-      }, { passive:false });
-    }
+      // 폼 팝업을 코드로 띄우고 싶을 때 예시:
+      // calendar.openFormPopup({ start: new Date(), end: new Date(), isAllday:false }); // 공식 API
+    });
   </script>
 </body>
 </html>
