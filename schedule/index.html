@@ -2,201 +2,286 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>일정 캘린더</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Schedule</title>
 
+<!-- TUI Calendar v2 CSS (필수) -->
+<link rel="stylesheet" href="https://uicdn.toast.com/tui.time-picker/latest/toastui-time-picker.min.css" />
+<link rel="stylesheet" href="https://uicdn.toast.com/tui.date-picker/latest/toastui-date-picker.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
-<link rel="stylesheet" href="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.css" />
-<link rel="stylesheet" href="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.css" />
 
 <style>
-  /* ── 라이트/다크 공통 변수 ── */
-  :root { --bg:#0d1a1f; --panel:#0f1b20; --text:#e6eef2; --muted:#9fb4bf; --border:#1b2a31; --header:rgba(13,26,31,.9); --btn-bg:#0e1a1f; --btn-hover:#0b1628; }
-  :root[data-theme="dark"]  { color-scheme: dark; }
-  :root[data-theme="light"] { color-scheme: light;
-    --bg:#f5f7fb; --panel:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --header:rgba(255,255,255,.92); --btn-bg:#ffffff; --btn-hover:#f3f4f6;
+  :root {
+    --bg: #0b1217;         /* 다크 배경 */
+    --panel: #0f161c;
+    --ink: #c7d1d9;        /* 기본 글자색 */
+    --muted: #9fb0bd;      /* 보조 텍스트 */
+    --line: rgba(255,255,255,.10);
+    --line-strong: rgba(255,255,255,.16);
+    --today-bg: #10222e;
+    --accent: #59b1ff;
+    --select: rgba(89,177,255,.20);
+
+    /* 컴팩트 */
+    --cell-h: 76px;
+    --allday-h: 22px;
+    --event-pad: 2px 6px;
+    --fs: 13px;
+  }
+  /* 라이트 토글 시 바뀌는 변수 */
+  :root[data-theme="light"] {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #27323a;
+    --muted: #51606c;
+    --line: rgba(0,0,0,.08);
+    --line-strong: rgba(0,0,0,.14);
+    --today-bg: #eef6ff;
+    --accent: #2a7be5;
+    --select: rgba(42,123,229,.18);
   }
 
-  body{ margin:0; background:var(--bg); color:var(--text);
-        font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; }
-  header{
+  /* 페이지 바탕 및 툴바 */
+  html,body {height:100%}
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: Inter, Pretendard, system-ui, -apple-system, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+  }
+  .bar {
+    display:flex; align-items:center; gap:.5rem;
+    padding:10px 14px; background:var(--panel); border-bottom:1px solid var(--line-strong);
     position:sticky; top:0; z-index:10;
-    display:flex; gap:.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap;
-    padding:10px 12px; background:var(--header); border-bottom:1px solid var(--border);
-    backdrop-filter:blur(6px) saturate(120%);
   }
-  .left,.right{display:flex; gap:.5rem; align-items:center; flex-wrap:wrap}
-  button,.btn{
-    appearance:none; border:1px solid var(--border); background:var(--btn-bg); color:var(--text);
-    border-radius:10px; padding:6px 10px; cursor:pointer; font-size:14px;
+  .bar .spacer {flex:1}
+  .bar button, .bar a {
+    appearance:none; border:1px solid var(--line-strong); background:transparent; color:var(--ink);
+    padding:6px 10px; border-radius:10px; cursor:pointer; font-size:14px; text-decoration:none;
   }
-  button:hover,.btn:hover{ background:var(--btn-hover) }
-  #range{ color:var(--muted); font-size:.9rem }
-  #calendar{
-    height:calc(100vh - 64px); min-height:680px;
-    background:var(--panel); border:1px solid var(--border); border-radius:14px; margin:12px; overflow:hidden;
+  .bar button:hover, .bar a:hover { background: var(--select); }
+  #calendar { height: calc(100dvh - 56px); }
+
+  /* ===== 핵심: 캘린더 내부까지 다크/라이트 강제 오버라이드 ===== */
+  /* 캘린더 배경/텍스트 기본값 */
+  #calendar [class^="toastui-calendar-"],
+  #calendar [class*=" toastui-calendar-"] {
+    color: var(--ink);
+  }
+  /* 월/주/일 공통 패널 배경 */
+  #calendar .toastui-calendar-panel,
+  #calendar .toastui-calendar-layout,
+  #calendar .toastui-calendar-rows,
+  #calendar .toastui-calendar-month,
+  #calendar .toastui-calendar-week,
+  #calendar .toastui-calendar-daygrid,
+  #calendar .toastui-calendar-timegrid {
+    background: var(--panel);
+  }
+  /* 요일 헤더 */
+  #calendar [class*="dayname"] {
+    background: var(--panel);
+    color: var(--muted);
+    border-color: var(--line-strong) !important;
+  }
+  /* 그리드 경계선 */
+  #calendar [class*="grid-line"],
+  #calendar [class*="grid-cell"] {
+    border-color: var(--line) !important;
+  }
+  /* 오늘 배경 강조(월/주/일) */
+  #calendar [class*="today"],
+  #calendar .toastui-calendar-week-today,
+  #calendar .toastui-calendar-month-week-item--today {
+    background: var(--today-bg);
+  }
+  /* 시간축/타임라벨 */
+  #calendar [class*="timegrid-time"],
+  #calendar .toastui-calendar-timegrid-timezone-label {
+    color: var(--muted);
+  }
+  /* 선택 드래그 영역 */
+  #calendar .toastui-calendar-grid-selection {
+    background: var(--select) !important;
+  }
+  /* 이벤트 카드 기본 패딩(컴팩트 대비) */
+  #calendar .toastui-calendar-event {
+    padding: var(--event-pad);
+    border-radius: 6px;
+  }
+
+  /* ===== 컴팩트 모드 ===== */
+  :root[data-compact="1"] #calendar {
+    font-size: var(--fs);
+  }
+  :root[data-compact="1"] #calendar .toastui-calendar-allday {
+    min-height: var(--allday-h);
+  }
+  :root[data-compact="1"] #calendar [class*="month"] [class*="grid-cell"] {
+    height: var(--cell-h); min-height: var(--cell-h);
   }
 </style>
 </head>
-<body>
-  <header>
-    <div class="left">
-      <button id="btnBack" title="뒤로 (Esc/Backspace)">⟵ 뒤로</button>
-      <a class="btn" id="btnHome" href="../" title="메인으로 (H)">🏠 메인</a>
-
-      <button id="btnPrev">◀︎ 이전</button>
-      <button id="btnToday">오늘</button>
-      <button id="btnNext">다음 ▶︎</button>
-
-      <button data-view="month">월</button>
-      <button data-view="week">주</button>
-      <button data-view="day">일</button>
-    </div>
-    <div class="right">
-      <button id="btnDensity" title="칸/시간 압축 토글">컴팩트</button>
-      <button id="btnTheme" title="라이트/다크 전환">☀️ 라이트</button>
-      <span id="range"></span>
-    </div>
-  </header>
+<body data-theme="dark" data-compact="1">
+  <div class="bar">
+    <a href="../" aria-label="홈으로">홈</a>
+    <button id="backBtn" type="button">◀ 뒤로</button>
+    <button id="prevBtn" type="button">이전</button>
+    <button id="todayBtn" type="button">오늘</button>
+    <button id="nextBtn" type="button">다음</button>
+    <div class="spacer"></div>
+    <button id="viewMonth" type="button">월</button>
+    <button id="viewWeek" type="button">주</button>
+    <button id="viewDay" type="button">일</button>
+    <button id="themeBtn" type="button">라이트</button>
+    <button id="compactBtn" type="button">컴팩트 끄기</button>
+  </div>
 
   <div id="calendar"></div>
 
-  <script src="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.min.js"></script>
-  <script src="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.min.js"></script>
-  <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+  <!-- ESM 빌드 (권장) -->
+  <script type="module">
+    import Calendar from 'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.esm.js';
 
-  <script>
-    let calendar; // render 안전 호출용
-    const THEME_KEY = 'cal_theme';
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const boot = () => (window.tui && window.tui.Calendar) ? init() : setTimeout(boot, 30);
-      boot();
+    // 캘린더 생성
+    const cal = new Calendar('#calendar', {
+      defaultView: 'month',
+      usageStatistics: false,
+      isReadOnly: false,
+      useFormPopup: true,
+      useDetailPopup: true,
+      week: {
+        startDayOfWeek: 0,
+        hourStart: 8,
+        hourEnd: 22,
+        workweek: false,
+        showNowIndicator: true,
+      },
+      month: {
+        startDayOfWeek: 0,
+        visibleWeeksCount: 0
+      },
+      template: {} // 필요 시 커스터마이즈
     });
 
-    function init(){
-      const { Calendar } = tui;
-      const el = document.getElementById('calendar');
-      const STORAGE_KEY = 'toastui_v2_events';
-      const rangeEl = document.getElementById('range');
-      const btnTheme = document.getElementById('btnTheme');
+    // 캘린더(카테고리) 별 기본 색상 세트
+    cal.setCalendars?.([
+      { id: 'default', name: '기본', color: '#e6f2ff', backgroundColor: '#2a7be5', borderColor: '#2a7be5', dragBackgroundColor: '#2a7be5' },
+      { id: 'second',  name: '서브', color: '#e9fff5', backgroundColor: '#18a36b', borderColor: '#18a36b', dragBackgroundColor: '#18a36b' }
+    ]);
 
-      // ── 기본: 다크 + 컴팩트 ──
-      let compact = true;
+    // 시연용 이벤트 약간
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    cal.createEvents?.([
+      { id:'e1', calendarId:'default', title:'회의', start:`${ymd(now)}T10:00:00`, end:`${ymd(now)}T11:00:00`, category:'time' },
+      { id:'e2', calendarId:'second',  title:'데모', start:`${ymd(now)}T14:00:00`, end:`${ymd(now)}T15:30:00`, category:'time' },
+      { id:'e3', calendarId:'default', title:'종일 일정', start:`${ymd(now)}`, end:`${ymd(now)}`, isAllday:true, category:'allday' }
+    ]);
 
-      calendar = new Calendar(el, {
-        defaultView: 'month',
-        usageStatistics: false,
-        useFormPopup: true,
-        useDetailPopup: true,
-        timezone: { zones: [{ timezoneName:'Asia/Seoul', displayLabel:'Seoul' }] },
-        calendars: [{ id:'default', name:'내 일정' }],
-        month: {
-          isAlways6Week: true,
-          startDayOfWeek: 1,
-          narrowWeekend: true,
-          visibleEventCount: compact ? 3 : 5
+    /* ===== 테마(토큰) + CSS 오버레이 =====
+       - setTheme는 선택/지표/요일헤더 등 토큰을 바꾸고,
+       - CSS는 그리드 배경/경계선을 확실히 덮어써서 진짜 다크가 되게 합니다.
+    */
+    const THEMES = {
+      dark: {
+        common: {
+          backgroundColor: getCSS('--panel'),
+          gridSelection: { backgroundColor: getCSS('--select') },
+          saturday: { color: getCSS('--muted') },
+          holiday: { color: getCSS('--muted') },
+          dayName: { color: getCSS('--muted') },
+          today: { color: getCSS('--accent') }
         },
         week: {
-          workweek: true,
-          narrowWeekend: true,
-          showNowIndicator: true,
-          hourStart: compact ? 9 : 8,
-          hourEnd: compact ? 19 : 21
+          nowIndicatorLabel: { color: getCSS('--accent') },
+        },
+        month: {
+          dayName: {
+            backgroundColor: getCSS('--panel'),
+            borderLeft: `1px solid ${getCSS('--line-strong')}`,
+            color: getCSS('--muted')
+          }
         }
-      });
-
-      // ── 테마 전환 로직 ──
-      const getVar = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-      function applyCalendarTheme(mode){
-        // 캘린더 배경/요일 톤만 최소 조정 (라이트/다크 공통)
-        calendar.setTheme({
-          common: { backgroundColor: getVar('--panel') },
-          month:  { dayName: { color: getVar('--muted') }, gridSelection: { backgroundColor: 'transparent' } },
-          week:   { dayName: { color: getVar('--muted') } }
-        });
-        // 필요 시 재렌더
-        try { calendar.render(); } catch(e){}
+      },
+      light: {
+        common: {
+          backgroundColor: getCSS('--panel'),
+          gridSelection: { backgroundColor: getCSS('--select') },
+          saturday: { color: getCSS('--muted') },
+          holiday: { color: getCSS('--muted') },
+          dayName: { color: getCSS('--muted') },
+          today: { color: getCSS('--accent') }
+        },
+        week: {
+          nowIndicatorLabel: { color: getCSS('--accent') },
+        },
+        month: {
+          dayName: {
+            backgroundColor: getCSS('--panel'),
+            borderLeft: `1px solid ${getCSS('--line-strong')}`,
+            color: getCSS('--muted')
+          }
+        }
       }
-      function setTheme(mode){
-        document.documentElement.setAttribute('data-theme', mode);
-        localStorage.setItem(THEME_KEY, mode);
-        btnTheme.textContent = (mode === 'dark') ? '☀️ 라이트' : '🌙 다크';
-        applyCalendarTheme(mode);
-      }
-      // 초기 테마: 저장값 → 시스템 → 기본(다크)
-      const saved = localStorage.getItem(THEME_KEY);
-      const initial = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark');
-      setTheme(initial);
+    };
 
-      btnTheme.addEventListener('click', () => {
-        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-        setTheme(cur === 'dark' ? 'light' : 'dark');
-      });
-
-      // ── 저장/복구 ──
-      let state = [];
-      try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []; } catch(e){}
-      if (state.length) calendar.createEvents(state);
-      const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      const upsert = (ev) => {
-        const i = state.findIndex(x => x.id === ev.id && x.calendarId === x.calendarId);
-        if (i >= 0) state[i] = { ...state[i], ...ev }; else state.push(ev);
-        save();
-      };
-      const remove = (id, calendarId) => { state = state.filter(x => !(x.id === id && x.calendarId === calendarId)); save(); };
-
-      calendar.on('beforeCreateEvent', (ev) => {
-        const id = String(Date.now()) + Math.random().toString(36).slice(2,7);
-        const newEvent = { id, calendarId: ev.calendarId || 'default', title: ev.title || '새 일정',
-                           start: ev.start, end: ev.end, isAllday: !!ev.isAllday,
-                           location: ev.location || '', category: ev.isAllday ? 'allday' : 'time' };
-        calendar.createEvents([newEvent]); upsert(newEvent);
-      });
-      calendar.on('beforeUpdateEvent', ({ event, changes }) => {
-        calendar.updateEvent(event.id, event.calendarId, changes); upsert({ ...event, ...changes });
-      });
-      calendar.on('beforeDeleteEvent', ({ id, calendarId }) => { calendar.deleteEvent(id, calendarId); remove(id, calendarId); });
-
-      // ── 범위 표시 & 내비 ──
-      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const updateRange = () => { const s = calendar.getDateRangeStart(), e = calendar.getDateRangeEnd(); rangeEl.textContent = `${fmt(s)} ~ ${fmt(e)}`; };
-      updateRange();
-
-      document.getElementById('btnPrev').addEventListener('click', () => { calendar.prev(); updateRange(); });
-      document.getElementById('btnToday').addEventListener('click', () => { calendar.today(); updateRange(); });
-      document.getElementById('btnNext').addEventListener('click', () => { calendar.next(); updateRange(); });
-      document.querySelectorAll('button[data-view]').forEach(b=>{
-        b.addEventListener('click', () => { calendar.changeView(b.dataset.view); updateRange(); });
-      });
-
-      // ── 컴팩트 토글 ──
-      document.getElementById('btnDensity').addEventListener('click', () => {
-        compact = !compact;
-        calendar.setOptions?.({
-          month: { visibleEventCount: compact ? 3 : 5 },
-          week:  { hourStart: compact ? 9 : 8, hourEnd: compact ? 19 : 21 }
-        });
-        document.getElementById('btnDensity').textContent = compact ? '컴팩트' : '보통';
-      });
-
-      // ── 뒤로/메인 + 키보드 ──
-      const goHome = () => location.href = '../';
-      const goBack = () => (history.length > 1) ? history.back() : goHome();
-      document.getElementById('btnHome').addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
-      document.getElementById('btnBack').addEventListener('click', goBack);
-      window.addEventListener('keydown', (e) => {
-        const k = e.key.toLowerCase?.() || e.key;
-        if (k === 'h') { e.preventDefault(); goHome(); }
-        else if (e === 'escape' || k === 'backspace') { e.preventDefault(); goBack(); }
-        else if (k === 't') { e.preventDefault(); calendar.today(); updateRange(); }
-      }, { passive:false });
-
-      // ── 안전 렌더 ──
-      const safeRender = () => { try { calendar.render(); } catch(e){} };
-      window.addEventListener('load', safeRender);
-      new ResizeObserver(safeRender).observe(el);
+    function getCSS(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     }
+    function applyTheme(mode = (document.documentElement.dataset.theme || 'dark')) {
+      cal.setTheme?.(THEMES[mode]);
+      cal.render?.();
+    }
+
+    // 초기 다크 적용
+    applyTheme('dark');
+
+    /* ===== 툴바 동작 ===== */
+    document.getElementById('todayBtn').onclick = () => cal.today();
+    document.getElementById('prevBtn').onclick = () => cal.prev();
+    document.getElementById('nextBtn').onclick = () => cal.next();
+    document.getElementById('viewMonth').onclick = () => cal.changeView('month');
+    document.getElementById('viewWeek').onclick = () => cal.changeView('week');
+    document.getElementById('viewDay').onclick = () => cal.changeView('day');
+
+    // 뒤로/홈
+    document.getElementById('backBtn').onclick = () => history.length > 1 ? history.back() : (location.href = '../');
+
+    // 테마 토글
+    const themeBtn = document.getElementById('themeBtn');
+    function syncThemeBtn() {
+      const mode = document.documentElement.dataset.theme || 'dark';
+      themeBtn.textContent = (mode === 'dark') ? '라이트' : '다크';
+    }
+    themeBtn.onclick = () => {
+      const next = (document.documentElement.dataset.theme === 'light') ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      applyTheme(next);
+      syncThemeBtn();
+    };
+    syncThemeBtn();
+
+    // 컴팩트 토글
+    const compactBtn = document.getElementById('compactBtn');
+    function syncCompactBtn(){
+      const on = document.documentElement.dataset.compact === '1';
+      compactBtn.textContent = on ? '컴팩트 끄기' : '컴팩트 켜기';
+    }
+    compactBtn.onclick = () => {
+      const cur = document.documentElement.dataset.compact;
+      document.documentElement.dataset.compact = (cur === '1') ? '0' : '1';
+      cal.render?.();
+      syncCompactBtn();
+    };
+    syncCompactBtn();
+
+    // 화면 리사이즈 대응
+    addEventListener('resize', () => cal.render?.());
   </script>
+
+  <!-- (UMD 사용이 필요하면 위 <script type="module"> 블록 대신 CDN UMD를 쓰세요)
+  <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+  <script> const Calendar = window.tui?.Calendar || window.toastui?.Calendar; /* 동일 로직 */ </script>
+  -->
 </body>
 </html>
