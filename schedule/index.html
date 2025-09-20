@@ -1,293 +1,155 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TRPG 일정 — Neverending Cthulhu</title>
-<base target="_self">
-<style>
-  :root{
-    --bg:#0d1a1f; --ink:#e6eef2; --muted:#a8bcc6; --line:#1f2b31;
-    --brand:#4C8DA9; --accent:#86d2c7;
-    --white:255 255 255; --alpha:.22; --blur:14px;
-    --shadow-lg: 0 12px 28px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.25);
-    --shadow-md: 0 8px 18px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18);
-  }
-  html,body{ height:100% }
-  body{
-    margin:0; background:
-      radial-gradient(900px 500px at 70% -10%, rgba(76,141,169,.18), transparent 60%),
-      radial-gradient(700px 400px at 5% 110%, rgba(134,210,199,.12), transparent 60%),
-      var(--bg);
-    color:var(--ink);
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo","Malgun Gothic","맑은 고딕", sans-serif;
-    display:flex; flex-direction:column;
-  }
-  .wrap{max-width:1220px; width:100%; margin:24px auto; padding:0 16px; flex:1; display:flex; flex-direction:column;}
-  .toolbar{
-    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-    background: rgba(var(--white), var(--alpha));
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:18px; padding:12px;
-    backdrop-filter:saturate(140%) blur(var(--blur));
-    -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
-    margin-bottom:16px; box-shadow: var(--shadow-md);
-  }
-  .btn{
-    appearance:none; user-select:none; -webkit-tap-highlight-color: transparent;
-    display:inline-flex; align-items:center; gap:10px;
-    border-radius:12px; padding:10px 14px; font-weight:800; letter-spacing:.01em;
-    cursor:pointer; border:1px solid rgba(255,255,255,.08);
-    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-    color:var(--ink);
-    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, var(--shadow-md);
-    transition: transform .16s cubic-bezier(.22,.8,.2,1), box-shadow .16s, background .16s, border-color .16s;
-    backdrop-filter: saturate(140%) blur(8px);
-    -webkit-backdrop-filter: saturate(140%) blur(8px);
-  }
-  .btn svg{ width:16px; height:16px; opacity:.9 }
-  .btn:hover{ transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.1) inset, 0 10px 22px rgba(0,0,0,.35) }
-  .btn:active{ transform: translateY(0); box-shadow: none }
-  .btn:focus-visible{ outline: none; box-shadow: 0 0 0 2px rgba(134,210,199,.5), var(--shadow-md) }
-  .btn--ghost{ background: rgba(255,255,255,.06); }
-  .btn--brand{
-    background: linear-gradient(180deg, rgba(76,141,169,.55), rgba(76,141,169,.35));
-    border-color: rgba(76,141,169,.55); color:#0b1519;
-  }
-  .btn--brand:hover{ box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 12px 26px rgba(76,141,169,.35) }
-  .pill{
-    display:inline-flex; gap:6px; padding:6px;
-    background: rgba(255,255,255,.10);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:999px;
-  }
-  .pill button{
-    border:0; background:transparent; color:var(--muted);
-    padding:8px 14px; border-radius:999px; font-weight:800; cursor:pointer;
-    transition: all .18s cubic-bezier(.22,.8,.2,1);
-  }
-  .pill button[aria-pressed="true"]{
-    background: linear-gradient(180deg, rgba(76,141,169,.20), rgba(76,141,169,.12));
-    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 0 0 1px rgba(255,255,255,.10) inset;
-    color:var(--ink);
-  }
-  .pill button:hover{ transform: translateY(-1px) }
-  .toolbar .spacer{ flex:1 }
-  .card{
-    background: rgba(15, 28, 33, .55); border:1px solid rgba(255,255,255,.08); border-radius:18px;
-    backdrop-filter:saturate(140%) blur(var(--blur)); -webkit-backdrop-filter:saturate(140%) blur(var(--blur));
-    box-shadow: var(--shadow-lg); padding:12px; flex:1; display:flex; min-height: 680px;
-  }
-  #cal{height:100%; width:100%}
-  .toastui-calendar-day-name{background:rgba(255,255,255,.06); border-bottom:1px solid var(--line); color:var(--muted)}
-  .toastui-calendar-grid-cell{border-color:var(--line)}
-  .toastui-calendar-panel + .toastui-calendar-panel .toastui-calendar-grid-cell{border-top-color:var(--line)}
-  .toastui-calendar-week-view .toastui-calendar-panel-resizer{border-color:var(--line)}
-  .toastui-calendar-time{color:var(--muted)}
-  .toastui-calendar-grid-selection{background: rgba(76,141,169,.14); border: 1px solid rgba(76,141,169,.45)}
-  .toastui-calendar-popup-container{border-radius:12px; color:#0b1519}
-  .toastui-calendar-popup-container .toastui-calendar-section-button{color:#0b1519}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>일정 캘린더</title>
+
+  <!-- TOAST UI Calendar v2 CSS/JS (CDN) -->
+  <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+  <style>
+    :root { color-scheme: dark light; }
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background:#0d1a1f; color:#e6eef2;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+      padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.12);
+      background:rgba(13,26,31,.85); backdrop-filter: blur(6px) saturate(120%);
+    }
+    .left, .right { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+    button, .btn{
+      appearance:none; border:1px solid #334155; background:#0f172a; color:#e6eef2;
+      padding:6px 10px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:14px;
+    }
+    button:hover, .btn:hover{ background:#0b1628 }
+    #status{ font-size:.85rem; opacity:.8; border-radius:999px; padding:2px 8px; border:1px solid #334155 }
+    #calendar{ height: calc(100vh - 58px); } /* 캘린더는 높이가 꼭 필요 */
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="toolbar">
-      <button class="btn btn--ghost" id="home" aria-label="홈">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-        <span>홈</span>
-      </button>
-      <button class="btn btn--ghost" id="back" aria-label="뒤로가기">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
-        <span>뒤로</span>
-      </button>
-
-      <div class="pill" role="tablist" aria-label="뷰 선택" style="margin-left:8px">
-        <button data-view="month" aria-pressed="true">월간</button>
-        <button data-view="week"  aria-pressed="false">주간</button>
-        <button data-view="day"   aria-pressed="false">일간</button>
-      </div>
-
-      <div class="spacer"></div>
-
-      <button class="btn btn--ghost" id="reload-json">불러오기</button>
-      <button class="btn btn--ghost" id="export-json">내보내기</button>
-      <button class="btn btn--brand" id="quick-add">새 일정</button>
-
-      <button class="btn btn--ghost" id="prev" aria-label="이전">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
-        <span>이전</span>
-      </button>
-      <button class="btn btn--brand" id="today"><span>오늘</span></button>
-      <button class="btn btn--ghost" id="next" aria-label="다음">
-        <span>다음</span>
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
-      </button>
+  <header>
+    <div class="left">
+      <button id="btnBack" title="뒤로 (Esc / Backspace)">⟵ 뒤로</button>
+      <a class="btn" id="btnHome" href="../" title="메인으로 (H)">🏠 메인</a>
     </div>
+    <div class="right">
+      <button id="btnPrev">◀︎ 이전</button>
+      <button id="btnToday">오늘</button>
+      <button id="btnNext">다음 ▶︎</button>
 
-    <div class="card"><div id="cal" aria-label="TRPG 캘린더">로딩 중…</div></div>
-  </div>
+      <button data-view="month">월</button>
+      <button data-view="week">주</button>
+      <button data-view="day">일</button>
+      <span id="range" style="margin-left:.5rem; opacity:.85"></span>
+      <span id="status">저장됨</span>
+    </div>
+  </header>
 
-<script>
-/* --------- 로더: CDN 실패시 로컬로 --------- */
-function loadCSS(href){
-  return new Promise((res,rej)=>{
-    const l=document.createElement('link');
-    l.rel='stylesheet'; l.href=href; l.onload=()=>res(href); l.onerror=()=>rej(href);
-    document.head.appendChild(l);
-  });
-}
-function loadJS(src){
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src=src; s.defer=true; s.onload=()=>res(src); s.onerror=()=>rej(src);
-    document.head.appendChild(s);
-  });
-}
-async function ensureToastUI(){
-  const CSS = [
-    'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css',
-    'https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.css',
-    './vendor/toastui/toastui-calendar.min.css'
-  ];
-  const JS  = [
-    'https://cdn.jsdelivr.net/npm/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js',
-    'https://unpkg.com/@toast-ui/calendar@2.1.3/dist/toastui-calendar.min.js',
-    './vendor/toastui/toastui-calendar.min.js'
-  ];
-  // CSS 먼저 하나 성공할 때까지
-  let cssOk=false;
-  for (const u of CSS){ try{ await loadCSS(u); cssOk=true; break; }catch{} }
-  // JS도 하나 성공할 때까지
-  let jsOk=false;
-  for (const u of JS){ try{ await loadJS(u); jsOk=true; break; }catch{} }
+  <div id="calendar"></div>
 
-  // window.toastui 가 생길 때까지 최대 2초 대기
-  const start=performance.now();
-  while(!(window.toastui && window.toastui.Calendar) && performance.now()-start < 2000){
-    await new Promise(r=>setTimeout(r,50));
-  }
-  if(!(cssOk && jsOk && window.toastui && window.toastui.Calendar)){
-    throw new Error('ToastUI not available after load attempts');
-  }
-}
+  <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js" defer></script>
+  <script>
+    // 안전 로더: CDN이 로드되었는지 확인 후 초기화
+    window.addEventListener('DOMContentLoaded', () => {
+      const boot = () => (window.tui && window.tui.Calendar) ? init() : setTimeout(boot, 30);
+      boot();
+    });
 
-/* --------- 앱 부트스트랩 (로더 완료 후 초기화) --------- */
-function getProjectHome(){
-  const seg = location.pathname.split('/').filter(Boolean);
-  return seg.length ? '/' + seg[0] + '/' : '/';
-}
-const HOME_URL = getProjectHome();
+    function init(){
+      const { Calendar } = tui;
+      const el = document.getElementById('calendar');
+      const STORAGE_KEY = 'toastui_v2_events';
+      const statusEl = document.getElementById('status');
 
-async function boot(){
-  const mount = document.getElementById('cal');
-  try{
-    await ensureToastUI();
-  }catch(e){
-    mount.innerHTML = '⚠️ 캘린더 라이브러리를 어떤 CDN/로컬에서도 불러오지 못했습니다.<br>사내망이면 jsdelivr/unpkg 허용 또는 <code>schedule/vendor/toastui/</code>에 파일이 있는지 확인하세요.';
-    console.error(e);
-    return;
-  }
+      const calendar = new Calendar(el, {
+        defaultView: 'month',
+        usageStatistics: false,
+        timezone: { zones: [{ timezoneName: 'Asia/Seoul', displayLabel: 'Seoul' }] },
+        useFormPopup: true,
+        useDetailPopup: true,
+        calendars: [{ id: 'default', name: '내 일정', backgroundColor: '#4f46e5', borderColor: '#4f46e5' }],
+      });
 
-  const cal = new toastui.Calendar('#cal', {
-    defaultView:'month',
-    theme:{
-      common:{ backgroundColor:'transparent',
-        gridSelection:{ backgroundColor:'rgba(76,141,169,.14)', border:'1px solid rgba(76,141,169,.45)'},
-        saturday:{ color:'#9fc7d6' }, dayName:{ color:'#a8bcc6' }, today:{ color:'#86d2c7' }
-      },
-      month:{ dayName:{backgroundColor:'rgba(255,255,255,.06)'},
-              dayCell:{borderLeft:'1px solid var(--line)', borderBottom:'1px solid var(--line)'} },
-      week:{ dayName:{backgroundColor:'rgba(255,255,255,.06)', borderBottom:'1px solid var(--line)'} }
-    },
-    usageStatistics:false,
-    month:{ startDayOfWeek:1 },
-    week:{ startDayOfWeek:1, hourStart:8, hourEnd:24 },
-    calendars:[
-      { id:'session', name:'세션', color:'#0b1519', backgroundColor:'#4C8DA9' },
-      { id:'prep',    name:'프렙',  color:'#0b1519', backgroundColor:'#86D2C7' },
-      { id:'off',     name:'휴식',  color:'#0b1519', backgroundColor:'#6AA3B8' }
-    ],
-  });
+      // 저장된 일정 불러오기
+      let state = [];
+      try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []; } catch(e){}
+      if (state.length) calendar.createEvents(state);
 
-  // 홈/뒤로
-  document.getElementById('home').onclick = () => location.href = HOME_URL;
-  document.getElementById('back').onclick = () => (history.length>1 ? history.back() : (location.href = HOME_URL));
-  window.addEventListener('keydown', (e)=>{
-    if (/input|textarea|select/i.test(e.target.tagName)) return;
-    if (e.key==='h'||e.key==='H'){ e.preventDefault(); location.href = HOME_URL; }
-    if (e.key==='b'||e.key==='B'){ e.preventDefault(); history.length>1 ? history.back() : (location.href = HOME_URL); }
-  });
+      const setDirty = (txt='저장됨') => {
+        statusEl.textContent = txt;
+        if (txt !== '저장됨') setTimeout(() => statusEl.textContent = '저장됨', 1000);
+      };
+      const save = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setDirty('저장 중…');
+      };
+      const upsert = (ev) => {
+        const i = state.findIndex(x => x.id === ev.id && x.calendarId === ev.calendarId);
+        if (i >= 0) state[i] = { ...state[i], ...ev }; else state.push(ev);
+      };
+      const remove = (id, calendarId) => {
+        state = state.filter(x => !(x.id === id && x.calendarId === calendarId));
+      };
 
-  // 뷰 전환/네비
-  const btns = document.querySelectorAll('[data-view]');
-  const setView = v => { btns.forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===v))); cal.changeView(v,true); };
-  btns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
-  document.getElementById('prev').onclick  = () => cal.prev();
-  document.getElementById('next').onclick  = () => cal.next();
-  document.getElementById('today').onclick = () => cal.today();
+      // 이벤트 생성/수정/삭제(드래그, 더블클릭, 팝업 등)
+      calendar.on('beforeCreateEvent', (ev) => {
+        const id = String(Date.now()) + Math.random().toString(36).slice(2,7);
+        const newEvent = {
+          id,
+          calendarId: ev.calendarId || 'default',
+          title: ev.title || '새 일정',
+          start: ev.start, end: ev.end,
+          isAllday: !!ev.isAllday,
+          location: ev.location || '',
+          category: ev.isAllday ? 'allday' : 'time',
+        };
+        calendar.createEvents([newEvent]);
+        upsert(newEvent); save();
+      });
 
-  // JSON 불러오기/내보내기/빠른추가 + 오토세이브
-  async function loadFromRepo() {
-    const url = new URL('events.json', location.href);
-    url.searchParams.set('v', Date.now());
-    try{
-      const r = await fetch(url, {cache:'no-store'});
-      if (!r.ok) throw new Error('HTTP '+r.status);
-      const raw = await r.json();
-      const data = raw.map(e=>({...e, start:e.start?new Date(e.start):null, end:e.end?new Date(e.end):null}));
-      cal.clear(); cal.createEvents(data);
-    }catch(err){
-      alert('⚠️ events.json을 불러오지 못했습니다.\n파일이 존재하는지, 경로가 맞는지 확인하세요.');
-      console.error(err);
+      calendar.on('beforeUpdateEvent', ({ event, changes }) => {
+        calendar.updateEvent(event.id, event.calendarId, changes);
+        upsert({ ...event, ...changes }); save();
+      });
+
+      calendar.on('beforeDeleteEvent', ({ id, calendarId }) => {
+        calendar.deleteEvent(id, calendarId);
+        remove(id, calendarId); save();
+      });
+
+      // 범위 라벨 & 내비게이션
+      const rangeEl = document.getElementById('range');
+      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const updateRange = () => {
+        const s = calendar.getDateRangeStart(); const e = calendar.getDateRangeEnd();
+        rangeEl.textContent = `${fmt(s)} ~ ${fmt(e)}`;
+      };
+      updateRange();
+
+      document.getElementById('btnPrev').addEventListener('click', () => { calendar.prev(); updateRange(); });
+      document.getElementById('btnToday').addEventListener('click', () => { calendar.today(); updateRange(); });
+      document.getElementById('btnNext').addEventListener('click', () => { calendar.next(); updateRange(); });
+
+      document.querySelectorAll('button[data-view]').forEach(b=>{
+        b.addEventListener('click', () => { calendar.changeView(b.dataset.view); updateRange(); });
+      });
+
+      // 뒤로/메인
+      const goHome = () => location.href = '../';
+      const goBack = () => (history.length > 1) ? history.back() : goHome();
+      document.getElementById('btnHome').addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
+      document.getElementById('btnBack').addEventListener('click', goBack);
+
+      // 단축키: H=메인, Esc/Backspace=뒤로, T=오늘
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'h' || e.key === 'H') { e.preventDefault(); goHome(); }
+        else if (e.key === 'Escape' || e.key === 'Backspace') { e.preventDefault(); goBack(); }
+        else if (e.key.toLowerCase() === 't') { e.preventDefault(); calendar.today(); updateRange(); }
+      }, { passive:false });
     }
-  }
-  const serialize = () => cal.getEvents().map(e=>({
-    id:e.id, calendarId:e.calendarId, title:e.title||'',
-    start:e.start?new Date(e.start).toISOString():null,
-    end:e.end?new Date(e.end).toISOString():null,
-    category:e.category || (e.isAllday?'allday':'time'),
-  }));
-  function downloadJSON(name, obj){
-    const blob = new Blob([JSON.stringify(obj,null,2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), {href:url, download:name});
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  }
-  async function quickAdd(){
-    const title = prompt('제목 (예: 세션 Ep.03)'); if(!title) return;
-    const startStr = prompt('시작 (YYYY-MM-DD 또는 YYYY-MM-DD HH:mm)'); if(!startStr) return;
-    const endStr = prompt('끝 (옵션. 비우면 2시간 또는 종일)', '');
-    const parse = s => /\d{2}:\d{2}/.test(s) ? new Date(s.replace(' ','T')+':00') : new Date(s);
-    const start = parse(startStr);
-    const isAllDay = !/\d{2}:\d{2}/.test(startStr) && !endStr;
-    const end = endStr ? parse(endStr) : (isAllDay ? start : new Date(start.getTime()+2*3600*1000));
-    cal.createEvents([{ id:crypto.randomUUID(), calendarId:'session', title, start, end, category:isAllDay?'allday':'time' }]);
-    localStorage.setItem('events:autosave', JSON.stringify(serialize()));
-    if (confirm('추가됨! 지금 events.json으로 다운로드 할까요?')) downloadJSON('events.json', serialize());
-  }
-  // 버튼
-  document.getElementById('reload-json').onclick = loadFromRepo;
-  document.getElementById('export-json').onclick = ()=>downloadJSON('events.json', serialize());
-  document.getElementById('quick-add').onclick = quickAdd;
-
-  // 오토세이브 로드
-  try{
-    const raw = localStorage.getItem('events:autosave');
-    if (raw){
-      const data = JSON.parse(raw).map(e=>({...e, start:e.start?new Date(e.start):null, end:e.end?new Date(e.end):null}));
-      if (data.length) cal.createEvents(data);
-    }
-  }catch{}
-  const save = ()=>localStorage.setItem('events:autosave', JSON.stringify(serialize()));
-  cal.on('afterCreateEvent', save);
-  cal.on('afterUpdateEvent', save);
-  cal.on('afterDeleteEvent', save);
-
-  // 최초 한 번 리포 events.json 시도
-  loadFromRepo();
-}
-
-window.addEventListener('DOMContentLoaded', boot);
-</script>
+  </script>
 </body>
 </html>
