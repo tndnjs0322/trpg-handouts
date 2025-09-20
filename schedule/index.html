@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>일정 캘린더</title>
 
-  <!-- TOAST UI Calendar v2 CSS/JS (CDN) -->
+  <!-- TOAST UI Calendar v2 -->
   <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
   <style>
     :root { color-scheme: dark light; }
@@ -15,36 +15,71 @@
     }
     header{
       position:sticky; top:0; z-index:10;
-      display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+      display:grid; grid-template-columns: 1fr auto 1fr;
+      align-items:center; gap:.75rem;
       padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.12);
       background:rgba(13,26,31,.85); backdrop-filter: blur(6px) saturate(120%);
     }
-    .left, .right { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
-    button, .btn{
+    .left, .center, .right { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+    .center { justify-content:center; }
+    .right { justify-content:flex-end; }
+    button, .btn, select{
       appearance:none; border:1px solid #334155; background:#0f172a; color:#e6eef2;
       padding:6px 10px; border-radius:10px; cursor:pointer; text-decoration:none; font-size:14px;
     }
-    button:hover, .btn:hover{ background:#0b1628 }
-    #status{ font-size:.85rem; opacity:.8; border-radius:999px; padding:2px 8px; border:1px solid #334155 }
-    #calendar{ height: calc(100vh - 58px); } /* 캘린더는 높이가 꼭 필요 */
+    button:hover, .btn:hover, select:hover{ background:#0b1628 }
+    #calendar{ height: calc(100vh - 64px); }
+
+    /* 칩(필터) */
+    .chips{ display:flex; gap:.4rem; align-items:center; flex-wrap:wrap }
+    .chip{
+      display:inline-flex; align-items:center; gap:.45rem; padding:6px 10px; border-radius:999px;
+      border:1px solid #334155; background:#0f172a; cursor:pointer; user-select:none;
+    }
+    .dot{ width:10px; height:10px; border-radius:50% }
+    .chip input{ appearance:none; width:0; height:0; position:absolute; pointer-events:none }
+    .chip[data-on="true"]{ outline:2px solid rgba(255,255,255,.08); background:#0b1628 }
+
+    /* 상태 뱃지 */
+    #status{ font-size:.85rem; opacity:.85; border-radius:999px; padding:2px 8px; border:1px solid #334155 }
+    #selectedTitle{ font-size:.85rem; opacity:.85; max-width:28ch; text-overflow:ellipsis; overflow:hidden; white-space:nowrap }
+
+    /* 툴그룹 */
+    .group{ display:flex; gap:.4rem; align-items:center; flex-wrap:wrap }
   </style>
 </head>
 <body>
   <header>
-    <div class="left">
-      <button id="btnBack" title="뒤로 (Esc / Backspace)">⟵ 뒤로</button>
+    <!-- 좌측: 뒤로/메인 + 범위/뷰 -->
+    <div class="left group">
+      <button id="btnBack" title="뒤로 (Esc/Backspace)">⟵ 뒤로</button>
       <a class="btn" id="btnHome" href="../" title="메인으로 (H)">🏠 메인</a>
-    </div>
-    <div class="right">
-      <button id="btnPrev">◀︎ 이전</button>
+
+      <button id="btnPrev">◀︎</button>
       <button id="btnToday">오늘</button>
-      <button id="btnNext">다음 ▶︎</button>
+      <button id="btnNext">▶︎</button>
 
       <button data-view="month">월</button>
       <button data-view="week">주</button>
       <button data-view="day">일</button>
-      <span id="range" style="margin-left:.5rem; opacity:.85"></span>
+    </div>
+
+    <!-- 가운데: 카테고리 토글 칩 -->
+    <div class="center chips" id="chips">
+      <!-- JS가 채움 -->
+    </div>
+
+    <!-- 우측: 새 일정 / 캘린더 선택 / 상태 -->
+    <div class="right group">
+      <select id="newCal">
+        <option value="personal">개인</option>
+        <option value="project">프로젝트</option>
+        <option value="deadline">마감</option>
+      </select>
+      <button id="btnNew">＋ 새 일정</button>
       <span id="status">저장됨</span>
+      <span id="selectedTitle" title="선택된 일정 없음"></span>
+      <button id="btnMove" title="선택된 일정을 왼쪽 콤보에 지정된 캘린더로 이동">이동</button>
     </div>
   </header>
 
@@ -52,9 +87,9 @@
 
   <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js" defer></script>
   <script>
-    // 안전 로더: CDN이 로드되었는지 확인 후 초기화
+    // ===== 부트스트랩 =====
     window.addEventListener('DOMContentLoaded', () => {
-      const boot = () => (window.tui && window.tui.Calendar) ? init() : setTimeout(boot, 30);
+      const boot = () => (window.tui && window.tui.Calendar) ? init() : setTimeout(boot, 25);
       boot();
     });
 
@@ -63,28 +98,39 @@
       const el = document.getElementById('calendar');
       const STORAGE_KEY = 'toastui_v2_events';
       const statusEl = document.getElementById('status');
+      const chipsEl = document.getElementById('chips');
+      const newCalSel = document.getElementById('newCal');
+      const selectedTitleEl = document.getElementById('selectedTitle');
 
+      // 1) 카테고리 정의(색상/이름)
+      const CAL_DEFS = [
+        { id:'personal', name:'개인',    bg:'#10b981' }, // 초록
+        { id:'project',  name:'프로젝트', bg:'#3b82f6' }, // 파랑
+        { id:'deadline', name:'마감',    bg:'#ef4444' }, // 빨강
+      ];
+
+      // 2) 캘린더 인스턴스
       const calendar = new Calendar(el, {
         defaultView: 'month',
         usageStatistics: false,
-        timezone: { zones: [{ timezoneName: 'Asia/Seoul', displayLabel: 'Seoul' }] },
+        timezone: { zones: [{ timezoneName:'Asia/Seoul', displayLabel:'Seoul' }] },
         useFormPopup: true,
         useDetailPopup: true,
-        calendars: [{ id: 'default', name: '내 일정', backgroundColor: '#4f46e5', borderColor: '#4f46e5' }],
+        calendars: CAL_DEFS.map(c => ({
+          id: c.id, name: c.name,
+          backgroundColor: c.bg, borderColor: c.bg
+        })),
       });
 
-      // 저장된 일정 불러오기
+      // 3) 상태 저장/불러오기(+이전 'default' → 'personal' 마이그레이션)
       let state = [];
       try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []; } catch(e){}
-      if (state.length) calendar.createEvents(state);
+      state = state.map(e => e.calendarId === 'default' ? { ...e, calendarId:'personal' } : e);
 
-      const setDirty = (txt='저장됨') => {
-        statusEl.textContent = txt;
-        if (txt !== '저장됨') setTimeout(() => statusEl.textContent = '저장됨', 1000);
-      };
       const save = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        setDirty('저장 중…');
+        statusEl.textContent = '저장 중…';
+        setTimeout(() => statusEl.textContent = '저장됨', 700);
       };
       const upsert = (ev) => {
         const i = state.findIndex(x => x.id === ev.id && x.calendarId === ev.calendarId);
@@ -94,60 +140,144 @@
         state = state.filter(x => !(x.id === id && x.calendarId === calendarId));
       };
 
-      // 이벤트 생성/수정/삭제(드래그, 더블클릭, 팝업 등)
+      // 4) 필터(보이기/숨기기) & 렌더 제어
+      const visible = new Set(CAL_DEFS.map(c => c.id)); // 처음엔 모두 on
+      const rendered = new Set(); // "id|calendarId" 집합
+      const keyOf = (e) => `${e.id}|${e.calendarId}`;
+
+      function rerender(){
+        const want = state.filter(e => visible.has(e.calendarId));
+        // 지울 것
+        for (const k of [...rendered]) {
+          if (!want.some(e => keyOf(e) === k)) {
+            const [id, calId] = k.split('|');
+            calendar.deleteEvent(id, calId);
+            rendered.delete(k);
+          }
+        }
+        // 추가할 것
+        for (const e of want) {
+          const k = keyOf(e);
+          if (!rendered.has(k)) {
+            calendar.createEvents([e]);
+            rendered.add(k);
+          }
+        }
+      }
+
+      // 처음 렌더
+      rerender();
+
+      // 5) 칩 UI 구성
+      function makeChip(def){
+        const chip = document.createElement('label');
+        chip.className = 'chip'; chip.dataset.on = 'true';
+        chip.innerHTML = `
+          <span class="dot" style="background:${def.bg}"></span>
+          <span>${def.name}</span>
+          <input type="checkbox" checked>
+        `;
+        chip.addEventListener('click', (e) => {
+          // 내부 input 클릭 이벤트로 중복 반응 방지
+          if (e.target.tagName === 'INPUT') return;
+          const on = chip.dataset.on !== 'true';
+          chip.dataset.on = on ? 'true' : 'false';
+          if (on) visible.add(def.id); else visible.delete(def.id);
+          rerender();
+        });
+        return chip;
+      }
+      CAL_DEFS.forEach(def => chipsEl.appendChild(makeChip(def)));
+
+      // 6) 새 일정 버튼: 선택된 캘린더로 폼 팝업 열기
+      document.getElementById('btnNew').addEventListener('click', () => {
+        const calId = newCalSel.value;
+        const now = new Date();
+        const end = new Date(now.getTime() + 60*60*1000);
+        // 폼 팝업으로 생성(사용자가 저장 누르면 beforeCreateEvent가 호출됨)
+        if (calendar.openFormPopup) {
+          calendar.openFormPopup({
+            start: now, end,
+            isAllday: false,
+            calendarId: calId,
+            title: ''
+          });
+        } else {
+          // 폼 팝업이 불가한 경우 빠른 생성
+          const ev = { id: String(Date.now())+Math.random().toString(36).slice(2,7),
+            calendarId: calId, title:'새 일정', start: now, end, category:'time' };
+          calendar.createEvents([ev]); upsert(ev); save(); rerender();
+        }
+      });
+
+      // 7) 일정 생성/수정/삭제 이벤트
       calendar.on('beforeCreateEvent', (ev) => {
         const id = String(Date.now()) + Math.random().toString(36).slice(2,7);
         const newEvent = {
           id,
-          calendarId: ev.calendarId || 'default',
+          calendarId: ev.calendarId || newCalSel.value || 'personal',
           title: ev.title || '새 일정',
           start: ev.start, end: ev.end,
           isAllday: !!ev.isAllday,
           location: ev.location || '',
           category: ev.isAllday ? 'allday' : 'time',
         };
-        calendar.createEvents([newEvent]);
-        upsert(newEvent); save();
+        upsert(newEvent); save(); rerender();
       });
 
       calendar.on('beforeUpdateEvent', ({ event, changes }) => {
-        calendar.updateEvent(event.id, event.calendarId, changes);
-        upsert({ ...event, ...changes }); save();
+        // calendarId 변경까지 반영
+        const updated = { ...event, ...changes };
+        // state: 기존 항목 제거 후 upsert (calendarId 바뀔 수 있으므로)
+        remove(event.id, event.calendarId);
+        upsert(updated); save(); rerender();
       });
 
       calendar.on('beforeDeleteEvent', ({ id, calendarId }) => {
-        calendar.deleteEvent(id, calendarId);
-        remove(id, calendarId); save();
+        remove(id, calendarId); save(); rerender();
       });
 
-      // 범위 라벨 & 내비게이션
-      const rangeEl = document.getElementById('range');
-      const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const updateRange = () => {
-        const s = calendar.getDateRangeStart(); const e = calendar.getDateRangeEnd();
-        rangeEl.textContent = `${fmt(s)} ~ ${fmt(e)}`;
-      };
-      updateRange();
+      // 8) 선택/이동: 일정 클릭 → 제목 표시 → 이동 버튼으로 캘린더 변경
+      let selected = null;
+      function showSelected(ev){
+        selected = ev;
+        selectedTitleEl.textContent = ev ? `선택: ${ev.title||'(제목 없음)'}` : '';
+        selectedTitleEl.title = ev?.title || '선택된 일정 없음';
+      }
+      // v2 이벤트명: clickEvent
+      calendar.on('clickEvent', ({ event }) => { showSelected(event); });
 
+      document.getElementById('btnMove').addEventListener('click', () => {
+        if (!selected) return;
+        const target = newCalSel.value;
+        if (selected.calendarId === target) return;
+        // state 갱신
+        remove(selected.id, selected.calendarId);
+        const moved = { ...selected, calendarId: target };
+        upsert(moved); save(); rerender();
+        showSelected(moved);
+      });
+
+      // 9) 범위/뷰/뒤로/메인
+      const updateRange = () => {
+        // 필요 시 범위 표시를 추가하고 싶다면 여기에 구현
+      };
       document.getElementById('btnPrev').addEventListener('click', () => { calendar.prev(); updateRange(); });
       document.getElementById('btnToday').addEventListener('click', () => { calendar.today(); updateRange(); });
       document.getElementById('btnNext').addEventListener('click', () => { calendar.next(); updateRange(); });
-
       document.querySelectorAll('button[data-view]').forEach(b=>{
         b.addEventListener('click', () => { calendar.changeView(b.dataset.view); updateRange(); });
       });
 
-      // 뒤로/메인
       const goHome = () => location.href = '../';
       const goBack = () => (history.length > 1) ? history.back() : goHome();
       document.getElementById('btnHome').addEventListener('click', (e)=>{ e.preventDefault(); goHome(); });
       document.getElementById('btnBack').addEventListener('click', goBack);
 
-      // 단축키: H=메인, Esc/Backspace=뒤로, T=오늘
       window.addEventListener('keydown', (e) => {
         if (e.key === 'h' || e.key === 'H') { e.preventDefault(); goHome(); }
         else if (e.key === 'Escape' || e.key === 'Backspace') { e.preventDefault(); goBack(); }
-        else if (e.key.toLowerCase() === 't') { e.preventDefault(); calendar.today(); updateRange(); }
+        else if (e.key.toLowerCase?.() === 't') { e.preventDefault(); calendar.today(); }
       }, { passive:false });
     }
   </script>
