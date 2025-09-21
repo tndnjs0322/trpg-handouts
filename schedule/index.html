@@ -96,7 +96,7 @@
   .chip-cat .dot{width:8px; height:8px; border-radius:50%}
   .chip-cat.active{outline:2px solid #35507d}
 
-  /* 공용 모달(퀵 편집/카테고리 관리자 공용) */
+  /* 공용 모달 */
   .qback{position:fixed; inset:0; display:none; align-items:flex-start; justify-content:flex-start; background:transparent; z-index:9999}
   .qpop{position:absolute; width:min(540px, calc(100vw - 24px)); background:#0b1220; border:1px solid #1e2a41; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.45); padding:12px}
   .qrow{display:grid; grid-template-columns:1fr; gap:8px; margin-top:6px}
@@ -119,15 +119,14 @@
   /* 공휴일 배경 */
   .fc .fc-bg-event.holiday{background:rgba(255,107,107,.14)}
 
-  /* ====== 선 잘림 0% 패치: 내부 테두리 제거 + 오버레이 프레임 ====== */
+  /* ── 선 잘림 방지: 내부 테두리 제거 + 오버레이 프레임 ── */
   #calendar .fc-scrollgrid{
     border: 0 !important;
     border-radius: 12px !important;
-    overflow: hidden;           /* 내부만 깔끔하게 클립 */
+    overflow: hidden;
     margin: 0 !important;
     background-clip: padding-box;
   }
-  /* 실제 1px 프레임은 오버레이로 그림(overflow 영향 없음) */
   #calendar::after{
     content:"";
     position:absolute;
@@ -139,12 +138,10 @@
     border-radius:12px;
     pointer-events:none;
   }
-  /* 셀/헤더 경계선 색 통일 */
   .fc-theme-standard td,
   .fc-theme-standard th{ border-color: var(--line) !important; }
   .fc .fc-timegrid-slot,
   .fc .fc-timegrid-axis{ border-color: var(--line) !important; }
-  /* HiDPI 경계 흐림 방지 */
   .fc .fc-daygrid-day-frame{ transform: translateZ(0); }
 </style>
 </head>
@@ -356,6 +353,14 @@
   let catColors = {};           // { name: "#RRGGBB" }
   let holidayEvents = [];       // 공휴일 source
 
+  /* === 히스토리 상태 관리(캘린더 내부 뒤로/앞으로) === */
+  let _fcFirstStateSet = false;     // 첫 상태는 replaceState
+  let _isPopNavigating  = false;    // popstate로 datesSet push 억제
+  const ymd = (date) => {
+    const d = new Date(date), p = n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+  };
+
   /* ===== 요소 ===== */
   const calEl   = document.getElementById('calendar');
   const dirtyEl = document.getElementById('dirty');
@@ -441,7 +446,7 @@
   function markDirty(v=true){ dirty=v; dirtyEl.textContent = v ? '· 수정됨' : ''; }
   window.addEventListener('beforeunload', e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; }});
 
-  /* ===== 데이터 로드: 일정 + 카테고리 + 공휴일 ===== */
+  /* ===== 데이터 로드 ===== */
   Promise.all([
     fetch(SRC, { cache:'no-store' }).then(r=>r.ok?r.json():[]).catch(()=>[]),
     fetch(CAT_SRC, { cache:'no-store' }).then(r=>r.ok?r.json():{}).catch(()=>({})),
@@ -475,16 +480,13 @@
   function roundToNextHalfHour(d){ const x=new Date(d); x.setSeconds(0,0); const m=x.getMinutes(); x.setMinutes(m<30?30:60); return x; }
   function isYMD(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
 
-  /* 공휴일: [{ "date":"2025-09-15", "end":"2025-09-17", "title":"추석" }, ...] */
   function holidaysToEvents(list){
     const arr=[];
     for (const h of list){
       const s=parseDateOnly(h.date); const e=parseDateOnly(h.end||h.date);
       if(!s||!e) continue;
       const sStr=isoDate(s), eStr=isoDate(addDays(e,1));
-      // 배경 하이라이트
       arr.push({ id:`hb-${sStr}`, title:h.title||HOLI_CAT, start:sStr, end:eStr, allDay:true, display:'background', classNames:['holiday'], editable:false, extendedProps:{category:HOLI_CAT}});
-      // 텍스트 점(월간)/리스트 표시용
       arr.push({ id:`ht-${sStr}`, title:h.title||HOLI_CAT, start:sStr, end:eStr, allDay:true, editable:false, extendedProps:{category:HOLI_CAT}});
     }
     return arr;
@@ -507,7 +509,15 @@
       locale:'ko', timeZone:'Asia/Seoul', height:'100%', initialView:'dayGridMonth', headerToolbar:false,
       progressiveEventRendering:true, editable:true, selectable:true, selectMirror:true,
       events:[...holidayEvents, ...events.map(toFCEvt)],
-      datesSet: updateYMBar,
+
+      datesSet: (info) => {
+        updateYMBar(info);
+        // 히스토리에 내부 상태를 쌓기(뷰/날짜)
+        if (_isPopNavigating) { _isPopNavigating = false; return; }
+        const st = { view: info.view.type, date: ymd(calendar.getDate()) };
+        if (_fcFirstStateSet) history.pushState(st, '', '');
+        else { history.replaceState(st, '', ''); _fcFirstStateSet = true; }
+      },
 
       dateClick: (info) => openQuick({ anchor:info.jsEvent, start:parseDateOnly(info.dateStr), end:parseDateOnly(info.dateStr), allDay:true, title:'' }),
       select: (info) => {
@@ -536,6 +546,27 @@
     });
     calendar.render();
 
+    // 첫 상태 안전하게 심기
+    (() => {
+      const st = { view: calendar.view.type, date: ymd(calendar.getDate()) };
+      history.replaceState(st, '', '');
+      _fcFirstStateSet = true;
+    })();
+
+    // 브라우저 뒤/앞으로 내부 상태 복원
+    window.addEventListener('popstate', (e) => {
+      if (!e.state) return;
+      _isPopNavigating = true;
+      try {
+        const { view, date } = e.state;
+        if (view && date)      calendar.changeView(view, new Date(date));
+        else if (date)         calendar.gotoDate(new Date(date));
+        else if (view)         calendar.changeView(view);
+      } finally {
+        setTimeout(() => { _isPopNavigating = false; }, 0);
+      }
+    });
+
     /* 상단 버튼 */
     btnMonth.onclick = () => calendar.changeView('dayGridMonth');
     btnWeek.onclick  = () => calendar.changeView('timeGridWeek');
@@ -550,8 +581,8 @@
     btnDel2.onclick  = () => btnDel.onclick();
     btnSave.onclick  = saveAllToGitHub;
 
-    btnBack.onclick  = () => history.back();
-    if (history.length <= 1 || !document.referrer) btnBack.style.display = 'none';
+    // ← 진짜 브라우저 뒤로 (내부 히스토리 되돌아감)
+    btnBack.addEventListener('click', (e) => { e.preventDefault(); history.back(); });
 
     btnQuickToday.onclick = () => {
       const base=new Date(); base.setHours(20,0,0,0);
@@ -733,13 +764,17 @@
     } else { evtProg.style.width='0%'; }
   }
 
-  /* ===== 카테고리 UI/필터 ===== */
+  /* ===== 카테고리 ===== */
   function catUnion(){
     const set=new Set(Object.keys(catColors));
-    calendar?.getEvents().forEach(ev=>{ const c=(ev.extendedProps?.category||'').trim(); if(c) set.add(c); else set.add('미분류'); });
-    ['세션','CoC 7e','D&D 5e','룰: 전투','룰: 조사','룰: 마법','NPC','아이템','핸드아웃', HOLI_CAT].forEach(v=>set.add(v));
+    calendar?.getEvents().forEach(ev=>{
+      const c=(ev.extendedProps?.category||'').trim();
+      if(c) set.add(c); else set.add('미분류');
+    });
+    set.delete(''); // 안전
     return [...set].sort((a,b)=>a.localeCompare(b,'ko'));
   }
+
   function renderCatUI(){
     const cats=catUnion();
     catsEl.innerHTML=cats.map(name=>{
@@ -905,12 +940,15 @@
           calendar.getEvents().forEach(ev=>{
             if((ev.extendedProps?.category||'')===orig) ev.setExtendedProp('category', newName);
           });
+          // 🔹 활성 필터도 새 이름으로 교체
+          if (activeCats.has(orig)) { activeCats.delete(orig); activeCats.add(newName); }
           if(catColors[orig] && !catColors[newName]) catColors[newName]=catColors[orig];
           delete catColors[orig];
           row.dataset.name=newName;
+          markDirty(true); // 🔹 저장 안내
         }
         renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail();
-        alert('반영됨. 상단 "GitHub로 저장"으로 커밋하세요.');
+        alert('반영됨. 상단 "GitHub로 저장" 또는 아래 "카테고리 저장(GitHub)"으로 커밋하세요.');
       });
 
       btnDel.addEventListener('click', ()=>{
@@ -919,7 +957,10 @@
           if((ev.extendedProps?.category||'')===orig) ev.setExtendedProp('category','');
         });
         delete catColors[orig];
+        // 🔹 활성 필터에서 제거
+        if (activeCats.has(orig)) { activeCats.delete(orig); }
         row.remove();
+        markDirty(true); // 🔹 저장 안내
         renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail();
       });
     });
@@ -931,6 +972,8 @@
       renderCatManagerRows(); renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail();
     };
   }
+
+  // 🔸 카테고리 저장 버튼: 카테고리 + 일정 동시 저장
   catSaveBtn.onclick = async ()=>{
     try{
       const rows=[...catList.querySelectorAll('.cat-row')];
@@ -941,9 +984,29 @@
         if(nm && hx) next[nm]=hx.toUpperCase();
       });
       catColors=next;
-      const token=prompt('GitHub Personal Access Token(레포 Contents:write 권한):'); if(!token) return;
+
+      const token=prompt('GitHub Personal Access Token(레포 Contents:write 권한):'); 
+      if(!token) return;
+
+      // 1) 카테고리 색 저장
       await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:CAT_PATH, contentObj:catColors, token });
-      alert('카테고리 저장 완료!');
+
+      // 2) 일정도 함께 저장 (현재 메모리 상태 → schedule.json)
+      const eventsData = calendar.getEvents()
+        .filter(ev=>ev.extendedProps?.category !== '공휴일')
+        .map(ev=>{
+          const category=ev.extendedProps?.category || '';
+          if(ev.allDay){
+            const sY=isoDate(ev.start); const eY=isoDate(ev.end||addDays(ev.start,1));
+            return { id:ev.id, title:ev.title, allDay:true, start:sY, end:eY, image:ev.extendedProps?.image||'', desc:ev.extendedProps?.desc||'', status:ev.extendedProps?.status||'', category };
+          }
+          return { id:ev.id, title:ev.title, allDay:false, start:toKSTISO(ev.start), end:toKSTISO(ev.end||ev.start),
+            image:ev.extendedProps?.image||'', desc:ev.extendedProps?.desc||'', status:ev.extendedProps?.status||'', category };
+        });
+      await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:PATH, contentObj:eventsData, token });
+
+      markDirty(false);
+      alert('카테고리와 일정이 모두 저장되었습니다!');
       renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail(); closeCatManager();
     }catch(err){ console.error(err); alert('저장 실패: '+err.message); }
   };
