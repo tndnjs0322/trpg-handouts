@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>캠페인 일정</title>
+<title>네버엔딩 크툴루 1호점 일정 캘린더</title>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -107,26 +107,26 @@
   /* 공휴일 배경 */
   .fc .fc-bg-event.holiday{background:rgba(255,107,107,.14)}
 
-  /* ── FullCalendar 그리드 테두리/자르힘 보정 ───────────────────── */
-  #calendar{                           /* 오른쪽/아래쪽 1px 여백으로 잘림 방지 */
-    padding: 8px 9px 9px 8px;
+  /* ── FullCalendar 그리드 보정(선 잘림 방지, 모든 뷰 공통) ───────────────── */
+  #calendar{
+    padding: 8px 10px 10px 8px; /* 오른쪽/아래쪽 살짝 더 띄움 */
   }
-  #calendar .fc-scrollgrid{            /* 그리드 자체 테두리 + 둥근 모서리 */
+  #calendar .fc-scrollgrid{
     border: 1px solid var(--line);
     border-radius: 12px;
-    overflow: clip;                    /* 내부 스크롤러가 테두리 침범 방지 */
+    overflow: hidden;            /* 내부만 클리핑 */
+    margin-right: 1px;           /* 부모 overflow와 이격 */
+    margin-bottom: 1px;
     background-clip: padding-box;
   }
-  /* 선 색 통일(월/주/리스트 모두) */
+  #calendar .fc-scrollgrid table{
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+  }
   .fc-theme-standard td,
-  .fc-theme-standard th{
-    border-color: var(--line);
-  }
-  /* 주간/일간의 시간 슬롯도 동일하게 */
+  .fc-theme-standard th{ border-color: var(--line); }
   .fc .fc-timegrid-slot,
-  .fc .fc-timegrid-axis {
-    border-color: var(--line);
-  }
+  .fc .fc-timegrid-axis{ border-color: var(--line); }
 </style>
 </head>
 <body>
@@ -289,9 +289,9 @@
     </div>
     <div class="qactions">
       <button class="btn" id="qMore">자세히</button>
-      <button class="btn btn-danger" id="qDelete" style="display:none">삭제</button>
-      <button class="btn" id="qCancel">취소</button>
       <button class="btn" id="qSave">저장</button>
+      <button class="btn" id="qCancel">취소</button>
+      <button class="btn btn-danger" id="qDelete" style="display:none">삭제</button>
     </div>
   </div>
 </div>
@@ -499,7 +499,7 @@
         calendar.unselect();
       },
       eventClick: (info) => {
-        if (info.event.extendedProps?.category === HOLI_CAT) return;
+        if (info.event.extendedProps?.category === '공휴일') return;
         openQuick({ anchor:info.jsEvent, start:info.event.start, end:info.event.end||info.event.start,
           allDay:info.event.allDay, title:info.event.title, event:info.event });
       },
@@ -790,7 +790,7 @@
   function getUpcoming(limit=6){
     const now=new Date();
     return calendar.getEvents()
-      .filter(ev=>ev.display!=='none' && ev.extendedProps?.category !== HOLI_CAT)
+      .filter(ev=>ev.display!=='none' && ev.extendedProps?.category !== '공휴일')
       .map(ev=>{
         let s = ev.allDay ? (typeof ev.start==='string'?parseDateOnly(ev.start):new Date(ev.start)) : new Date(ev.start);
         let e = ev.allDay ? (typeof ev.end==='string'?parseDateOnly(ev.end):new Date(ev.end||ev.start)) : new Date(ev.end||ev.start);
@@ -805,7 +805,7 @@
     try{
       const token=prompt('GitHub Personal Access Token(레포 Contents:write 권한):'); if(!token) return;
       const eventsData = calendar.getEvents()
-        .filter(ev=>ev.extendedProps?.category !== HOLI_CAT)
+        .filter(ev=>ev.extendedProps?.category !== '공휴일')
         .map(ev=>{
           const category=ev.extendedProps?.category || '';
           if(ev.allDay){
