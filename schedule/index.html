@@ -11,7 +11,7 @@
 
 <style>
   :root{
-    --bg:#0c171b; --card:#0b1220; --line:#1e2a41; --text:#e6eef2; --muted:#a6b3c2;
+    --bg:#0c171b; --card:#0b1220; --line:#20304f; --text:#e6eef2; --muted:#a6b3c2;
     --accent:#58a6ff; --danger:#ff6b6b; --ok:#57d19a;
   }
   *{box-sizing:border-box}
@@ -41,7 +41,7 @@
   #calendar{height:100%; padding:8px}
 
   /* 월/연 이동 바 */
-  .navbar{display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #1e2a41; background:#0b1220}
+  .navbar{display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--line); background:#0b1220}
   .navbtn{border:1px solid #2a3a58; background:#0c1526; border-radius:8px; color:#cfe2ff; padding:6px 8px; cursor:pointer; font-size:12px}
   .navlabel{min-width:120px; text-align:center; font-weight:700}
   select.year, select.month{background:#0c1526; color:#e6eef2; border:1px solid #2a3a58; border-radius:8px; padding:6px 8px; font-size:12px}
@@ -52,7 +52,7 @@
   #detail.collapsed #rail{display:grid}
   #detail:not(.collapsed) #rail{display:none}
 
-  .card{background:#0c1526; border:1px solid #20304f; border-radius:14px; padding:12px}
+  .card{background:#0c1526; border:1px solid #213254; border-radius:14px; padding:12px}
   .card + .card{margin-top:12px}
   .card h3{margin:0 0 8px; font-size:14px; letter-spacing:.2px}
   .muted{color:var(--muted); font-size:13px}
@@ -106,6 +106,27 @@
 
   /* 공휴일 배경 */
   .fc .fc-bg-event.holiday{background:rgba(255,107,107,.14)}
+
+  /* ── FullCalendar 그리드 테두리/자르힘 보정 ───────────────────── */
+  #calendar{                           /* 오른쪽/아래쪽 1px 여백으로 잘림 방지 */
+    padding: 8px 9px 9px 8px;
+  }
+  #calendar .fc-scrollgrid{            /* 그리드 자체 테두리 + 둥근 모서리 */
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: clip;                    /* 내부 스크롤러가 테두리 침범 방지 */
+    background-clip: padding-box;
+  }
+  /* 선 색 통일(월/주/리스트 모두) */
+  .fc-theme-standard td,
+  .fc-theme-standard th{
+    border-color: var(--line);
+  }
+  /* 주간/일간의 시간 슬롯도 동일하게 */
+  .fc .fc-timegrid-slot,
+  .fc .fc-timegrid-axis {
+    border-color: var(--line);
+  }
 </style>
 </head>
 <body>
@@ -478,7 +499,6 @@
         calendar.unselect();
       },
       eventClick: (info) => {
-        // 공휴일은 상세 열지 않음(필요 시 수정 가능)
         if (info.event.extendedProps?.category === HOLI_CAT) return;
         openQuick({ anchor:info.jsEvent, start:info.event.start, end:info.event.end||info.event.start,
           allDay:info.event.allDay, title:info.event.title, event:info.event });
@@ -538,6 +558,7 @@
 
   function updateYMBar(){
     const d = calendar.getDate();
+    const pad = n => n.toString().padStart(2,'0');
     lblYM.textContent = `${d.getFullYear()}.${pad(d.getMonth()+1)}`;
     selYear.value = d.getFullYear();
     selMonth.value = (d.getMonth()+1);
@@ -597,10 +618,9 @@
   });
   [qStartDate,qEndDate,qStartTime,qEndTime].forEach(el=> el.addEventListener('input', updateWhenText));
 
-  // 퀵 팝업에서 색 선택 → 카테고리 색 반영
   qCat.addEventListener('input', ()=>{ qCatColor.value = normalizeHex(catColor(qCat.value)) || '#58A6FF'; });
   qCatColor.addEventListener('input', ()=>{
-    const nm = (qCat.value||'').trim(); const hx = normalizeHex(qCatColor.value); if(nm && hx){ catColors[nm]=hx; calendar.rerenderEvents(); renderCatUI(); }
+    const nm = (qCat.value||'').trim(); const hx = normalizeHex(qCatColor.value); if(nm && hx){ catColors[nm]=hx; refreshEvents(); renderCatUI(); }
   });
 
   qSave.addEventListener('click', ()=>{
@@ -633,7 +653,7 @@
         markDirty();
       }
     }
-    closeQuick(); renderRail(); renderCatUI(); applyCategoryFilter();
+    closeQuick(); renderRail(); renderCatUI(); applyCategoryFilter(); refreshEvents();
   });
 
   qDelete.addEventListener('click', ()=>{
@@ -641,7 +661,7 @@
     if(confirm('이 일정을 삭제할까요?')){
       editingEvent.remove();
       if(selected && selected.id===editingEvent.id){ clearDetail(); }
-      editingEvent=null; markDirty(); closeQuick(); renderRail(); renderCatUI(); applyCategoryFilter();
+      editingEvent=null; markDirty(); closeQuick(); renderRail(); renderCatUI(); applyCategoryFilter(); refreshEvents();
     }
   });
   qMore.addEventListener('click', ()=>{ if(editingEvent){ selectEvent(editingEvent,{expandDetail:true}); } closeQuick(); });
@@ -665,9 +685,8 @@
   }
   function clearDetail(){ selected=null; document.getElementById('card').style.display='none'; rail.style.display='grid'; imgEl.removeAttribute('src'); }
 
-  // 상세에서 카테고리/색 변경 즉시 반영
   fCat.addEventListener('input', ()=>{ fCatColor.value = normalizeHex(catColor(fCat.value)) || '#58A6FF'; });
-  fCatColor.addEventListener('input', ()=>{ const nm=(fCat.value||'').trim(); const hx=normalizeHex(fCatColor.value); if(nm && hx){ catColors[nm]=hx; calendar.rerenderEvents(); renderCatUI(); } });
+  fCatColor.addEventListener('input', ()=>{ const nm=(fCat.value||'').trim(); const hx=normalizeHex(fCatColor.value); if(nm && hx){ catColors[nm]=hx; refreshEvents(); renderCatUI(); } });
 
   btnApply.onclick = () => {
     if(!selected) return alert('선택된 일정이 없습니다.');
@@ -678,8 +697,9 @@
     selected.setExtendedProp('image', fImage.value.trim()); selected.setExtendedProp('desc', fDesc.value);
     selected.setExtendedProp('status', fStatus.value); selected.setExtendedProp('category', fCat.value.trim());
     const hx=normalizeHex(fCatColor.value); if(fCat.value.trim() && hx) catColors[fCat.value.trim()]=hx;
-    updatePreview(); markDirty(); alert('적용 완료(임시). 상단 "GitHub로 저장"을 눌러 커밋하세요!');
-    renderRail(); renderCatUI(); applyCategoryFilter();
+    updatePreview(); markDirty();
+    alert('적용 완료(임시). 상단 "GitHub로 저장"을 눌러 커밋하세요!');
+    renderRail(); renderCatUI(); applyCategoryFilter(); refreshEvents();
   };
 
   function updatePreview(){
@@ -770,7 +790,7 @@
   function getUpcoming(limit=6){
     const now=new Date();
     return calendar.getEvents()
-      .filter(ev=>ev.display!=='none' && ev.extendedProps?.category !== HOLI_CAT) // 공휴일 제외
+      .filter(ev=>ev.display!=='none' && ev.extendedProps?.category !== HOLI_CAT)
       .map(ev=>{
         let s = ev.allDay ? (typeof ev.start==='string'?parseDateOnly(ev.start):new Date(ev.start)) : new Date(ev.start);
         let e = ev.allDay ? (typeof ev.end==='string'?parseDateOnly(ev.end):new Date(ev.end||ev.start)) : new Date(ev.end||ev.start);
@@ -784,9 +804,8 @@
   async function saveAllToGitHub(){
     try{
       const token=prompt('GitHub Personal Access Token(레포 Contents:write 권한):'); if(!token) return;
-      // 일정
       const eventsData = calendar.getEvents()
-        .filter(ev=>ev.extendedProps?.category !== HOLI_CAT) // 공휴일은 저장 대상 아님
+        .filter(ev=>ev.extendedProps?.category !== HOLI_CAT)
         .map(ev=>{
           const category=ev.extendedProps?.category || '';
           if(ev.allDay){
@@ -797,7 +816,6 @@
             image:ev.extendedProps?.image||'', desc:ev.extendedProps?.desc||'', status:ev.extendedProps?.status||'', category };
         });
       await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:PATH, contentObj:eventsData, token });
-      // 카테고리 색
       await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:CAT_PATH, contentObj:catColors, token });
       markDirty(false); alert('커밋 완료! (일정 + 카테고리 색)');
     }catch(err){ console.error(err); alert('저장 실패: '+err.message); }
@@ -817,7 +835,6 @@
   function openCatManager(){
     pickSupport.textContent = ('EyeDropper' in window) ? '스포이드 사용 가능(크롬/엣지 등)' : '스포이드는 일부 브라우저에서만 지원';
     renderCatManagerRows();
-    // 위치
     const x=lastPointer.x, y=lastPointer.y; const pad=12, width=Math.min(760, window.innerWidth-24);
     catPop.style.left=Math.max(12, Math.min(x+10, window.innerWidth-width-pad))+'px';
     catPop.style.top =Math.max(12, Math.min(y-10, window.innerHeight-420))+'px';
@@ -866,41 +883,37 @@
         if(!newName) return alert('이름을 입력하세요.');
         if(hx) catColors[newName]=hx;
         if(newName!==orig){
-          // 이벤트의 카테고리명 변경
           calendar.getEvents().forEach(ev=>{
             if((ev.extendedProps?.category||'')===orig) ev.setExtendedProp('category', newName);
           });
-          // 색 키 변경
           if(catColors[orig] && !catColors[newName]) catColors[newName]=catColors[orig];
           delete catColors[orig];
           row.dataset.name=newName;
         }
-        renderCatUI(); applyCategoryFilter(); calendar.rerenderEvents(); renderRail();
+        renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail();
         alert('반영됨. 상단 "GitHub로 저장"으로 커밋하세요.');
       });
 
       btnDel.addEventListener('click', ()=>{
         if(!confirm(`"${orig}" 카테고리를 삭제하고, 해당 일정들은 미분류로 이동할까요?`)) return;
-        // 일정 재배치
         calendar.getEvents().forEach(ev=>{
           if((ev.extendedProps?.category||'')===orig) ev.setExtendedProp('category','');
         });
         delete catColors[orig];
         row.remove();
-        renderCatUI(); applyCategoryFilter(); calendar.rerenderEvents(); renderRail();
+        renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail();
       });
     });
 
-    // 새 카테고리 추가
     btnAddCat.onclick=()=>{
       const nm=(newCatName.value||'').trim(); const hx=normalizeHex(newCatHex.value)||'#58A6FF';
       if(!nm) return alert('카테고리 이름을 입력해 주세요.');
-      catColors[nm]=hx.toUpperCase(); newCatName.value=''; renderCatManagerRows(); renderCatUI(); applyCategoryFilter(); calendar.rerenderEvents(); renderRail();
+      catColors[nm]=hx.toUpperCase(); newCatName.value='';
+      renderCatManagerRows(); renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail();
     };
   }
   catSaveBtn.onclick = async ()=>{
     try{
-      // 현재 행에서 값 수집(이름 변경 반영)
       const rows=[...catList.querySelectorAll('.cat-row')];
       const next={};
       rows.forEach(row=>{
@@ -912,12 +925,21 @@
       const token=prompt('GitHub Personal Access Token(레포 Contents:write 권한):'); if(!token) return;
       await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:CAT_PATH, contentObj:catColors, token });
       alert('카테고리 저장 완료!');
-      renderCatUI(); applyCategoryFilter(); calendar.rerenderEvents(); renderRail(); closeCatManager();
+      renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail(); closeCatManager();
     }catch(err){ console.error(err); alert('저장 실패: '+err.message); }
   };
 
-  /* 입력 변화 → 더티 표시 */
   [fTitle,fStatus,fStart,fEnd,fImage,fDesc,fCat,fCatColor].forEach(el=> el.addEventListener('input', ()=>{ if(selected){ updatePreview(); markDirty(); }}));
+
+  /* ===== 이벤트만 깔끔 리렌더(FC v6 대응) ===== */
+  function refreshEvents(){
+    if (!calendar) return;
+    calendar.batchRendering(() => {
+      calendar.getEvents().forEach(ev => {
+        ev.setExtendedProp('__refresh', (ev.extendedProps?.__refresh || 0) + 1);
+      });
+    });
+  }
 })();
 </script>
 </body>
