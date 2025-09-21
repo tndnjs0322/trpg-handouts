@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>캠페인 일정</title>
+
+<!-- FullCalendar (글로벌 번들) -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/locales-all.global.min.js"></script>
+
+<style>
+  :root{ --bg:#0d1a1f; --card:#0b1220; --line:#1e2a41; --text:#e6eef2; --muted:#a6b3c2; --accent:#58a6ff }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Arial; background:var(--bg); color:var(--text)}
+  .wrap{max-width:1200px; margin:28px auto; padding:0 16px}
+  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+  .title{font-weight:700; font-size:18px}
+  .actions{display:flex; gap:8px; flex-wrap:wrap}
+  .btn{appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer}
+  .btn:hover{border-color:#38507d}
+  .grid{display:grid; grid-template-columns: 1fr 320px; gap:12px}
+  @media (max-width:900px){ .grid{grid-template-columns: 1fr} }
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; min-height:70vh}
+  #calendar{padding:8px}
+  aside{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; min-height:70vh}
+  .muted{color:var(--muted); font-size:13px}
+  .evt-img{width:100%; height:160px; object-fit:cover; border-radius:10px; background:#09121f; margin-bottom:8px}
+  .evt-title{margin:.4rem 0 .2rem; font-size:16px; font-weight:700}
+  .evt-time{font-size:12px; opacity:.8; margin-bottom:.6rem}
+  .progress{height:8px; background:#122036; border-radius:6px; overflow:hidden}
+  .bar{height:100%; width:0%; background:var(--accent)}
+  .hint{font-size:12px; opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">캠페인 일정</div>
+    <div class="actions">
+      <button class="btn" id="btnMonth">월간</button>
+      <button class="btn" id="btnWeek">주간</button>
+      <button class="btn" id="btnList">리스트</button>
+      <button class="btn" id="btnBack">뒤로</button>
+      <!-- 편집 바로가기(선택): 브랜치가 main이 아니면 링크만 바꿔줘 -->
+      <a class="btn" href="https://github.com/tndnjs0322/trpg-handouts/edit/main/data/schedule.json" target="_blank" rel="noopener">JSON 편집</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="panel"><div id="calendar"></div></div>
+    <aside id="detail">
+      <div class="muted" id="empty">일정을 클릭하면 상세가 표시됩니다.</div>
+      <div id="card" style="display:none">
+        <img id="evtImg" class="evt-img" alt="" />
+        <div id="evtTitle" class="evt-title"></div>
+        <div id="evtTime"  class="evt-time"></div>
+        <div id="evtDesc"  style="font-size:14px; line-height:1.5; white-space:pre-wrap"></div>
+        <div id="evtProgWrap" style="margin-top:10px">
+          <div id="evtProgText" class="hint" style="margin-bottom:6px"></div>
+          <div class="progress"><div id="evtProgBar" class="bar"></div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  // === 설정 ===
+  // schedule/ 폴더 기준으로 한 단계 상위의 data/schedule.json
+  const SRC = '../data/schedule.json';
+
+  const calEl = document.getElementById('calendar');
+  const btnMonth = document.getElementById('btnMonth');
+  const btnWeek  = document.getElementById('btnWeek');
+  const btnList  = document.getElementById('btnList');
+  const btnBack  = document.getElementById('btnBack');
+
+  const emptyEl = document.getElementById('empty');
+  const cardEl  = document.getElementById('card');
+  const imgEl   = document.getElementById('evtImg');
+  const titleEl = document.getElementById('evtTitle');
+  const timeEl  = document.getElementById('evtTime');
+  const descEl  = document.getElementById('evtDesc');
+  const progBar = document.getElementById('evtProgBar');
+  const progTxt = document.getElementById('evtProgText');
+
+  let calendar;
+
+  btnBack.onclick = () => history.length > 1 ? history.back() : (location.href = '../');
+
+  fetch(SRC, { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : [])
+    .then(data => initCalendar(Array.isArray(data) ? data : []))
+    .catch(() => initCalendar([]));
+
+  function toFCEvt(ev){
+    return {
+      id: ev.id,
+      title: ev.title || '(제목 없음)',
+      start: ev.start,
+      end:   ev.end,
+      extendedProps: {
+        image: ev.image || '',
+        desc:  ev.desc  || '',
+        status: ev.status || ''
+      }
+    };
+  }
+
+  function initCalendar(events){
+    calendar = new FullCalendar.Calendar(calEl, {
+      locale: 'ko',
+      timeZone: 'Asia/Seoul',
+      height: 'auto',
+      initialView: 'dayGridMonth',
+      headerToolbar: false,
+      buttonText: { today: '오늘' },
+      navLinks: true,
+      nowIndicator: true,
+      events: events.map(toFCEvt),
+      eventClick: (info) => showDetail(info.event),
+    });
+    calendar.render();
+
+    btnMonth.onclick = () => calendar.changeView('dayGridMonth');
+    btnWeek.onclick  = () => calendar.changeView('timeGridWeek');
+    btnList.onclick  = () => calendar.changeView('listMonth');
+  }
+
+  function showDetail(ev){
+    emptyEl.style.display = 'none';
+    cardEl.style.display  = '';
+
+    const p = ev.extendedProps || {};
+    titleEl.textContent = ev.title || '(제목 없음)';
+    timeEl.textContent  = [ev.start, ev.end].filter(Boolean).map(fmt).join(' ~ ');
+    descEl.textContent  = p.desc || '';
+
+    if (p.image){ imgEl.src = p.image; imgEl.style.display=''; }
+    else { imgEl.removeAttribute('src'); imgEl.style.display='none'; }
+
+    // 진행률 표시
+    const now = new Date();
+    if (ev.start && ev.end){
+      const s = new Date(ev.start), e = new Date(ev.end);
+      if (now < s){
+        const d = Math.ceil((s-now)/86400000);
+        progTxt.textContent = `시작까지 D-${d}`;
+        progBar.style.width = '0%';
+      } else if (now >= s && now <= e){
+        const pct = Math.min(100, Math.max(0, ((now - s)/(e - s))*100));
+        progTxt.textContent = `진행 중 · ${pct.toFixed(0)}%`;
+        progBar.style.width = pct.toFixed(0) + '%';
+      } else {
+        progTxt.textContent = '종료됨';
+        progBar.style.width = '100%';
+      }
+    } else {
+      progTxt.textContent = '';
+      progBar.style.width = '0%';
+    }
+  }
+
+  function fmt(d){
+    const x = new Date(d);
+    return x.toLocaleString('ko-KR', { timeZone:'Asia/Seoul' });
+  }
+})();
+</script>
+</body>
+</html>
