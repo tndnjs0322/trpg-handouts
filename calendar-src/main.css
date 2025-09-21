@@ -1,0 +1,49 @@
+:root{
+  --bg:#0b1217; --panel:#0f161c; --ink:#c7d1d9; --muted:#9fb0bd;
+  --line:rgba(255,255,255,.10); --line-strong:rgba(255,255,255,.16);
+  --today:#10222e; --select:rgba(89,177,255,.20);
+  --toolbar-bg:#0b1217; --toolbar-fg:#dce7ee;
+  --btn:#0e1a1f; --btnh:#0b1628;
+}
+:root[data-theme="light"]{
+  --bg:#f6f7f9; --panel:#fff; --ink:#27323a; --muted:#51606c;
+  --line:rgba(0,0,0,.08); --line-strong:rgba(0,0,0,.14);
+  --today:#eef6ff; --select:rgba(42,123,229,.18);
+  --toolbar-bg:#fff; --toolbar-fg:#111827; --btn:#fff; --btnh:#f3f4f6;
+}
+html{color-scheme:dark} :root[data-theme="light"] html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Malgun Gothic","맑은 고딕",sans-serif}
+
+.bar{position:sticky;top:0;z-index:10;display:flex;gap:.5rem;align-items:center;justify-content:space-between;flex-wrap:wrap;
+     padding:10px 12px;background:var(--toolbar-bg);color:var(--toolbar-fg);border-bottom:1px solid var(--line-strong);
+     backdrop-filter:blur(6px) saturate(120%)}
+.left,.right{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+button,.btn{appearance:none;border:1px solid var(--line-strong);background:var(--btn);color:var(--ink);
+  padding:6px 10px;border-radius:10px;cursor:pointer;font-size:14px;text-decoration:none}
+button:hover,.btn:hover{background:var(--btnh)}
+#range{color:var(--muted);font-size:.9rem}
+
+#calendar{height:calc(100vh - 64px);min-height:680px;background:var(--panel);
+  border:1px solid var(--line-strong);border-radius:14px;margin:12px;overflow:hidden}
+
+/* 캘린더 내부까지 색 적용 */
+#calendar [class^="toastui-calendar-"], #calendar [class*=" toastui-calendar-"]{color:var(--ink)}
+#calendar .toastui-calendar-panel, #calendar .toastui-calendar-layout,
+#calendar .toastui-calendar-month, #calendar .toastui-calendar-week,
+#calendar .toastui-calendar-daygrid, #calendar .toastui-calendar-timegrid{background:var(--panel)}
+#calendar [class*="dayname"]{background:var(--panel);color:var(--muted);border-color:var(--line-strong)!important}
+#calendar [class*="grid-line"], #calendar [class*="grid-cell"]{border-color:var(--line)!important}
+#calendar .toastui-calendar-week-today, #calendar .toastui-calendar-month-week-item--today{background:var(--today)}
+#calendar .toastui-calendar-grid-selection{background:var(--select)!important}
+#calendar .toastui-calendar-event{border-radius:8px;padding:2px 6px}
+
+/* 버튼으로 연 팝업이 (0,0)에 뜨면 중앙 배치 */
+.toastui-calendar-popup-container[style*="left: 0px"][style*="top: 0px"]{
+  position:fixed !important; left:50% !important; top:50% !important; transform:translate(-50%,-50%);
+}
+
+/* 컴팩트 */
+:root[data-compact="1"] #calendar{font-size:13px}
+:root[data-compact="1"] #calendar .toastui-calendar-allday{min-height:22px}
+:root[data-compact="1"] #calendar [class*="month"] [class*="grid-cell"]{height:76px;min-height:76px}
