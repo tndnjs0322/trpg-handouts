@@ -11,7 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/locales-all.global.min.js"></script>
 
 <style>
-  :root{ --bg:#0d1a1f; --card:#0b1220; --line:#1e2a41; --text:#e6eef2; --muted:#a6b3c2; --accent:#58a6ff }
+  :root{ --bg:#0d1a1f; --card:#0b1220; --line:#1e2a41; --text:#e6eef2; --muted:#a6b3c2; --accent:#58a6ff; --danger:#ff6b6b }
   *{box-sizing:border-box}
   body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Arial; background:var(--bg); color:var(--text)}
   .wrap{max-width:1200px; margin:28px auto; padding:0 16px}
@@ -20,6 +20,8 @@
   .actions{display:flex; gap:8px; flex-wrap:wrap}
   .btn{appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer}
   .btn:hover{border-color:#38507d}
+  .btn-danger{border-color:#5a2a2a; background:#2a1111}
+  .btn-danger:hover{border-color:#7d3838}
   .grid{display:grid; grid-template-columns: 1fr 320px; gap:12px}
   @media (max-width:900px){ .grid{grid-template-columns: 1fr} }
   .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; min-height:70vh}
@@ -32,34 +34,81 @@
   .progress{height:8px; background:#122036; border-radius:6px; overflow:hidden}
   .bar{height:100%; width:0%; background:var(--accent)}
   .hint{font-size:12px; opacity:.8}
+  .row{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  input[type="text"], input[type="url"], input[type="datetime-local"], textarea, select{
+    width:100%; padding:10px; border:1px solid #2a3a58; border-radius:10px; background:#0c1526; color:#e6eef2; font-size:14px;
+  }
+  textarea{min-height:100px; resize:vertical}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="title">캠페인 일정</div>
+    <div class="title">캠페인 일정 <span id="dirty" class="muted"></span></div>
     <div class="actions">
       <button class="btn" id="btnMonth">월간</button>
       <button class="btn" id="btnWeek">주간</button>
       <button class="btn" id="btnList">리스트</button>
+      <button class="btn" id="btnToday">오늘</button>
+      <button class="btn" id="btnNew">새 일정</button>
+      <button class="btn btn-danger" id="btnDel">선택 삭제</button>
+      <button class="btn" id="btnExport">JSON 내보내기</button>
+      <button class="btn" id="btnSave">GitHub로 저장</button>
       <button class="btn" id="btnBack">뒤로</button>
-      <!-- 편집 바로가기(선택): 브랜치가 main이 아니면 링크만 바꿔줘 -->
-      <a class="btn" href="https://github.com/tndnjs0322/trpg-handouts/edit/main/data/schedule.json" target="_blank" rel="noopener">JSON 편집</a>
     </div>
   </header>
 
   <div class="grid">
     <div class="panel"><div id="calendar"></div></div>
+
+    <!-- 우측: 상세/편집 -->
     <aside id="detail">
-      <div class="muted" id="empty">일정을 클릭하면 상세가 표시됩니다.</div>
+      <div class="muted" id="empty">날짜를 클릭하면 새 일정을 만들 수 있고,<br>이벤트를 클릭하면 여기서 편집할 수 있어요.</div>
       <div id="card" style="display:none">
         <img id="evtImg" class="evt-img" alt="" />
-        <div id="evtTitle" class="evt-title"></div>
-        <div id="evtTime"  class="evt-time"></div>
-        <div id="evtDesc"  style="font-size:14px; line-height:1.5; white-space:pre-wrap"></div>
-        <div id="evtProgWrap" style="margin-top:10px">
-          <div id="evtProgText" class="hint" style="margin-bottom:6px"></div>
-          <div class="progress"><div id="evtProgBar" class="bar"></div></div>
+        <div class="row">
+          <div>
+            <div class="hint">제목</div>
+            <input id="fTitle" type="text" placeholder="제목" />
+          </div>
+          <div>
+            <div class="hint">상태</div>
+            <select id="fStatus">
+              <option value="">(선택)</option>
+              <option value="planned">planned</option>
+              <option value="ongoing">ongoing</option>
+              <option value="done">done</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:6px">
+          <div>
+            <div class="hint">시작</div>
+            <input id="fStart" type="datetime-local" />
+          </div>
+          <div>
+            <div class="hint">종료</div>
+            <input id="fEnd" type="datetime-local" />
+          </div>
+        </div>
+
+        <div style="margin-top:6px">
+          <div class="hint">이미지 URL</div>
+          <input id="fImage" type="url" placeholder="https://..." />
+        </div>
+
+        <div style="margin-top:6px">
+          <div class="hint">설명</div>
+          <textarea id="fDesc" placeholder="세부 내용/링크/메모 등"></textarea>
+        </div>
+
+        <div class="hint" id="evtTime" style="margin-top:8px"></div>
+        <div class="progress" style="margin-top:6px"><div id="evtProg" class="bar"></div></div>
+
+        <div style="display:flex; gap:8px; margin-top:10px">
+          <button class="btn" id="btnApply">변경 적용</button>
+          <button class="btn btn-danger" id="btnDel2">삭제</button>
         </div>
       </div>
     </aside>
@@ -68,37 +117,56 @@
 
 <script>
 (() => {
-  // === 설정 ===
-  // schedule/ 폴더 기준으로 한 단계 상위의 data/schedule.json
-  const SRC = '../data/schedule.json';
+  // ===== 설정 (네 레포에 맞게 확인) =====
+  const OWNER  = 'tndnjs0322';
+  const REPO   = 'trpg-handouts';
+  const BRANCH = 'main';                // Pages가 gh-pages면 'gh-pages'로 변경
+  const PATH   = 'data/schedule.json';  // 저장 대상 파일
+  const SRC    = '../data/schedule.json'; // 불러올 JSON(이 페이지 기준)
 
-  const calEl = document.getElementById('calendar');
-  const btnMonth = document.getElementById('btnMonth');
-  const btnWeek  = document.getElementById('btnWeek');
-  const btnList  = document.getElementById('btnList');
-  const btnBack  = document.getElementById('btnBack');
+  // ===== 상태 =====
+  let calendar, selected = null, dirty = false;
+
+  // ===== UI =====
+  const calEl   = document.getElementById('calendar');
+  const btnMonth= document.getElementById('btnMonth');
+  const btnWeek = document.getElementById('btnWeek');
+  const btnList = document.getElementById('btnList');
+  const btnToday= document.getElementById('btnToday');
+  const btnNew  = document.getElementById('btnNew');
+  const btnDel  = document.getElementById('btnDel');
+  const btnSave = document.getElementById('btnSave');
+  const btnBack = document.getElementById('btnBack');
+  const btnExport = document.getElementById('btnExport');
+  const dirtyEl = document.getElementById('dirty');
 
   const emptyEl = document.getElementById('empty');
   const cardEl  = document.getElementById('card');
   const imgEl   = document.getElementById('evtImg');
-  const titleEl = document.getElementById('evtTitle');
-  const timeEl  = document.getElementById('evtTime');
-  const descEl  = document.getElementById('evtDesc');
-  const progBar = document.getElementById('evtProgBar');
-  const progTxt = document.getElementById('evtProgText');
+  const fTitle  = document.getElementById('fTitle');
+  const fStatus = document.getElementById('fStatus');
+  const fStart  = document.getElementById('fStart');
+  const fEnd    = document.getElementById('fEnd');
+  const fImage  = document.getElementById('fImage');
+  const fDesc   = document.getElementById('fDesc');
+  const evtTime = document.getElementById('evtTime');
+  const evtProg = document.getElementById('evtProg');
+  const btnApply= document.getElementById('btnApply');
+  const btnDel2 = document.getElementById('btnDel2');
 
-  let calendar;
+  function markDirty(v=true){ dirty=v; dirtyEl.textContent = v ? '· 수정됨' : ''; }
+  window.addEventListener('beforeunload', (e)=>{ if(dirty){ e.preventDefault(); e.returnValue=''; }});
 
-  btnBack.onclick = () => history.length > 1 ? history.back() : (location.href = '../');
-
+  // ===== 로드 =====
   fetch(SRC, { cache: 'no-store' })
     .then(r => r.ok ? r.json() : [])
-    .then(data => initCalendar(Array.isArray(data) ? data : []))
+    .then(arr => initCalendar(Array.isArray(arr) ? arr : []))
     .catch(() => initCalendar([]));
 
+  // ===== 캘린더 =====
   function toFCEvt(ev){
     return {
-      id: ev.id,
+      id: ev.id || genId(new Date(ev.start || Date.now())),
       title: ev.title || '(제목 없음)',
       start: ev.start,
       end:   ev.end,
@@ -120,54 +188,218 @@
       buttonText: { today: '오늘' },
       navLinks: true,
       nowIndicator: true,
+      editable: true,           // 드래그/리사이즈로 시간 변경
+      selectable: true,         // 드래그 선택으로 범위 만들기
+      selectMirror: true,
       events: events.map(toFCEvt),
-      eventClick: (info) => showDetail(info.event),
+      dateClick: onDateClick,   // 월뷰에서 날짜 클릭 → 빠른 생성
+      select: onSelectRange,    // 주/일뷰에서 드래그 선택 → 생성
+      eventClick: (info) => { selectEvent(info.event); },
+      eventDrop:  () => markDirty(),  // 드래그로 이동
+      eventResize:() => markDirty()
     });
     calendar.render();
 
+    // 상단 버튼
     btnMonth.onclick = () => calendar.changeView('dayGridMonth');
     btnWeek.onclick  = () => calendar.changeView('timeGridWeek');
     btnList.onclick  = () => calendar.changeView('listMonth');
+    btnToday.onclick = () => calendar.today();
+
+    btnNew.onclick   = () => {
+      const s = roundToNextHalfHour(new Date());
+      const e = new Date(s.getTime() + 2*3600*1000);
+      const ev = calendar.addEvent({ id: genId(s), title:'새 일정', start:s, end:e });
+      markDirty(); selectEvent(ev);
+    };
+    btnDel.onclick   = () => { if(selected) { if(confirm('선택된 일정을 삭제할까요?')) { selected.remove(); clearDetail(); markDirty(); } } else alert('선택된 일정이 없습니다.'); };
+    btnDel2.onclick  = () => btnDel.onclick();
+    btnExport.onclick= exportJSON;
+    btnSave.onclick  = saveToGitHub;
+    btnBack.onclick  = () => history.length>1 ? history.back() : (location.href='../');
   }
 
-  function showDetail(ev){
+  // 날짜 클릭(월간)
+  function onDateClick(info){
+    // dayGridMonth에서 allDay=true로 들어옴 → 20~22시 기본
+    const base = new Date(info.date);
+    base.setHours(20,0,0,0);
+    const end  = new Date(base.getTime() + 2*3600*1000);
+    const ev = calendar.addEvent({ id: genId(base), title:'새 일정', start:base, end:end });
+    markDirty(); selectEvent(ev);
+  }
+  // 드래그 범위 선택(주간/일간)
+  function onSelectRange(info){
+    const s = new Date(info.start);
+    const e = new Date(info.end);
+    const ev = calendar.addEvent({ id: genId(s), title:'새 일정', start:s, end:e });
+    markDirty(); selectEvent(ev);
+    calendar.unselect();
+  }
+
+  // 선택/상세
+  function selectEvent(ev){
+    selected = ev;
     emptyEl.style.display = 'none';
     cardEl.style.display  = '';
+    fTitle.value  = ev.title || '';
+    fStatus.value = ev.extendedProps?.status || '';
+    fStart.value  = toLocalInput(ev.start);
+    fEnd.value    = toLocalInput(ev.end);
+    fImage.value  = ev.extendedProps?.image || '';
+    fDesc.value   = ev.extendedProps?.desc  || '';
+    updatePreview();
+  }
+  function clearDetail(){
+    selected = null;
+    cardEl.style.display = 'none';
+    emptyEl.style.display = '';
+    imgEl.removeAttribute('src');
+  }
 
-    const p = ev.extendedProps || {};
-    titleEl.textContent = ev.title || '(제목 없음)';
-    timeEl.textContent  = [ev.start, ev.end].filter(Boolean).map(fmt).join(' ~ ');
-    descEl.textContent  = p.desc || '';
+  // 폼 변경 → 이벤트에 반영(적용 버튼)
+  btnApply.onclick = () => {
+    if (!selected) return alert('선택된 일정이 없습니다.');
+    const title = fTitle.value.trim();
+    const start = fromLocalInput(fStart.value);
+    const end   = fromLocalInput(fEnd.value);
+    if(!title || !start || !end) return alert('제목/시작/종료는 필수입니다.');
+    if(new Date(start) > new Date(end)) return alert('종료가 시작보다 빠를 수 없어요.');
 
+    selected.setProp('title', title);
+    selected.setStart(new Date(start));
+    selected.setEnd(new Date(end));
+    selected.setExtendedProp('image', fImage.value.trim());
+    selected.setExtendedProp('desc',  fDesc.value);
+    selected.setExtendedProp('status',fStatus.value);
+    updatePreview();
+    markDirty();
+    alert('적용 완료(임시). 상단 "GitHub로 저장"을 눌러 커밋하세요!');
+  };
+
+  // 상세 우측 미리보기/진행률
+  function updatePreview(){
+    if(!selected) return;
+    const p = selected.extendedProps || {};
     if (p.image){ imgEl.src = p.image; imgEl.style.display=''; }
     else { imgEl.removeAttribute('src'); imgEl.style.display='none'; }
-
-    // 진행률 표시
-    const now = new Date();
-    if (ev.start && ev.end){
-      const s = new Date(ev.start), e = new Date(ev.end);
-      if (now < s){
-        const d = Math.ceil((s-now)/86400000);
-        progTxt.textContent = `시작까지 D-${d}`;
-        progBar.style.width = '0%';
-      } else if (now >= s && now <= e){
-        const pct = Math.min(100, Math.max(0, ((now - s)/(e - s))*100));
-        progTxt.textContent = `진행 중 · ${pct.toFixed(0)}%`;
-        progBar.style.width = pct.toFixed(0) + '%';
-      } else {
-        progTxt.textContent = '종료됨';
-        progBar.style.width = '100%';
+    evtTime.textContent = [selected.start, selected.end].filter(Boolean).map(fmtKST).join(' ~ ');
+    // 진행률
+    if(selected.start && selected.end){
+      const now = new Date(), s=new Date(selected.start), e=new Date(selected.end);
+      if(now < s){ evtProg.style.width='0%'; }
+      else if(now > e){ evtProg.style.width='100%'; }
+      else {
+        const pct = Math.min(100, Math.max(0, (now - s)/(e - s)*100));
+        evtProg.style.width = pct.toFixed(0) + '%';
       }
-    } else {
-      progTxt.textContent = '';
-      progBar.style.width = '0%';
+    } else { evtProg.style.width='0%'; }
+  }
+
+  // ===== JSON 내보내기/저장 =====
+  function exportJSON(){
+    const data = eventsToArray();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'schedule.json'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function saveToGitHub(){
+    try{
+      const token = prompt('GitHub Personal Access Token(이 레포 Contents:write 권한):');
+      if(!token) return;
+      const data = eventsToArray();
+      await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:PATH, contentObj:data, token });
+      markDirty(false);
+      alert('커밋 완료! 페이지를 새로고침하면 반영 확인 가능');
+    }catch(err){
+      console.error(err);
+      alert('저장 실패: ' + err.message);
     }
   }
 
-  function fmt(d){
-    const x = new Date(d);
-    return x.toLocaleString('ko-KR', { timeZone:'Asia/Seoul' });
+  function eventsToArray(){
+    return calendar.getEvents().map(ev => ({
+      id: ev.id,
+      title: ev.title,
+      start: toKSTISO(ev.start),
+      end:   toKSTISO(ev.end),
+      image: ev.extendedProps?.image || '',
+      desc:  ev.extendedProps?.desc  || '',
+      status: ev.extendedProps?.status || ''
+    }));
   }
+
+  // ===== GitHub Contents API =====
+  async function saveFileToGitHub({owner,repo,branch,path,contentObj,token}){
+    const api = 'https://api.github.com';
+    const getUrl = `${api}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
+
+    let sha;
+    const getRes = await fetch(getUrl, { headers: { 'Accept':'application/vnd.github+json' } });
+    if (getRes.ok){ const meta = await getRes.json(); sha = meta.sha; }
+    else if (getRes.status !== 404){ throw new Error('기존 파일 조회 실패(' + getRes.status + ')'); }
+
+    const json = JSON.stringify(contentObj, null, 2);
+    const b64  = base64EncodeUnicode(json);
+    const putUrl = `${api}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+    const body = { message:`chore(schedule): update ${path}`, content:b64, branch, ...(sha?{sha}:{}) };
+
+    const putRes = await fetch(putUrl, {
+      method:'PUT',
+      headers:{
+        'Accept':'application/vnd.github+json',
+        'Authorization': `token ${token}`,
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!putRes.ok){
+      const t = await putRes.text();
+      throw new Error('PUT 실패(' + putRes.status + '): ' + t);
+    }
+  }
+  function base64EncodeUnicode(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(_,p)=>String.fromCharCode('0x'+p)));
+  }
+
+  // ===== 유틸 =====
+  function genId(d){ const pad=n=>n.toString().padStart(2,'0'); return `e-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${Math.random().toString(36).slice(2,6)}`; }
+  function roundToNextHalfHour(d){
+    const x = new Date(d);
+    x.setSeconds(0,0);
+    const m = x.getMinutes();
+    x.setMinutes(m<30?30:60);
+    return x;
+  }
+  function toLocalInput(dt){
+    if(!dt) return '';
+    const d = new Date(dt);
+    const pad=n=>n.toString().padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  // 고정 KST(+09:00) ISO 문자열 만들기 (대한민국은 DST 없음)
+  function toKSTISO(dt){
+    if(!dt) return null;
+    const d = new Date(dt);
+    const pad = n=>n.toString().padStart(2,'0');
+    // '로컬 시각'을 그대로 KST로 기록한다고 가정
+    const y=d.getFullYear(), m=pad(d.getMonth()+1), da=pad(d.getDate()), h=pad(d.getHours()), mi=pad(d.getMinutes()), s=pad(d.getSeconds());
+    return `${y}-${m}-${da}T${h}:${mi}:${s}+09:00`;
+  }
+  function fromLocalInput(str){
+    if(!str) return null; // 'YYYY-MM-DDTHH:MM'
+    // 입력을 로컬 시각으로 간주하고 Date 생성
+    return new Date(str.replace('T', ' ') + ':00');
+  }
+  function fmtKST(d){ return new Date(d).toLocaleString('ko-KR', { timeZone:'Asia/Seoul' }); }
+
+  // 폼에서 값이 바뀌면 미리보기/dirty
+  [fTitle,fStatus,fStart,fEnd,fImage,fDesc].forEach(el=>{
+    el.addEventListener('input', ()=>{ if(selected){ updatePreview(); markDirty(); }});
+  });
 })();
 </script>
 </body>
