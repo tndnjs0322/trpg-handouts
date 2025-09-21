@@ -22,7 +22,6 @@
                         var(--bg);
   }
 
-  /* ===== 상단 ===== */
   .wrap{max-width:min(1680px, 94vw); margin:28px auto; padding:0 16px}
   header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
   .title{font-weight:700; font-size:18px}
@@ -33,16 +32,14 @@
   .btn-danger:hover{border-color:#7d3838}
   .chip{display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #334357; background:#0b1526; color:#cfe2ff}
 
-  /* ===== 레이아웃: 캘린더(왼) + 인포레일/상세(오른) ===== */
   .grid{
     display:grid; gap:18px;
-    grid-template-columns: minmax(860px, 1.8fr) minmax(380px, 1fr);
+    grid-template-columns: minmax(860px, 1.8fr) minmax(420px, 1fr);
   }
   @media (max-width: 1200px){
     .grid{ grid-template-columns: 1fr; }
   }
 
-  /* 왼쪽 캘린더 패널을 화면높이에 맞게 */
   .panel{
     background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 18%) , var(--card);
     border:1px solid var(--line); border-radius:16px; overflow:hidden;
@@ -51,36 +48,31 @@
   }
   #calendar{ height:100%; padding:8px }
 
-  /* 오른쪽 레일(상세 or 빈 상태의 요약 카드들) */
   aside{
     background:var(--card); border:1px solid var(--line); border-radius:16px;
     padding:14px; min-height:620px; height: calc(100vh - 140px); overflow:auto;
     box-shadow: 0 8px 50px rgba(0,0,0,.25);
   }
   #detail.collapsed #card{ display:none }
-  #detail.collapsed #rail{ display:grid }   /* 선택 없음 → 요약 레일 보여주기 */
-  #detail:not(.collapsed) #rail{ display:none } /* 상세 열리면 요약 숨김 */
+  #detail.collapsed #rail{ display:grid }
+  #detail:not(.collapsed) #rail{ display:none }
 
-  /* 공통 카드 */
   .card{ background:#0c1526; border:1px solid #20304f; border-radius:14px; padding:12px; }
   .card + .card{ margin-top:12px }
   .card h3{ margin:0 0 8px; font-size:14px; letter-spacing:.2px }
   .muted{color:var(--muted); font-size:13px}
 
-  /* 요약 리스트 */
   .list{margin:0; padding:0; list-style:none; display:grid; gap:8px}
   .li{
-    display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px;
+    display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
     padding:8px; border:1px solid #213254; background:#0b1220; border-radius:12px;
   }
-  .li .dot{width:8px; height:8px; border-radius:50%; background:var(--ok)}
+  .li .dot{width:8px; height:8px; border-radius:50%}
   .li .title{font-size:13px; font-weight:600}
   .li .sub{font-size:12px; color:#a6b3c2}
-  .li .act{justify-self:end}
   .li .mini-btn{border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:8px; padding:4px 8px; font-size:12px; cursor:pointer}
   .li .mini-btn:hover{border-color:#38507d}
 
-  /* 상세 편집(card) */
   .evt-img{width:100%; height:160px; object-fit:cover; border-radius:10px; background:#09121f; margin-bottom:8px}
   .evt-time{font-size:12px; opacity:.8; margin:6px 0}
   .progress{height:8px; background:#122036; border-radius:6px; overflow:hidden}
@@ -94,9 +86,17 @@
   }
   textarea{min-height:100px; resize:vertical}
 
-  /* 퀵 편집 팝업 */
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip-cat{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+    border:1px solid #2a3a58; background:#0b1526; color:#cfe2ff; font-size:12px; cursor:pointer;
+  }
+  .chip-cat .dot{width:8px; height:8px; border-radius:50%}
+  .chip-cat.active{ outline:2px solid #35507d }
+
+  /* 공용 모달(퀵 편집/카테고리 관리자 공용) */
   .qpop-back{position:fixed; inset:0; display:none; align-items:flex-start; justify-content:flex-start; background:transparent; z-index:9999}
-  .qpop{position:absolute; width:min(420px, calc(100vw - 24px)); background:#0b1220; border:1px solid #1e2a41; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.45); padding:12px}
+  .qpop{position:absolute; width:min(520px, calc(100vw - 24px)); background:#0b1220; border:1px solid #1e2a41; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.45); padding:12px}
   .qrow{display:grid; grid-template-columns:1fr; gap:8px; margin-top:6px}
   .qrow2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .qtitle{width:100%; padding:10px; border:1px solid #2a3a58; border-radius:10px; background:#0c1526; color:#e6eef2; font-size:14px}
@@ -105,6 +105,14 @@
   .qpop .btn{padding:8px 10px}
   .qtoggle{display:flex; align-items:center; gap:8px}
   .qtoggle input{accent-color:#58a6ff}
+
+  /* 카테고리 관리자 */
+  .cat-row{display:grid; grid-template-columns:1fr auto 110px auto auto; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #233352}
+  .cat-row:last-child{border-bottom:none}
+  .pill{font-size:12px; padding:4px 8px; background:#0c1526; border:1px solid #2a3a58; border-radius:999px}
+  .color-hex{width:110px; padding:8px; border:1px solid #2a3a58; border-radius:8px; background:#0c1526; color:#e6eef2}
+  .ico-btn{border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer}
+  .ico-btn:hover{border-color:#38507d}
 </style>
 </head>
 <body>
@@ -124,12 +132,9 @@
   </header>
 
   <div class="grid">
-    <!-- 왼쪽: 캘린더 -->
     <div class="panel"><div id="calendar"></div></div>
 
-    <!-- 오른쪽: 상세 or 요약 레일 -->
     <aside id="detail" class="collapsed">
-      <!-- 요약 레일(선택 없을 때) -->
       <div id="rail">
         <div class="card">
           <h3>오늘</h3>
@@ -139,6 +144,16 @@
             <span class="chip" id="chipNow"></span>
           </div>
         </div>
+
+        <div class="card">
+          <h3>카테고리</h3>
+          <div id="cats" class="chips"></div>
+          <div style="display:flex; gap:8px; margin-top:8px">
+            <button class="btn" id="btnCatReset">전체 보기</button>
+            <button class="btn" id="btnCatManage">색/목록 관리</button>
+          </div>
+        </div>
+
         <div class="card">
           <h3>다가오는 일정</h3>
           <ul id="upcoming" class="list"></ul>
@@ -149,7 +164,6 @@
         </div>
       </div>
 
-      <!-- 상세 편집(선택 시) -->
       <div id="card" style="display:none">
         <img id="evtImg" class="evt-img" alt="" />
         <div class="row">
@@ -169,6 +183,17 @@
         </div>
         <div class="row" style="margin-top:6px">
           <div>
+            <div class="hint">카테고리</div>
+            <input id="fCat" type="text" list="catlist2" placeholder="예: CoC 7e / 룰: 전투" />
+            <datalist id="catlist2"></datalist>
+          </div>
+          <div>
+            <div class="hint">이미지 URL</div>
+            <input id="fImage" type="url" placeholder="https://..." />
+          </div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div>
             <div class="hint">시작</div>
             <input id="fStart" type="datetime-local" />
           </div>
@@ -176,10 +201,6 @@
             <div class="hint">종료</div>
             <input id="fEnd" type="datetime-local" />
           </div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="hint">이미지 URL</div>
-          <input id="fImage" type="url" placeholder="https://..." />
         </div>
         <div style="margin-top:6px">
           <div class="hint">설명</div>
@@ -204,6 +225,11 @@
       <label><input id="qAllDay" type="checkbox" /> 하루 종일</label>
       <label><input id="qAddTime" type="checkbox" /> 시간 추가</label>
       <span class="qsub" id="qWhenText"></span>
+    </div>
+    <div class="qrow">
+      <div class="qsub">카테고리</div>
+      <input id="qCat" type="text" list="catlist" placeholder="예: CoC 7e / 룰: 마법 / 세션" />
+      <datalist id="catlist"></datalist>
     </div>
     <div class="qrow2" id="qDates">
       <div>
@@ -234,6 +260,27 @@
   </div>
 </div>
 
+<!-- 카테고리 관리자 팝업 -->
+<div class="qpop-back" id="catBack" aria-hidden="true">
+  <div class="qpop" id="catPop" role="dialog" aria-modal="true" style="width:min(720px, calc(100vw - 24px))">
+    <h3 style="margin:0 0 6px">카테고리 색/목록 관리</h3>
+    <div class="qsub">HEX(#RRGGBB) 직접 입력 가능. <span id="pickSupport"></span></div>
+    <div id="catList" class="qrow" style="max-height:min(60vh,520px); overflow:auto; border:1px solid #1e2a41; border-radius:10px; padding:6px"></div>
+    <div class="qrow" style="margin-top:8px">
+      <div style="display:flex; gap:8px; align-items:center">
+        <input id="newCatName" class="qtitle" type="text" placeholder="새 카테고리 이름" style="max-width:320px" />
+        <input id="newCatColor" type="color" value="#58a6ff" />
+        <input id="newCatHex" class="color-hex" value="#58A6FF" />
+        <button class="ico-btn" id="btnAddCat">추가</button>
+      </div>
+    </div>
+    <div class="qactions">
+      <button class="btn" id="catCancel">닫기</button>
+      <button class="btn" id="catSave">카테고리 색 저장(GitHub)</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
   /* ===== 설정 ===== */
@@ -242,10 +289,14 @@
   const BRANCH = 'main';
   const PATH   = 'data/schedule.json';
   const SRC    = '../data/schedule.json';
+  const CAT_PATH = 'data/categories.json';     // 색 매핑 저장 위치
+  const CAT_SRC  = '../data/categories.json';  // 로드 경로
 
-  /* ===== 상태/UI 참조 ===== */
+  /* ===== 상태/UI ===== */
   let calendar, selected = null, dirty = false, editingEvent = null;
   let lastPointer = {x: window.innerWidth/2, y: 120};
+  let activeCats = new Set(); // 비면 전체 보기
+  let catColors = {};         // { "카테고리명": "#RRGGBB" }
 
   const calEl   = document.getElementById('calendar');
   const btnMonth= document.getElementById('btnMonth');
@@ -260,11 +311,14 @@
 
   const detail  = document.getElementById('detail');
   const rail    = document.getElementById('rail');
+  const catsEl  = document.getElementById('cats');
   const upcomingEl = document.getElementById('upcoming');
   const todayLine = document.getElementById('todayLine');
   const chipNow = document.getElementById('chipNow');
   const statsMonth = document.getElementById('statsMonth');
   const btnQuickToday = document.getElementById('btnQuickToday');
+  const btnCatReset   = document.getElementById('btnCatReset');
+  const btnCatManage  = document.getElementById('btnCatManage');
 
   const imgEl   = document.getElementById('evtImg');
   const fTitle  = document.getElementById('fTitle');
@@ -273,6 +327,7 @@
   const fEnd    = document.getElementById('fEnd');
   const fImage  = document.getElementById('fImage');
   const fDesc   = document.getElementById('fDesc');
+  const fCat    = document.getElementById('fCat');
   const evtTime = document.getElementById('evtTime');
   const evtProg = document.getElementById('evtProg');
   const btnApply= document.getElementById('btnApply');
@@ -295,28 +350,83 @@
   const qCancel=document.getElementById('qCancel');
   const qDelete=document.getElementById('qDelete');
   const qMore=document.getElementById('qMore');
+  const qCat = document.getElementById('qCat');
+  const catlist = document.getElementById('catlist');
+  const catlist2 = document.getElementById('catlist2');
+
+  // 카테고리 관리자
+  const catBack = document.getElementById('catBack');
+  const catPop  = document.getElementById('catPop');
+  const catList = document.getElementById('catList');
+  const catCancel = document.getElementById('catCancel');
+  const catSave   = document.getElementById('catSave');
+  const newCatName= document.getElementById('newCatName');
+  const newCatColor=document.getElementById('newCatColor');
+  const newCatHex = document.getElementById('newCatHex');
+  const btnAddCat = document.getElementById('btnAddCat');
+  const pickSupport = document.getElementById('pickSupport');
 
   document.addEventListener('pointerdown', (e)=>{ lastPointer={x:e.clientX,y:e.clientY}; }, {passive:true});
   function markDirty(v=true){ dirty=v; dirtyEl.textContent = v ? '· 수정됨' : ''; }
   window.addEventListener('beforeunload', (e)=>{ if(dirty){ e.preventDefault(); e.returnValue=''; }});
 
-  /* ===== 데이터 로드 ===== */
-  fetch(SRC, { cache: 'no-store' })
-    .then(r => r.ok ? r.json() : [])
-    .then(arr => initCalendar(Array.isArray(arr) ? arr : []))
-    .catch(() => initCalendar([]));
+  /* ===== 데이터 로드: 일정 + 카테고리 색 ===== */
+  Promise.all([
+    fetch(SRC, { cache: 'no-store' }).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch(CAT_SRC, { cache: 'no-store' }).then(async r=>{
+      if (!r.ok) return {};
+      const j = await r.json(); return (j && typeof j==='object') ? j : {};
+    }).catch(()=> ({}))
+  ]).then(([events, colors])=>{
+    catColors = colors || {};
+    initCalendar(Array.isArray(events)?events:[]);
+  });
 
-  /* ===== 캘린더 구성 ===== */
+  /* ===== 유틸: 카테고리 ===== */
+  const PALETTE = ['#57d19a','#58a6ff','#b08ad6','#ef7d7d','#f6c951','#6adcb3','#96a6ff','#ffb86c','#ff99cc','#8bd3dd','#a5ffd6','#c792ea','#9cdcfe'];
+  function catColor(name){
+    if (name && catColors[name]) return catColors[name];
+    if(!name) return '#8892a6';
+    let h=0; for (let i=0;i<name.length;i++) { h = (h<<5) - h + name.charCodeAt(i); h|=0; }
+    return PALETTE[Math.abs(h)%PALETTE.length];
+  }
+  function normalizeHex(s){
+    if (!s) return null;
+    let v = s.trim().toUpperCase();
+    if (!v.startsWith('#')) v = '#'+v;
+    if (/^#[0-9A-F]{6}$/.test(v)) return v;
+    return null;
+  }
+  function catUnion(){
+    const set = new Set(Object.keys(catColors));
+    calendar?.getEvents().forEach(ev=>{
+      const c = (ev.extendedProps?.category || '').trim();
+      if (c) set.add(c); else set.add('미분류');
+    });
+    // 기본 제안
+    ['세션','CoC 7e','D&D 5e','룰: 전투','룰: 조사','룰: 마법','NPC','아이템','핸드아웃'].forEach(v=>set.add(v));
+    return [...set].sort((a,b)=>a.localeCompare(b,'ko'));
+  }
+
+  /* ===== 캘린더 ===== */
   function isYMD(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
   function toFCEvt(ev){
+    const base = {
+      id: ev.id || genId(new Date(ev.start || Date.now())),
+      title: ev.title || '(제목 없음)',
+      extendedProps: {
+        image: ev.image || '',
+        desc:  ev.desc  || '',
+        status: ev.status || '',
+        category: ev.category || ''
+      }
+    };
     if (ev.allDay){
       const s = isYMD(ev.start) ? ev.start : isoDate(new Date(ev.start));
       const e = ev.end ? (isYMD(ev.end) ? ev.end : isoDate(new Date(ev.end))) : undefined;
-      return { id: ev.id || genId(new Date()), title: ev.title || '(제목 없음)', allDay:true, start:s, end:e,
-        extendedProps:{ image:ev.image||'', desc:ev.desc||'', status:ev.status||'' } };
+      return { ...base, allDay:true, start:s, end:e };
     }
-    return { id: ev.id || genId(new Date(ev.start||Date.now())), title: ev.title || '(제목 없음)', allDay:false,
-      start:ev.start, end:ev.end, extendedProps:{ image:ev.image||'', desc:ev.desc||'', status:ev.status||'' } };
+    return { ...base, allDay:false, start:ev.start, end:ev.end };
   }
 
   function initCalendar(events){
@@ -345,7 +455,15 @@
       },
       eventDrop:  () => { markDirty(); updatePreview(); renderRail(); },
       eventResize:() => { markDirty(); updatePreview(); renderRail(); },
-      eventsSet:  () => { renderRail(); } // 초기 렌더 및 변경시 요약 갱신
+      eventsSet:  () => { renderRail(); renderCatUI(); },
+
+      eventDidMount: (info) => {
+        const cat = info.event.extendedProps?.category || '';
+        const col = catColor(cat);
+        const dot = info.el.querySelector('.fc-daygrid-event-dot');
+        if (dot){ dot.style.borderColor = col; dot.style.backgroundColor = col; }
+        info.el.style.borderLeft = `4px solid ${col}`;
+      }
     });
     calendar.render();
 
@@ -359,18 +477,19 @@
       const s = roundToNextHalfHour(new Date());
       openQuick({ anchor:null, start:s, end:new Date(s.getTime()+2*3600*1000), allDay:false, title:'' });
     };
-    btnDel.onclick   = () => { if(selected) { if(confirm('선택된 일정을 삭제할까요?')) { selected.remove(); clearDetail(); markDirty(); renderRail(); } } else alert('선택된 일정이 없습니다.'); };
+    btnDel.onclick   = () => { if(selected) { if(confirm('선택된 일정을 삭제할까요?')) { selected.remove(); clearDetail(); markDirty(); renderRail(); renderCatUI(); } } else alert('선택된 일정이 없습니다.'); };
     btnDel2.onclick  = () => btnDel.onclick();
-    btnSave.onclick  = saveToGitHub;
+    btnSave.onclick  = saveAllToGitHub;
 
     btnBack.onclick  = () => history.back();
     if (history.length <= 1 || !document.referrer) btnBack.style.display = 'none';
 
-    // 레일의 "오늘 20:00로" 빠른 추가
     btnQuickToday.onclick = () => {
       const base = new Date(); base.setHours(20,0,0,0);
       openQuick({ anchor:null, start:base, end:new Date(base.getTime()+2*3600*1000), allDay:false, title:'' });
     };
+    btnCatReset.onclick = () => { activeCats.clear(); applyCategoryFilter(); updateCatChipActive(); };
+    btnCatManage.onclick= () => openCatManager();
   }
 
   /* ===== 퀵 팝업 ===== */
@@ -396,13 +515,15 @@
       qStartTime.value = hhmm(s);
       qEndTime.value   = hhmm(e);
     }
+    qCat.value = event?.extendedProps?.category || '';
+    populateCatDatalists();
     updateWhenText();
 
     const x = anchor?.clientX ?? lastPointer.x;
     const y = anchor?.clientY ?? lastPointer.y;
-    const pad = 12, width = Math.min(420, window.innerWidth - 24);
+    const pad = 12, width = Math.min(520, window.innerWidth - 24);
     const left = Math.max(12, Math.min(x + 10, window.innerWidth - width - pad));
-    const top  = Math.max(12, Math.min(y - 10, window.innerHeight - 260));
+    const top  = Math.max(12, Math.min(y - 10, window.innerHeight - 320));
     qpop.style.left = left + 'px';
     qpop.style.top  = top + 'px';
 
@@ -426,6 +547,7 @@
   qSave.addEventListener('click', ()=>{
     const title  = qTitle.value.trim() || '(제목 없음)';
     const allDay = qAllDay.checked;
+    const category = qCat.value.trim();
 
     if (allDay){
       const sDay = parseDateOnly(qStartDate.value);
@@ -438,9 +560,10 @@
         editingEvent.setAllDay(true);
         editingEvent.setStart(startStr, { maintainDuration:false });
         editingEvent.setEnd(endExStr);
+        editingEvent.setExtendedProp('category', category);
         markDirty(); selectEvent(editingEvent);
       } else {
-        calendar.addEvent({ id: genId(sDay), title, allDay:true, start:startStr, end:endExStr });
+        calendar.addEvent({ id: genId(sDay), title, allDay:true, start:startStr, end:endExStr, extendedProps:{ category } });
         markDirty();
       }
     } else {
@@ -453,14 +576,15 @@
         editingEvent.setAllDay(false);
         editingEvent.setStart(s, { maintainDuration:false });
         editingEvent.setEnd(e);
+        editingEvent.setExtendedProp('category', category);
         markDirty(); selectEvent(editingEvent);
       } else {
-        calendar.addEvent({ id: genId(s), title, allDay:false, start:s, end:e });
+        calendar.addEvent({ id: genId(s), title, allDay:false, start:s, end:e, extendedProps:{ category } });
         markDirty();
       }
     }
     closeQuick();
-    renderRail();
+    renderRail(); renderCatUI(); applyCategoryFilter();
   });
 
   qDelete.addEventListener('click', ()=>{
@@ -471,7 +595,7 @@
       editingEvent = null;
       markDirty();
       closeQuick();
-      renderRail();
+      renderRail(); renderCatUI(); applyCategoryFilter();
     }
   });
   qMore.addEventListener('click', ()=>{ if (editingEvent){ selectEvent(editingEvent, {expandDetail:true}); } closeQuick(); });
@@ -504,6 +628,8 @@
     fEnd.value    = toLocalInput(ev.end || ev.start);
     fImage.value  = ev.extendedProps?.image || '';
     fDesc.value   = ev.extendedProps?.desc  || '';
+    fCat.value    = ev.extendedProps?.category || '';
+    populateCatDatalists();
     updatePreview();
   }
   function clearDetail(){
@@ -526,10 +652,11 @@
     selected.setExtendedProp('image', fImage.value.trim());
     selected.setExtendedProp('desc',  fDesc.value);
     selected.setExtendedProp('status',fStatus.value);
+    selected.setExtendedProp('category', fCat.value.trim());
     updatePreview();
     markDirty();
     alert('적용 완료(임시). 상단 "GitHub로 저장"을 눌러 커밋하세요!');
-    renderRail();
+    renderRail(); renderCatUI(); applyCategoryFilter();
   };
 
   function updatePreview(){
@@ -546,18 +673,59 @@
     } else { evtProg.style.width='0%'; }
   }
 
-  /* ===== 요약 레일 렌더 ===== */
+  /* ===== 카테고리 UI/필터 ===== */
+  function renderCatUI(){
+    const cats = catUnion();
+    catsEl.innerHTML = cats.map(name=>{
+      const real = name==='미분류' ? '' : name;
+      const color = catColor(real);
+      const active = activeCats.size && activeCats.has(real);
+      return `<button class="chip-cat ${active?'active':''}" data-cat="${escapeHtml(real)}">
+        <span class="dot" style="background:${color}"></span>${escapeHtml(name)}
+      </button>`;
+    }).join('');
+    catsEl.querySelectorAll('.chip-cat').forEach(btn=>{
+      btn.onclick = ()=>{
+        const cat = btn.dataset.cat || '';
+        if (activeCats.has(cat)) activeCats.delete(cat);
+        else activeCats.add(cat);
+        applyCategoryFilter();
+        updateCatChipActive();
+      };
+    });
+    populateCatDatalists();
+  }
+  function updateCatChipActive(){
+    catsEl.querySelectorAll('.chip-cat').forEach(btn=>{
+      const cat = btn.dataset.cat || '';
+      btn.classList.toggle('active', activeCats.size && activeCats.has(cat));
+    });
+  }
+  function applyCategoryFilter(){
+    const showAll = activeCats.size===0;
+    calendar.getEvents().forEach(ev=>{
+      const c = (ev.extendedProps?.category || '');
+      const ok = showAll || activeCats.has(c);
+      ev.setProp('display', ok ? 'auto' : 'none');
+    });
+    renderRail();
+  }
+  function populateCatDatalists(){
+    const cats = catUnion().filter(v=>v!=='미분류');
+    catlist.innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">`).join('');
+    catlist2.innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  /* ===== 요약 레일 ===== */
   function renderRail(){
-    // 오늘 라인
     const now = new Date();
     chipNow.textContent = now.toLocaleString('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit' });
     const todayStr = isoDate(now);
     const todays = calendar.getEvents().filter(ev => {
-      // allDay는 시작~(end-1일)까지 포함
+      if (ev.display==='none') return false;
       if (ev.allDay){
         const s = typeof ev.start === 'string' ? ev.start : isoDate(ev.start);
         const e = typeof ev.end   === 'string' ? ev.end   : isoDate(ev.end || addDays(ev.start,1));
-        // inclusive range 체크
         return s <= todayStr && todayStr < e;
       } else {
         const d = isoDate(ev.start);
@@ -566,79 +734,90 @@
     });
     todayLine.textContent = `${todayStr} · 오늘 일정 ${todays.length}건`;
 
-    // 다가오는 일정 6개
     const list = getUpcoming(6);
     upcomingEl.innerHTML = list.map(({ev, s, e, span}) => {
       const time = ev.allDay ? '하루 종일' :
         `${pad(s.getHours())}:${pad(s.getMinutes())} ~ ${pad(e.getHours())}:${pad(e.getMinutes())}`;
       const sub = `${s.getMonth()+1}월 ${s.getDate()}일 · ${time}${span>1?` · ${span}일`:''}`;
+      const cat = (ev.extendedProps?.category || '');
+      const col = catColor(cat);
       return `<li class="li">
-        <span class="dot"></span>
+        <span class="dot" style="background:${col}"></span>
         <div>
           <div class="title">${escapeHtml(ev.title||'(제목 없음)')}</div>
-          <div class="sub">${sub}</div>
+          <div class="sub">${escapeHtml(cat||'미분류')} · ${sub}</div>
         </div>
         <button class="mini-btn act" data-id="${ev.id}">열기</button>
       </li>`;
     }).join('') || `<div class="muted">예정된 일정이 없습니다.</div>`;
 
-    // 이벤트 연결(열기)
     upcomingEl.querySelectorAll('.mini-btn').forEach(btn=>{
       btn.onclick = () => {
         const ev = calendar.getEventById(btn.dataset.id);
         if (ev){
           selectEvent(ev, {expandDetail:true});
-          // 해당 날짜로 이동
           calendar.gotoDate(ev.start);
         }
       };
     });
 
-    // 이달 통계
     const cur = calendar.getDate();
     const mStart = new Date(cur.getFullYear(), cur.getMonth(), 1);
     const mEnd   = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
-    const monthCount = calendar.getEvents().filter(ev=> ev.start >= mStart && ev.start < mEnd).length;
+    const monthCount = calendar.getEvents().filter(ev=> ev.display!=='none' && ev.start >= mStart && ev.start < mEnd).length;
     statsMonth.textContent = `${cur.getMonth()+1}월 일정 ${monthCount}건`;
   }
 
   function getUpcoming(limit=6){
     const now = new Date();
-    const evs = calendar.getEvents().map(ev=>{
-      let s = ev.allDay
-        ? (typeof ev.start === 'string' ? parseDateOnly(ev.start) : new Date(ev.start))
-        : new Date(ev.start);
-      let e = ev.allDay
-        ? (typeof ev.end === 'string' ? parseDateOnly(ev.end) : new Date(ev.end || ev.start))
-        : new Date(ev.end || ev.start);
-      if (ev.allDay) e = addDays(e, -1); // inclusive
-      return { ev, s, e, span: Math.max(1, Math.round((e - s)/(24*3600*1000))+1) };
-    }).filter(o => o.e >= now).sort((a,b)=> a.s - b.s).slice(0, limit);
-    return evs;
+    return calendar.getEvents()
+      .filter(ev => ev.display!=='none')
+      .map(ev=>{
+        let s = ev.allDay
+          ? (typeof ev.start === 'string' ? parseDateOnly(ev.start) : new Date(ev.start))
+          : new Date(ev.start);
+        let e = ev.allDay
+          ? (typeof ev.end === 'string' ? parseDateOnly(ev.end) : new Date(ev.end || ev.start))
+          : new Date(ev.end || ev.start);
+        if (ev.allDay) e = addDays(e, -1);
+        return { ev, s, e, span: Math.max(1, Math.round((e - s)/(24*3600*1000))+1) };
+      })
+      .filter(o => o.e >= now)
+      .sort((a,b)=> a.s - b.s)
+      .slice(0, limit);
   }
 
-  /* ===== 저장(GitHub Contents API) ===== */
-  async function saveToGitHub(){
+  /* ===== 저장(GitHub) ===== */
+  async function saveAllToGitHub(){
     try{
       const token = prompt('GitHub Personal Access Token(이 레포 Contents:write 권한):');
       if(!token) return;
-      const data = eventsToArray();
-      await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:PATH, contentObj:data, token });
+
+      // 1) 일정
+      const eventsData = eventsToArray();
+      await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:PATH, contentObj:eventsData, token });
+
+      // 2) 카테고리 색
+      await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:CAT_PATH, contentObj:catColors, token });
+
       markDirty(false);
-      alert('커밋 완료! 페이지를 새로고침하면 반영 확인 가능');
+      alert('커밋 완료! (일정 + 카테고리 색)');
     }catch(err){ console.error(err); alert('저장 실패: ' + err.message); }
   }
   function eventsToArray(){
     return calendar.getEvents().map(ev => {
+      const category = ev.extendedProps?.category || '';
       if (ev.allDay){
         const sY = isoDate(ev.start);
         const eY = isoDate(ev.end || addDays(ev.start,1));
         return { id: ev.id, title: ev.title, allDay: true, start: sY, end: eY,
-          image: ev.extendedProps?.image || '', desc: ev.extendedProps?.desc  || '', status: ev.extendedProps?.status || '' };
+          image: ev.extendedProps?.image || '', desc: ev.extendedProps?.desc  || '',
+          status: ev.extendedProps?.status || '', category };
       }
       return { id: ev.id, title: ev.title, allDay: false,
         start: toKSTISO(ev.start), end: toKSTISO(ev.end || ev.start),
-        image: ev.extendedProps?.image || '', desc: ev.extendedProps?.desc  || '', status: ev.extendedProps?.status || '' };
+        image: ev.extendedProps?.image || '', desc: ev.extendedProps?.desc  || '',
+        status: ev.extendedProps?.status || '', category };
     });
   }
   async function saveFileToGitHub({owner,repo,branch,path,contentObj,token}){
@@ -649,7 +828,7 @@
     if (getRes.ok){ const meta = await getRes.json(); sha = meta.sha; }
     else if (getRes.status !== 404){ throw new Error('기존 파일 조회 실패(' + getRes.status + ')'); }
     const json = JSON.stringify(contentObj, null, 2);
-    const b64  = base64EncodeUnicode(json);
+    const b64  = btoa(unescape(encodeURIComponent(json)));
     const putUrl = `${api}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
     const body = { message:`chore(schedule): update ${path}`, content:b64, branch, ...(sha?{sha}:{}) };
     const putRes = await fetch(putUrl, {
@@ -659,7 +838,114 @@
     });
     if (!putRes.ok){ const t = await putRes.text(); throw new Error('PUT 실패(' + putRes.status + '): ' + t); }
   }
-  function base64EncodeUnicode(str){ return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(_,p)=>String.fromCharCode('0x'+p))); }
+
+  /* ===== 카테고리 관리자 ===== */
+  function openCatManager(){
+    // 안내
+    pickSupport.textContent = ('EyeDropper' in window) ? '스포이드 사용 가능(크롬/엣지 등)' : '브라우저가 스포이드를 지원하지 않아, 오른쪽의 색상/HEX로 지정하세요';
+
+    renderCatManagerRows();
+
+    // 위치
+    const x = lastPointer.x, y = lastPointer.y;
+    const pad = 12, width = Math.min(720, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(x + 10, window.innerWidth - width - pad));
+    const top  = Math.max(12, Math.min(y - 10, window.innerHeight - 420));
+    catPop.style.left = left + 'px';
+    catPop.style.top  = top + 'px';
+
+    catBack.style.display = 'flex';
+    catBack.setAttribute('aria-hidden','false');
+
+    newCatHex.value = newCatColor.value.toUpperCase();
+    newCatColor.addEventListener('input', ()=>{ newCatHex.value = newCatColor.value.toUpperCase(); });
+    newCatHex.addEventListener('input', ()=>{
+      const v = normalizeHex(newCatHex.value); if (v){ newCatColor.value = v; }
+    });
+  }
+  function closeCatManager(){ catBack.style.display='none'; catBack.setAttribute('aria-hidden','true'); }
+
+  catCancel.onclick = closeCatManager;
+  catBack.addEventListener('click', (e)=>{ if(e.target===catBack) closeCatManager(); });
+
+  function renderCatManagerRows(){
+    const cats = catUnion().filter(c=>c!=='미분류');
+    catList.innerHTML = cats.map(name=>{
+      const col = catColor(name);
+      const hex = (catColors[name] || col).toUpperCase();
+      const id  = 'c_'+name.replace(/\s+/g,'_');
+      return `<div class="cat-row" data-name="${escapeHtml(name)}">
+        <span class="pill">${escapeHtml(name)}</span>
+        <input type="color" id="${id}_color" value="${hex}">
+        <input type="text" id="${id}_hex" class="color-hex" value="${hex}">
+        <button class="ico-btn" data-act="pick">스포이드</button>
+        <button class="ico-btn" data-act="clear">초기화</button>
+      </div>`;
+    }).join('') || `<div class="muted" style="padding:10px">카테고리가 아직 없어요. 일정을 만들면서 카테고리를 지정하거나 아래에서 추가하세요.</div>`;
+
+    // 동기화/이벤트
+    catList.querySelectorAll('.cat-row').forEach(row=>{
+      const name = row.dataset.name;
+      const color = row.querySelector('[type=color]');
+      const hex   = row.querySelector('.color-hex');
+      const btnPick = row.querySelector('[data-act="pick"]');
+      const btnClear= row.querySelector('[data-act="clear"]');
+
+      color.addEventListener('input', ()=>{ hex.value = color.value.toUpperCase(); });
+      hex.addEventListener('input', ()=>{ const v = normalizeHex(hex.value); if (v){ color.value = v; } });
+
+      btnPick.addEventListener('click', async ()=>{
+        if (!('EyeDropper' in window)) return alert('이 브라우저는 스포이드를 지원하지 않아요.');
+        try{
+          const eye = new EyeDropper();
+          const res = await eye.open(); // { sRGBHex: "#RRGGBB" }
+          color.value = res.sRGBHex.toUpperCase(); hex.value = res.sRGBHex.toUpperCase();
+        }catch(_e){/* 취소 */}
+      });
+
+      btnClear.addEventListener('click', ()=>{
+        delete catColors[name];
+        color.value = catColor(name).toUpperCase();
+        hex.value   = color.value;
+      });
+    });
+
+    // 새 카테고리 추가
+    btnAddCat.onclick = ()=>{
+      const nm = (newCatName.value || '').trim();
+      const hx = normalizeHex(newCatHex.value) || '#58A6FF';
+      if (!nm) return alert('카테고리 이름을 입력해 주세요.');
+      catColors[nm] = hx.toUpperCase();
+      newCatName.value = '';
+      renderCatManagerRows();
+      renderCatUI(); applyCategoryFilter();
+      calendar.rerenderEvents();
+      renderRail();
+    };
+  }
+
+  catSave.onclick = async ()=>{
+    try{
+      // 현재 행들에서 색 읽기
+      const rows = catList.querySelectorAll('.cat-row');
+      const next = {};
+      rows.forEach(row=>{
+        const name = row.dataset.name;
+        const hx = normalizeHex(row.querySelector('.color-hex').value);
+        if (name && hx) next[name] = hx.toUpperCase();
+      });
+      catColors = next;
+
+      // 저장
+      const token = prompt('GitHub Personal Access Token(이 레포 Contents:write 권한):');
+      if(!token) return;
+
+      await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:CAT_PATH, contentObj:catColors, token });
+      alert('카테고리 색 저장 완료!');
+      renderCatUI(); applyCategoryFilter(); calendar.rerenderEvents(); renderRail();
+      closeCatManager();
+    }catch(err){ console.error(err); alert('저장 실패: ' + err.message); }
+  };
 
   /* ===== 유틸 ===== */
   function genId(d){ const pad=n=>n.toString().padStart(2,'0'); return `e-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${Math.random().toString(36).slice(2,6)}`; }
@@ -676,8 +962,7 @@
   const pad=n=>n.toString().padStart(2,'0');
   function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[c])); }
 
-  // 상세 값 변경 → 더티 & 미리보기
-  [fTitle,fStatus,fStart,fEnd,fImage,fDesc].forEach(el=>{
+  [fTitle,fStatus,fStart,fEnd,fImage,fDesc,fCat].forEach(el=>{
     el.addEventListener('input', ()=>{ if(selected){ updatePreview(); markDirty(); }});
   });
 })();
