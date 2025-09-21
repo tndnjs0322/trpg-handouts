@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>일정 캘린더</title>
+<title>캠페인 일정</title>
 
-<!-- FullCalendar (글로벌 번들) -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/locales-all.global.min.js"></script>
@@ -23,7 +22,6 @@
   .btn-danger{border-color:#5a2a2a; background:#2a1111}
   .btn-danger:hover{border-color:#7d3838}
 
-  /* 레이아웃 + 오버플로우 개선 */
   .grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,420px); gap:12px}
   @media (max-width:900px){ .grid{grid-template-columns:1fr} }
   .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; min-height:70vh}
@@ -31,7 +29,6 @@
   aside{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; min-height:70vh; overflow:hidden}
   .muted{color:var(--muted); font-size:13px}
 
-  /* 우측 세부(기본 숨김, "자세히"에서만) */
   #detail.collapsed{display:none}
   .evt-img{width:100%; height:160px; object-fit:cover; border-radius:10px; background:#09121f; margin-bottom:8px}
   .evt-time{font-size:12px; opacity:.8; margin:6px 0}
@@ -46,7 +43,7 @@
   }
   textarea{min-height:100px; resize:vertical}
 
-  /* ===== 퀵 편집 팝업 ===== */
+  /* 퀵 편집 팝업 */
   .qpop-back{position:fixed; inset:0; display:none; align-items:flex-start; justify-content:flex-start; background:transparent; z-index:9999}
   .qpop{position:absolute; width:min(420px, calc(100vw - 24px)); background:#0b1220; border:1px solid #1e2a41; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.45); padding:12px}
   .qrow{display:grid; grid-template-columns:1fr; gap:8px; margin-top:6px}
@@ -55,7 +52,6 @@
   .qsub{font-size:12px; color:#a6b3c2}
   .qactions{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
   .qpop .btn{padding:8px 10px}
-  .qline{height:1px; background:#1e2a41; margin:8px 0}
   .qtoggle{display:flex; align-items:center; gap:8px}
   .qtoggle input{accent-color:#58a6ff}
 </style>
@@ -79,7 +75,6 @@
   <div class="grid">
     <div class="panel"><div id="calendar"></div></div>
 
-    <!-- 우측: 세부(기본 접힘) -->
     <aside id="detail" class="collapsed">
       <div class="muted" id="empty">“자세히”를 누르면 상세 편집 패널이 열립니다.</div>
       <div id="card" style="display:none">
@@ -168,21 +163,17 @@
 
 <script>
 (() => {
-  // =========================
-  // 설정 (레포/브랜치에 맞게 확인)
-  // =========================
+  /* ========== 설정 ========== */
   const OWNER  = 'tndnjs0322';
   const REPO   = 'trpg-handouts';
-  const BRANCH = 'main';                 // Pages가 gh-pages면 'gh-pages'로 변경
+  const BRANCH = 'main';                 // Pages가 gh-pages면 'gh-pages'
   const PATH   = 'data/schedule.json';
   const SRC    = '../data/schedule.json';
 
-  // ===== 상태 =====
-  let calendar, selected = null, dirty = false;
-  let editingEvent = null;  // 퀵팝업에서 편집 중인 이벤트(없으면 새로 만들기)
-  let lastPointer = {x: window.innerWidth/2, y: 120}; // 팝업 위치 기본값
+  /* ========== 상태/UI ========== */
+  let calendar, selected = null, dirty = false, editingEvent = null;
+  let lastPointer = {x: window.innerWidth/2, y: 120};
 
-  // ===== UI =====
   const calEl   = document.getElementById('calendar');
   const btnMonth= document.getElementById('btnMonth');
   const btnWeek = document.getElementById('btnWeek');
@@ -209,7 +200,6 @@
   const btnApply= document.getElementById('btnApply');
   const btnDel2 = document.getElementById('btnDel2');
 
-  // 퀵 팝업 요소
   const qback = document.getElementById('qback');
   const qpop  = document.getElementById('qpop');
   const qTitle= document.getElementById('qTitle');
@@ -227,26 +217,43 @@
   const qDelete=document.getElementById('qDelete');
   const qMore=document.getElementById('qMore');
 
-  // 포인터 좌표 저장(팝업 위치용)
   document.addEventListener('pointerdown', (e)=>{ lastPointer={x:e.clientX,y:e.clientY}; }, {passive:true});
-
   function markDirty(v=true){ dirty=v; dirtyEl.textContent = v ? '· 수정됨' : ''; }
   window.addEventListener('beforeunload', (e)=>{ if(dirty){ e.preventDefault(); e.returnValue=''; }});
 
-  // ===== JSON 로드 후 캘린더 초기화 =====
+  /* ========== 로드 ========== */
   fetch(SRC, { cache: 'no-store' })
     .then(r => r.ok ? r.json() : [])
     .then(arr => initCalendar(Array.isArray(arr) ? arr : []))
     .catch(() => initCalendar([]));
 
-  // ===== 캘린더 =====
+  /* ========== 캘린더 ========== */
+  function isYMD(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
   function toFCEvt(ev){
+    // allDay는 YYYY-MM-DD 문자열을 그대로 전달(타임존 영향 없음)
+    if (ev.allDay){
+      const s = isYMD(ev.start) ? ev.start : isoDate(new Date(ev.start));
+      const e = ev.end ? (isYMD(ev.end) ? ev.end : isoDate(new Date(ev.end))) : undefined;
+      return {
+        id: ev.id || genId(new Date()),
+        title: ev.title || '(제목 없음)',
+        allDay: true,
+        start: s,
+        end: e,
+        extendedProps: {
+          image: ev.image || '',
+          desc:  ev.desc  || '',
+          status: ev.status || ''
+        }
+      };
+    }
+    // 시간 있는 이벤트는 Date/ISO 유지
     return {
       id: ev.id || genId(new Date(ev.start || Date.now())),
       title: ev.title || '(제목 없음)',
+      allDay: false,
       start: ev.start,
       end:   ev.end,
-      allDay: !!ev.allDay,
       extendedProps: {
         image: ev.image || '',
         desc:  ev.desc  || '',
@@ -263,38 +270,39 @@
       initialView: 'dayGridMonth',
       headerToolbar: false,
       buttonText: { today: '오늘' },
-      navLinks: true,
-      nowIndicator: true,
+      nowIndicator: false,
+      progressiveEventRendering: true,
       editable: true,
       selectable: true,
       selectMirror: true,
       events: events.map(toFCEvt),
 
-      // 날짜 클릭 → 퀵 팝업 열기
+      // 날짜 클릭 → 종일 기본 (dateStr 사용)
       dateClick: (info) => {
         openQuick({
           anchor: info.jsEvent,
-          start: info.date,
-          end: info.date,
+          start: parseDateOnly(info.dateStr),
+          end:   parseDateOnly(info.dateStr),
           allDay: true,
           title: ''
         });
       },
 
-      // 드래그 선택 → 퀵 팝업 (allDay or timed은 뷰에 따라)
+      // 드래그 선택 → allDay면 startStr/endStr 사용(endStr는 다음날 00:00)
       select: (info) => {
         const allDay = info.allDay ?? (calendar.view.type==='dayGridMonth');
+        const s = allDay ? parseDateOnly(info.startStr) : info.start;
+        const e = allDay ? parseDateOnly(info.endStr)   : info.end;
         openQuick({
-          anchor: null, // select에 jsEvent가 없을 수 있음 → 마지막 포인터 사용
-          start: info.start,
-          end: new Date(info.end.getTime() - (allDay?1:0)), // end 보정(표시용)
+          anchor: null,
+          start: s,
+          end:   allDay ? addDays(e, -1) : e, // UI에는 inclusive
           allDay,
           title: ''
         });
         calendar.unselect();
       },
 
-      // 기존 이벤트 클릭 → 퀵 팝업(편집)
       eventClick: (info) => {
         openQuick({
           anchor: info.jsEvent,
@@ -311,7 +319,6 @@
     });
     calendar.render();
 
-    // 상단 버튼
     btnMonth.onclick = () => calendar.changeView('dayGridMonth');
     btnWeek.onclick  = () => calendar.changeView('timeGridWeek');
     btnList.onclick  = () => calendar.changeView('listMonth');
@@ -324,26 +331,25 @@
     btnDel.onclick   = () => { if(selected) { if(confirm('선택된 일정을 삭제할까요?')) { selected.remove(); clearDetail(); markDirty(); } } else alert('선택된 일정이 없습니다.'); };
     btnDel2.onclick  = () => btnDel.onclick();
 
-    // 저장(PAT 사용)
     btnSave.onclick  = saveToGitHub;
 
-    // 진짜 "브라우저" 뒤로가기만
     btnBack.onclick  = () => history.back();
     if (history.length <= 1 || !document.referrer) btnBack.style.display = 'none';
   }
 
-  // ========= 퀵 팝업 =========
+  /* ========== 퀵 팝업 ========== */
   function openQuick({anchor, start, end, allDay, title, event=null}){
     editingEvent = event;
 
-    // 필드 값 채우기
     qTitle.value = title || '';
     qAllDay.checked = !!allDay;
     qAddTime.checked = !allDay;
 
-    // 날짜/시간 기본값
     const s = new Date(start);
-    const e = new Date(end || start);
+    let   e = new Date(end || start);
+    // allDay 기존 이벤트는 end(exclusive) → UI는 inclusive로 하루 빼서
+    if (event && allDay && event.end) e = addDays(event.end, -1);
+
     if (allDay){
       qTimes.style.display = 'none';
       qStartDate.value = isoDate(s);
@@ -357,29 +363,21 @@
     }
     updateWhenText();
 
-    // 위치(뷰포트 안에 클램프)
     const x = anchor?.clientX ?? lastPointer.x;
     const y = anchor?.clientY ?? lastPointer.y;
-    const pad = 12;
-    const width = Math.min(420, window.innerWidth - 24);
+    const pad = 12, width = Math.min(420, window.innerWidth - 24);
     const left = Math.max(12, Math.min(x + 10, window.innerWidth - width - pad));
     const top  = Math.max(12, Math.min(y - 10, window.innerHeight - 260));
     qpop.style.left = left + 'px';
     qpop.style.top  = top + 'px';
 
-    // 삭제 버튼은 편집일 때만
     qDelete.style.display = editingEvent ? '' : 'none';
 
     qback.style.display = 'flex';
     qback.setAttribute('aria-hidden','false');
     setTimeout(()=> qTitle.focus(), 0);
   }
-
-  function closeQuick(){
-    qback.style.display = 'none';
-    qback.setAttribute('aria-hidden','true');
-  }
-
+  function closeQuick(){ qback.style.display = 'none'; qback.setAttribute('aria-hidden','true'); }
   qCancel.onclick = closeQuick;
   qback.addEventListener('click', (e)=>{ if(e.target===qback) closeQuick(); });
 
@@ -398,38 +396,40 @@
   [qStartDate,qEndDate,qStartTime,qEndTime].forEach(el=> el.addEventListener('input', updateWhenText));
 
   qSave.addEventListener('click', ()=>{
-    const title = qTitle.value.trim() || '(제목 없음)';
+    const title  = qTitle.value.trim() || '(제목 없음)';
     const allDay = qAllDay.checked;
 
-    // 날짜/시간 조합
-    const s = parseDateTime(qStartDate.value, allDay ? '00:00' : (qStartTime.value || '20:00'));
-    const e = parseDateTime(qEndDate.value || qStartDate.value, allDay ? '00:00' : (qEndTime.value   || '22:00'));
-    if (!s || !e) return alert('날짜/시간을 확인해 주세요.');
-    if (!allDay && e <= s) return alert('종료가 시작보다 빠를 수 없어요.');
+    if (allDay){
+      const sDay = parseDateOnly(qStartDate.value);
+      const eDay = parseDateOnly(qEndDate.value || qStartDate.value);
+      if(!sDay || !eDay) return alert('날짜를 확인해 주세요.');
+      const startStr = isoDate(sDay);
+      const endExStr = isoDate(addDays(eDay, 1)); // exclusive
 
-    if (editingEvent){ // 업데이트
-      editingEvent.setProp('title', title);
-      editingEvent.setAllDay(allDay);
-      if (allDay){
-        // allDay는 end가 다음날 00:00 (exclusive) 권장
-        const endExclusive = new Date(e); endExclusive.setDate(endExclusive.getDate()+1);
-        editingEvent.setStart(s, { maintainDuration:false });
-        editingEvent.setEnd(endExclusive);
+      if (editingEvent){
+        editingEvent.setAllDay(true);
+        editingEvent.setStart(startStr, { maintainDuration:false }); // 문자열 전달
+        editingEvent.setEnd(endExStr);
+        markDirty(); selectEvent(editingEvent);
       } else {
+        calendar.addEvent({ id: genId(sDay), title, allDay:true, start:startStr, end:endExStr });
+        markDirty();
+      }
+    } else {
+      const s = parseDateTime(qStartDate.value, qStartTime.value || '20:00');
+      const e = parseDateTime(qEndDate.value || qStartDate.value, qEndTime.value || '22:00');
+      if (!s || !e) return alert('날짜/시간을 확인해 주세요.');
+      if (e <= s)   return alert('종료가 시작보다 빠를 수 없어요.');
+
+      if (editingEvent){
+        editingEvent.setAllDay(false);
         editingEvent.setStart(s, { maintainDuration:false });
         editingEvent.setEnd(e);
-      }
-      markDirty();
-      selectEvent(editingEvent); // 우측 상세 갱신용
-    } else { // 새로 만들기
-      const id = genId(s);
-      if (allDay){
-        const endExclusive = new Date(e); endExclusive.setDate(endExclusive.getDate()+1);
-        calendar.addEvent({ id, title, allDay:true, start:s, end:endExclusive });
+        markDirty(); selectEvent(editingEvent);
       } else {
-        calendar.addEvent({ id, title, allDay:false, start:s, end:e });
+        calendar.addEvent({ id: genId(s), title, allDay:false, start:s, end:e });
+        markDirty();
       }
-      markDirty();
     }
     closeQuick();
   });
@@ -444,37 +444,12 @@
       closeQuick();
     }
   });
+  qMore.addEventListener('click', ()=>{ if (editingEvent){ selectEvent(editingEvent, {expandDetail:true}); } closeQuick(); });
 
-  qMore.addEventListener('click', ()=>{
-    // 우측 상세 열고 선택 상태로
-    if (editingEvent){ selectEvent(editingEvent, {expandDetail:true}); }
-    closeQuick();
-  });
-
-  // Enter로 저장 / ESC로 닫기
-  qpop.addEventListener('keydown', (e)=>{
-    if (e.key==='Enter' && (e.target===qTitle)) qSave.click();
-    if (e.key==='Escape') qCancel.click();
-  });
-
-  function updateWhenText(){
-    const allDay = qAllDay.checked;
-    const sd = qStartDate.value, ed = qEndDate.value || sd;
-    if (!sd){ qWhenText.textContent=''; return; }
-    if (allDay){
-      qWhenText.textContent = `${sd} ~ ${ed} (하루 종일)`;
-    } else {
-      const st = qStartTime.value || '20:00';
-      const et = qEndTime.value   || '22:00';
-      qWhenText.textContent = `${sd} ${st} ~ ${ed} ${et}`;
-    }
-  }
-
-  // ========= 우측 상세 패널 =========
+  /* ========== 상세 패널 ========== */
   function selectEvent(ev, opts={}){
     selected = ev;
     if (opts.expandDetail) detail.classList.remove('collapsed');
-
     emptyEl.style.display = 'none';
     cardEl.style.display  = '';
     fTitle.value  = ev.title || '';
@@ -485,12 +460,7 @@
     fDesc.value   = ev.extendedProps?.desc  || '';
     updatePreview();
   }
-  function clearDetail(){
-    selected = null;
-    cardEl.style.display = 'none';
-    emptyEl.style.display = '';
-    imgEl.removeAttribute('src');
-  }
+  function clearDetail(){ selected=null; cardEl.style.display='none'; emptyEl.style.display=''; imgEl.removeAttribute('src'); }
 
   btnApply.onclick = () => {
     if (!selected) return alert('선택된 일정이 없습니다.');
@@ -525,7 +495,7 @@
     } else { evtProg.style.width='0%'; }
   }
 
-  // ===== 저장(GitHub Contents API) =====
+  /* ========== 저장(GitHub) ========== */
   async function saveToGitHub(){
     try{
       const token = prompt('GitHub Personal Access Token(이 레포 Contents:write 권한):');
@@ -534,23 +504,32 @@
       await saveFileToGitHub({ owner:OWNER, repo:REPO, branch:BRANCH, path:PATH, contentObj:data, token });
       markDirty(false);
       alert('커밋 완료! 페이지를 새로고침하면 반영 확인 가능');
-    }catch(err){
-      console.error(err);
-      alert('저장 실패: ' + err.message);
-    }
+    }catch(err){ console.error(err); alert('저장 실패: ' + err.message); }
   }
 
   function eventsToArray(){
-    return calendar.getEvents().map(ev => ({
-      id: ev.id,
-      title: ev.title,
-      start: toKSTISO(ev.start),
-      end:   toKSTISO(ev.end || ev.start),
-      allDay: !!ev.allDay,
-      image: ev.extendedProps?.image || '',
-      desc:  ev.extendedProps?.desc  || '',
-      status: ev.extendedProps?.status || ''
-    }));
+    return calendar.getEvents().map(ev => {
+      if (ev.allDay){
+        // FullCalendar는 allDay end를 "다음날 00:00(exclusive)"로 가짐 → 그대로 YMD 저장
+        const sY = isoDate(ev.start);
+        const eY = isoDate(ev.end || addDays(ev.start,1));
+        return {
+          id: ev.id, title: ev.title, allDay: true,
+          start: sY, end: eY,
+          image: ev.extendedProps?.image || '',
+          desc:  ev.extendedProps?.desc  || '',
+          status: ev.extendedProps?.status || ''
+        };
+      }
+      return {
+        id: ev.id, title: ev.title, allDay: false,
+        start: toKSTISO(ev.start),
+        end:   toKSTISO(ev.end || ev.start),
+        image: ev.extendedProps?.image || '',
+        desc:  ev.extendedProps?.desc  || '',
+        status: ev.extendedProps?.status || ''
+      };
+    });
   }
 
   async function saveFileToGitHub({owner,repo,branch,path,contentObj,token}){
@@ -576,44 +555,23 @@
       },
       body: JSON.stringify(body)
     });
-    if (!putRes.ok){
-      const t = await putRes.text();
-      throw new Error('PUT 실패(' + putRes.status + '): ' + t);
-    }
+    if (!putRes.ok){ const t = await putRes.text(); throw new Error('PUT 실패(' + putRes.status + '): ' + t); }
   }
-  function base64EncodeUnicode(str){
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(_,p)=>String.fromCharCode('0x'+p)));
-  }
+  function base64EncodeUnicode(str){ return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,(_,p)=>String.fromCharCode('0x'+p))); }
 
-  // ===== 유틸 =====
+  /* ========== 유틸 ========== */
   function genId(d){ const pad=n=>n.toString().padStart(2,'0'); return `e-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${Math.random().toString(36).slice(2,6)}`; }
-  function roundToNextHalfHour(d){
-    const x = new Date(d); x.setSeconds(0,0); const m=x.getMinutes(); x.setMinutes(m<30?30:60); return x;
-  }
-  function toLocalInput(dt){
-    if(!dt) return '';
-    const d = new Date(dt);
-    const pad=n=>n.toString().padStart(2,'0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-  // KST(+09:00) ISO 문자열
-  function toKSTISO(dt){
-    if(!dt) return null;
-    const d = new Date(dt);
-    const pad = n=>n.toString().padStart(2,'0');
-    const y=d.getFullYear(), m=pad(d.getMonth()+1), da=pad(d.getDate()), h=pad(d.getHours()), mi=pad(d.getMinutes()), s=pad(d.getSeconds());
-    return `${y}-${m}-${da}T${h}:${mi}:${s}+09:00`;
-  }
-  function fromLocalInput(str){
-    if(!str) return null;
-    return new Date(str.replace('T', ' ') + ':00');
-  }
+  function roundToNextHalfHour(d){ const x = new Date(d); x.setSeconds(0,0); const m=x.getMinutes(); x.setMinutes(m<30?30:60); return x; }
+  function toLocalInput(dt){ if(!dt) return ''; const d=new Date(dt); const p=n=>n.toString().padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+  function toKSTISO(dt){ if(!dt) return null; const d=new Date(dt); const p=n=>n.toString().padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}+09:00`; }
+  function fromLocalInput(str){ if(!str) return null; return new Date(str.replace('T',' ') + ':00'); }
   function fmtKST(d){ return new Date(d).toLocaleString('ko-KR', { timeZone:'Asia/Seoul' }); }
   function isoDate(d){ const x=new Date(d); const p=n=>n.toString().padStart(2,'0'); return `${x.getFullYear()}-${p(x.getMonth()+1)}-${p(x.getDate())}`; }
   function hhmm(d){ const x=new Date(d); const p=n=>n.toString().padStart(2,'0'); return `${p(x.getHours())}:${p(x.getMinutes())}`; }
   function parseDateTime(dstr, tstr){ if(!dstr) return null; const s = tstr || '00:00'; return new Date(`${dstr}T${s}:00`); }
+  function parseDateOnly(yyyy_mm_dd){ if(!yyyy_mm_dd) return null; const [y,m,d]=yyyy_mm_dd.split('-').map(Number); return new Date(y, m-1, d); } /* 로컬 00:00, TZ안전 */
+  function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
 
-  // 우측 상세 값 변경 시 더티/프리뷰
   [fTitle,fStatus,fStart,fEnd,fImage,fDesc].forEach(el=>{
     el.addEventListener('input', ()=>{ if(selected){ updatePreview(); markDirty(); }});
   });
