@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>캘린더 편집</title>
+<style>
+  :root{ --bg:#0d1a1f; --card:#0b1220; --line:#1e2a41; --text:#e6eef2; --muted:#a6b3c2; --accent:#58a6ff; --danger:#ff6b6b }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Arial; background:var(--bg); color:var(--text)}
+  .wrap{max-width:1200px; margin:28px auto; padding:0 16px}
+  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+  .title{font-weight:700; font-size:18px}
+  .actions{display:flex; gap:8px; flex-wrap:wrap}
+  .btn{appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer}
+  .btn:hover{border-color:#38507d}
+  .btn-danger{border-color:#5a2a2a; background:#2a1111}
+  .btn-danger:hover{border-color:#7d3838}
+  .grid{display:grid; grid-template-columns: 420px 1fr; gap:12px}
+  @media (max-width:980px){ .grid{grid-template-columns: 1fr} }
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; min-height:70vh}
+  .panel-head{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line)}
+  .panel-body{padding:12px}
+  .muted{color:var(--muted); font-size:12.5px}
+  /* 목록 */
+  .list{display:flex; flex-direction:column; gap:8px; max-height:70vh; overflow:auto; padding:12px}
+  .item{padding:10px; border:1px solid #25324a; border-radius:10px; display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; background:#0d1629}
+  .item-title{font-weight:600; font-size:14px}
+  .item-sub{font-size:12px; color:var(--muted)}
+  .item .row{display:flex; flex-direction:column}
+  .item .act{display:flex; gap:6px}
+  /* 폼 */
+  form{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  form .full{grid-column:1 / -1}
+  label{font-size:12px; color:#cdd7e5; display:block; margin-bottom:4px}
+  input[type="text"], input[type="url"], input[type="datetime-local"], textarea, select{
+    width:100%; padding:10px; border:1px solid #2a3a58; border-radius:10px; background:#0c1526; color:#e6eef2; font-size:14px;
+  }
+  textarea{min-height:120px; resize:vertical}
+  .hint{font-size:12px; opacity:.8}
+  .hr{height:1px; background:var(--line); margin:10px 0}
+  .right-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+  .pill{display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #334357; background:#0b1526; color:#cfe2ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">캘린더 편집</div>
+    <div class="actions">
+      <a class="btn" href="./" rel="noopener">보기로 이동</a>
+      <button id="btnLoad" class="btn">다시 불러오기</button>
+      <button id="btnImport" class="btn">JSON 가져오기</button>
+      <button id="btnExport" class="btn">JSON 내보내기</button>
+      <button id="btnSaveGit" class="btn">GitHub로 저장</button>
+      <button id="btnBack" class="btn">뒤로</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- 좌: 목록 -->
+    <div class="panel">
+      <div class="panel-head">
+        <div><strong>이벤트 목록</strong> <span class="muted" id="count"></span></div>
+        <div class="right-actions">
+          <button id="btnNew" class="btn">새 이벤트</button>
+          <span class="pill">Asia/Seoul</span>
+        </div>
+      </div>
+      <div class="list" id="list"></div>
+    </div>
+
+    <!-- 우: 편집 폼 -->
+    <div class="panel">
+      <div class="panel-head">
+        <div><strong>이벤트 편집</strong> <span class="muted" id="formState"></span></div>
+        <div class="right-actions">
+          <button id="btnApply" class="btn">변경 적용</button>
+          <button id="btnDelete" class="btn btn-danger">삭제</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <form id="form">
+          <div class="full">
+            <label for="fTitle">제목</label>
+            <input id="fTitle" type="text" placeholder="예: TRPG 세션 #12" required />
+          </div>
+          <div>
+            <label for="fStart">시작</label>
+            <input id="fStart" type="datetime-local" required />
+          </div>
+          <div>
+            <label for="fEnd">종료</label>
+            <input id="fEnd" type="datetime-local" required />
+          </div>
+          <div>
+            <label for="fStatus">상태</label>
+            <select id="fStatus">
+              <option value="">(선택)</option>
+              <option value="planned">planned</option>
+              <option value="ongoing">ongoing</option>
+              <option value="done">done</option>
+            </select>
+          </div>
+          <div>
+            <label for="fId">ID (자동 생성 권장)</label>
+            <input id="fId" type="text" placeholder="e-2025-10-01-01" />
+          </div>
+          <div class="full">
+            <label for="fImage">이미지 URL</label>
+            <input id="fImage" type="url" placeholder="https://..." />
+          </div>
+          <div class="full">
+            <label for="fDesc">설명</label>
+            <textarea id="fDesc" placeholder="세션 정보/링크/메모 등"></textarea>
+          </div>
+          <div class="full hint">※ 입력 시간은 한국 시간(Asia/Seoul) 기준으로 저장됩니다. JSON에는 <code>+09:00</code> 오프셋이 포함돼요.</div>
+        </form>
+        <div class="hr"></div>
+        <div class="muted">저장 대상 파일: <code>/data/schedule.json</code></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ===== 설정 =====
+  const OWNER  = 'tndnjs0322';
+  const REPO   = 'trpg-handouts';
+  const BRANCH = 'main';                 // gh-pages를 쓰면 'gh-pages'로 변경
+  const PATH   = 'data/schedule.json';   // 저장할 경로
+  const SRC    = '../data/schedule.json';// 불러올 경로(이 페이지 위치 기준)
+
+  // ===== 상태 =====
+  let events = [];
+  let selectedIndex = -1;
+  let dirty = false;
+
+  // ===== DOM =====
+  const listEl   = document.getElementById('list');
+  const countEl  = document.getElementById('count');
+  const formEl   = document.getElementById('form');
+  const stateEl  = document.getElementById('formState');
+
+  const fTitle  = document.getElementById('fTitle');
+  const fStart  = document.getElementById('fStart');
+  const fEnd    = document.getElementById('fEnd');
+  const fStatus = document.getElementById('fStatus');
+  const fId     = document.getElementById('fId');
+  const fImage  = document.getElementById('fImage');
+  const fDesc   = document.getElementById('fDesc');
+
+  const btnNew     = document.getElementById('btnNew');
+  const btnApply   = document.getElementById('btnApply');
+  const btnDelete  = document.getElementById('btnDelete');
+  const btnLoad    = document.getElementById('btnLoad');
+  const btnImport  = document.getElementById('btnImport');
+  const btnExport  = document.getElementById('btnExport');
+  const btnSaveGit = document.getElementById('btnSaveGit');
+  const btnBack    = document.getElementById('btnBack');
+
+  // ===== 유틸 =====
+  const pad = n => n.toString().padStart(2,'0');
+  // 'YYYY-MM-DDTHH:MM' -> 'YYYY-MM-DDTHH:MM:00+09:00'
+  function toISO9(localStr){
+    if (!localStr) return '';
+    const [d,t] = localStr.split('T');
+    const ss = (t && t.length<=5) ? ':00' : '';
+    return `${d}T${t}${ss}+09:00`;
+  }
+  // ISO(+09:00 포함/미포함) -> datetime-local 값
+  function isoToLocal(iso){
+    if (!iso) return '';
+    // Date 파싱 후 로컬로 변환
+    const d = new Date(iso);
+    const y = d.getFullYear(), m=pad(d.getMonth()+1), da=pad(d.getDate()), h=pad(d.getHours()), mi=pad(d.getMinutes());
+    return `${y}-${m}-${da}T${h}:${mi}`;
+  }
+  function genId(start, title=''){
+    const d = new Date(start || Date.now());
+    const id = `e-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${Math.random().toString(36).slice(2,6)}`;
+    return id;
+  }
+  function markDirty(v=true){ dirty = v; stateEl.textContent = dirty ? '수정됨' : ''; }
+
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty){ e.preventDefault(); e.returnValue = ''; }
+  });
+
+  // ===== 데이터 로드 =====
+  async function load(){
+    const r = await fetch(SRC, { cache:'no-store' });
+    events = r.ok ? (await r.json()) : [];
+    renderList();
+    clearForm();
+    markDirty(false);
+  }
+
+  // ===== 목록 렌더 =====
+  function renderList(){
+    countEl.textContent = `(${events.length}개)`;
+    listEl.innerHTML = '';
+    const sorted = [...events].sort((a,b)=> (a.start||'').localeCompare(b.start||''));
+    sorted.forEach(ev=>{
+      const idx = events.indexOf(ev);
+      const item = document.createElement('div');
+      item.className = 'item';
+      const when = ev.start ? new Date(ev.start) : null;
+      const when2 = ev.end ? new Date(ev.end) : null;
+      const sub = [when?.toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}) || '', when2?(' ~ '+when2.toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})):'', ev.status?` · ${ev.status}`:'' ].join('');
+      item.innerHTML = `
+        <div class="row">
+          <div class="item-title">${escapeHtml(ev.title || '(제목 없음)')}</div>
+          <div class="item-sub">${escapeHtml(sub)}</div>
+        </div>
+        <div class="act">
+          <button class="btn" data-act="edit">편집</button>
+          <button class="btn btn-danger" data-act="del">삭제</button>
+        </div>
+      `;
+      item.querySelector('[data-act="edit"]').onclick = () => { select(idx); };
+      item.querySelector('[data-act="del"]').onclick = () => { if (confirm('이 이벤트를 삭제할까요?')) { events.splice(idx,1); renderList(); if (selectedIndex===idx) clearForm(); markDirty(); } };
+      listEl.appendChild(item);
+    });
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+  // ===== 선택/폼 =====
+  function select(idx){
+    selectedIndex = idx;
+    const ev = events[idx];
+    fTitle.value  = ev.title || '';
+    fStart.value  = isoToLocal(ev.start);
+    fEnd.value    = isoToLocal(ev.end);
+    fStatus.value = ev.status || '';
+    fId.value     = ev.id || '';
+    fImage.value  = ev.image || '';
+    fDesc.value   = ev.desc || '';
+  }
+  function clearForm(){
+    selectedIndex = -1;
+    formEl.reset();
+    fId.value = '';
+  }
+
+  // ===== 이벤트 적용/삭제/신규 =====
+  btnNew.onclick = () => { clearForm(); fTitle.focus(); };
+  btnApply.onclick = () => {
+    const title = fTitle.value.trim();
+    const start = toISO9(fStart.value);
+    const end   = toISO9(fEnd.value);
+    if (!title || !start || !end){ alert('제목/시작/종료는 필수입니다.'); return; }
+    if (new Date(start) > new Date(end)){ alert('종료가 시작보다 빠를 수 없어요.'); return; }
+
+    const ev = {
+      id: (fId.value.trim() || genId(start, title)),
+      title, start, end,
+      image: fImage.value.trim(),
+      desc:  fDesc.value,
+      status: fStatus.value
+    };
+
+    if (selectedIndex >= 0){ events[selectedIndex] = ev; }
+    else { events.push(ev); selectedIndex = events.length - 1; }
+    renderList();
+    markDirty();
+    alert('적용 완료(임시). 상단 "GitHub로 저장"을 눌러 커밋하세요!');
+  };
+
+  btnDelete.onclick = () => {
+    if (selectedIndex < 0){ alert('선택된 이벤트가 없습니다.'); return; }
+    if (!confirm('삭제할까요?')) return;
+    events.splice(selectedIndex,1);
+    renderList();
+    clearForm();
+    markDirty();
+  };
+
+  // ===== 가져오기/내보내기 =====
+  btnImport.onclick = async () => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'application/json';
+    input.onchange = async () => {
+      const file = input.files[0]; if (!file) return;
+      try{
+        const txt = await file.text();
+        const data = JSON.parse(txt);
+        if (!Array.isArray(data)) throw new Error('배열 JSON이 아님');
+        events = data;
+        renderList(); clearForm(); markDirty();
+      }catch(e){ alert('JSON 파싱 실패: ' + e.message); }
+    };
+    input.click();
+  };
+  btnExport.onclick = () => {
+    const blob = new Blob([JSON.stringify(events, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'schedule.json';
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  // ===== GitHub 저장 =====
+  btnSaveGit.onclick = async () => {
+    try{
+      if (!events || !Array.isArray(events)) throw new Error('저장할 데이터가 없습니다.');
+      const token = prompt('GitHub Personal Access Token(해당 레포 Contents:write 권한):');
+      if (!token) return;
+
+      await saveFileToGitHub({
+        owner: OWNER, repo: REPO, branch: BRANCH, path: PATH, contentObj: events, token
+      });
+      markDirty(false);
+      alert('커밋 완료! (뷰 페이지 새로고침 시 반영됩니다)');
+    }catch(err){
+      console.error(err);
+      alert('저장 실패: ' + err.message);
+    }
+  };
+
+  async function saveFileToGitHub({owner,repo,branch,path,contentObj,token}){
+    const apiBase = 'https://api.github.com';
+    const getUrl  = `${apiBase}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
+
+    // 1) 현재 파일 SHA 조회(있으면 업데이트, 없으면 신규 생성)
+    let sha;
+    const getRes = await fetch(getUrl, { headers: { 'Accept':'application/vnd.github+json' } });
+    if (getRes.ok){ const meta = await getRes.json(); sha = meta.sha; }
+    else if (getRes.status !== 404){ throw new Error('기존 파일 조회 실패(' + getRes.status + ')'); }
+
+    // 2) Base64 인코딩 후 PUT
+    const json = JSON.stringify(contentObj, null, 2);
+    const b64  = base64EncodeUnicode(json);
+    const putUrl = `${apiBase}/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+    const body = { message:`chore(schedule): update ${path}`, content:b64, branch, ...(sha ? {sha}: {}) };
+
+    const putRes = await fetch(putUrl, {
+      method: 'PUT',
+      headers: { 'Accept':'application/vnd.github+json', 'Authorization': `token ${token}`, 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!putRes.ok){
+      const t = await putRes.text();
+      throw new Error('PUT 실패(' + putRes.status + '): ' + t);
+    }
+  }
+  function base64EncodeUnicode(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_,p1)=>String.fromCharCode('0x'+p1)));
+  }
+
+  // ===== 기타 =====
+  document.querySelectorAll('input,textarea,select').forEach(el=>{
+    el.addEventListener('input', ()=> markDirty());
+  });
+  btnLoad.onclick = () => { if (!dirty || confirm('수정사항이 사라집니다. 다시 불러올까요?')) load(); };
+  btnBack.onclick = () => history.length>1 ? history.back() : (location.href = './');
+
+  // 초기 로드
+  load();
+})();
+</script>
+</body>
+</html>
