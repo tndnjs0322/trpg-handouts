@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>네버엔딩 크툴루 1호점 일정 캘린더</title>
 
+<!-- FullCalendar -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/locales-all.global.min.js"></script>
@@ -13,6 +14,12 @@
   :root{
     --bg:#0c171b; --card:#0b1220; --line:#20304f; --text:#e6eef2; --muted:#a6b3c2;
     --accent:#58a6ff; --danger:#ff6b6b; --ok:#57d19a;
+
+    /* 캘린더 프레임/패딩 */
+    --cal-pad-top: 8px;
+    --cal-pad-right: 14px;
+    --cal-pad-bottom: 14px;
+    --cal-pad-left: 12px;
   }
   *{box-sizing:border-box}
   body{
@@ -38,7 +45,12 @@
   .panel{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 18%) , var(--card);
     border:1px solid var(--line); border-radius:16px; overflow:hidden;
     height:calc(100vh - 150px); min-height:620px; box-shadow:0 8px 50px rgba(0,0,0,.25)}
-  #calendar{height:100%; padding:8px}
+  /* 캘린더 컨테이너 */
+  #calendar{
+    position: relative;
+    height:100%;
+    padding: var(--cal-pad-top) var(--cal-pad-right) var(--cal-pad-bottom) var(--cal-pad-left) !important;
+  }
 
   /* 월/연 이동 바 */
   .navbar{display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--line); background:#0b1220}
@@ -107,26 +119,33 @@
   /* 공휴일 배경 */
   .fc .fc-bg-event.holiday{background:rgba(255,107,107,.14)}
 
-  /* ── FullCalendar 그리드 보정(선 잘림 방지, 모든 뷰 공통) ───────────────── */
-  #calendar{
-    padding: 8px 10px 10px 8px; /* 오른쪽/아래쪽 살짝 더 띄움 */
-  }
+  /* ====== 선 잘림 0% 패치: 내부 테두리 제거 + 오버레이 프레임 ====== */
   #calendar .fc-scrollgrid{
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;            /* 내부만 클리핑 */
-    margin-right: 1px;           /* 부모 overflow와 이격 */
-    margin-bottom: 1px;
+    border: 0 !important;
+    border-radius: 12px !important;
+    overflow: hidden;           /* 내부만 깔끔하게 클립 */
+    margin: 0 !important;
     background-clip: padding-box;
   }
-  #calendar .fc-scrollgrid table{
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
+  /* 실제 1px 프레임은 오버레이로 그림(overflow 영향 없음) */
+  #calendar::after{
+    content:"";
+    position:absolute;
+    left:  var(--cal-pad-left);
+    top:   var(--cal-pad-top);
+    right: var(--cal-pad-right);
+    bottom:var(--cal-pad-bottom);
+    border:1px solid var(--line);
+    border-radius:12px;
+    pointer-events:none;
   }
+  /* 셀/헤더 경계선 색 통일 */
   .fc-theme-standard td,
-  .fc-theme-standard th{ border-color: var(--line); }
+  .fc-theme-standard th{ border-color: var(--line) !important; }
   .fc .fc-timegrid-slot,
-  .fc .fc-timegrid-axis{ border-color: var(--line); }
+  .fc .fc-timegrid-axis{ border-color: var(--line) !important; }
+  /* HiDPI 경계 흐림 방지 */
+  .fc .fc-daygrid-day-frame{ transform: translateZ(0); }
 </style>
 </head>
 <body>
@@ -452,7 +471,7 @@
   function parseDateTime(dstr, tstr){ if(!dstr) return null; const s=tstr||'00:00'; return new Date(`${dstr}T${s}:00`); }
   function parseDateOnly(yyyy_mm_dd){ if(!yyyy_mm_dd) return null; const [y,m,d]=yyyy_mm_dd.split('-').map(Number); return new Date(y, m-1, d); }
   function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-  function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[c])); }
+  function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&gt;','>':'&lt;','"':'&quot;', "'":'&#39;' }[c])); }
   function roundToNextHalfHour(d){ const x=new Date(d); x.setSeconds(0,0); const m=x.getMinutes(); x.setMinutes(m<30?30:60); return x; }
   function isYMD(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
 
