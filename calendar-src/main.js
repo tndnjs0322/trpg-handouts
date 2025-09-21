@@ -1,8 +1,6 @@
 import '@toast-ui/calendar/dist/toastui-calendar.min.css';
 import 'tui-date-picker/dist/tui-date-picker.min.css';
 import 'tui-time-picker/dist/tui-time-picker.min.css';
-import './main.css';
-
 import Calendar from '@toast-ui/calendar';
 
 const el = document.getElementById('calendar');
