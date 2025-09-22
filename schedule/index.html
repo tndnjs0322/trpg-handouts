@@ -33,7 +33,7 @@
   .btn{
     appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff;
     border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer;
-    display:inline-flex; align-items:center; line-height:1;
+    display:inline-flex; align-items:center; line-height:1; text-decoration:none;
   }
   .btn:hover{border-color:#38507d}
   .btn-danger{border-color:#5a2a2a; background:#2a1111}
@@ -101,7 +101,6 @@
   .chip-cat .dot{width:8px; height:8px; border-radius:50%}
   .chip-cat.active{outline:2px solid #35507d}
 
-  /* 공용 모달 */
   .qback{position:fixed; inset:0; display:none; align-items:flex-start; justify-content:flex-start; background:transparent; z-index:9999}
   .qpop{position:absolute; width:min(540px, calc(100vw - 24px)); background:#0b1220; border:1px solid #1e2a41; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.45); padding:12px}
   .qrow{display:grid; grid-template-columns:1fr; gap:8px; margin-top:6px}
@@ -140,7 +139,6 @@
     background: rgba(88,166,255,.08);
     box-shadow: inset 0 0 0 2px #58a6ff66;
   }
-  /* (원형 배지 제거) */
   .fc .fc-daygrid-day.is-today .fc-daygrid-day-number{ color:inherit; font-weight:700 }
   .fc .fc-daygrid-day.is-today .fc-daygrid-day-number::before{ content:none }
 </style>
@@ -157,8 +155,8 @@
       <button class="btn" id="btnNew">새 일정</button>
       <button class="btn btn-danger" id="btnDel">선택 삭제</button>
       <button class="btn" id="btnSave">GitHub로 저장</button>
-      <button class="btn" id="btnBack">뒤로</button>
-      <a class="btn" href="../">홈</a>
+      <!-- 메인으로 -->
+      <a class="btn" href="../">메인</a>
     </div>
   </header>
 
@@ -439,7 +437,7 @@
   function parseDateTime(d,t){ if(!d) return null; const s=t||'00:00'; return new Date(`${d}T${s}:00`) }
   function parseDateOnly(s){ if(!s) return null; const [y,m,dd]=s.split('-').map(Number); return new Date(y,m-1,dd) }
   function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x }
-  function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&gt;','>':'&lt;','"':'&quot;', "'":'&#39;' }[c])) }
+  function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&gt;','>':'&lt;', '"':'&quot;', "'":'&#39;' }[c])) }
   function roundToNextHalfHour(d){ const x=new Date(d); x.setSeconds(0,0); const m=x.getMinutes(); x.setMinutes(m<30?30:60); return x }
   function isYMD(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s) }
 
@@ -502,6 +500,32 @@
     calendar.render();
     applyTodayHighlight();
 
+    /* 🔵 실시간 시각 & 자정 처리 */
+    function updateClockAndDaily() {
+      const now = new Date();
+
+      // 칩(오후 HH:MM) 갱신
+      chipNow.textContent = now.toLocaleTimeString('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        hour: '2-digit',
+        minute: '2-digit',
+        // second: '2-digit', // 초까지 보이게 하려면 주석 해제
+      });
+
+      // 선택 이벤트 진행률 실시간 반영
+      if (selected) updatePreview();
+
+      // 자정 넘어가면 오늘 관련 갱신
+      const key = ymd(now);
+      if (updateClockAndDaily.__lastKey !== key) {
+        updateClockAndDaily.__lastKey = key;
+        renderRail();
+        applyTodayHighlight();
+      }
+    }
+    updateClockAndDaily();
+    setInterval(updateClockAndDaily, 1000); // 1초마다 갱신
+
     history.replaceState({view:calendar.view.type, date:ymd(calendar.getDate())}, '', ''); _fcFirstStateSet=true;
     window.addEventListener('popstate',e=>{
       if(!e.state) return; _isPopNavigating=true;
@@ -547,7 +571,7 @@
     selYear.value=d.getFullYear(); selMonth.value=(d.getMonth()+1);
   }
 
-  /* 오늘 셀 하이라이트 클래스 부여 */
+  /* 오늘 셀 하이라이트 */
   function applyTodayHighlight(){
     const today=new Date();
     const y=today.getFullYear(), m=String(today.getMonth()+1).padStart(2,'0'), d=String(today.getDate()).padStart(2,'0');
@@ -557,10 +581,7 @@
     if(el) el.classList.add('is-today');
   }
 
-  /* Quick 팝업 등 이하 동일… (기능은 기존과 동일) */
-
-  /* --- 이하 스크립트는 이전 메시지와 동일하니 생략 없이 그대로 붙여둠 --- */
-  /* Quick */
+  /* Quick 팝업 */
   function openQuick({anchor,start,end,allDay,title,event=null}){
     editingEvent=event;
     qTitle.value=title||'';
@@ -635,7 +656,7 @@
 
   /* Rail */
   function renderRail(){
-    const now=new Date(); chipNow.textContent=now.toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});
+    const now=new Date(); chipNow.textContent=now.toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});
     const todayStr=isoDate(now);
     const todays=calendar.getEvents().filter(ev=>{
       if(ev.display==='none') return false;
