@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>네버엔딩 크툴루 1호점- 일정 캘린더</title>
+<title>네엔크1호점- 일정 캘린더</title>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -29,7 +29,7 @@
   .title{font-weight:700; font-size:18px}
   .actions{display:flex; gap:8px; flex-wrap:wrap}
 
-  /* ← 버튼/칩 세로 가운데 + 베이스라인 오차 제거 */
+  /* 버튼/칩: 세로 중앙 & 베이스라인 오차 제거 */
   .btn{
     appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff;
     border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer;
@@ -133,12 +133,27 @@
   .fc-theme-standard td,.fc-theme-standard th{ border-color:var(--line)!important }
   .fc .fc-timegrid-slot,.fc .fc-timegrid-axis{ border-color:var(--line)!important }
   .fc .fc-daygrid-day-frame{ transform:translateZ(0) }
+
+  /* ── 오늘 날짜 하이라이트 (원형 배지 + 은은한 배경) ───────────────── */
+  .fc .fc-daygrid-day.is-today .fc-daygrid-day-frame{
+    background: rgba(88,166,255,.08);
+    /* 기본 .fc-day-today보다 확실히 보이게 */
+  }
+  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number{
+    position:relative; z-index:1; color:#0b1b2b; font-weight:700;
+  }
+  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number::before{
+    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:26px; height:26px; border-radius:50%;
+    background:#a9c7ff; box-shadow:0 0 0 2px #58a6ff33;
+    z-index:-1;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="title">잃어버린 연대기<span id="dirty" class="muted"></span></div>
+    <div class="title"> 잃어버린 연대기<span id="dirty" class="muted"></span></div>
     <div class="actions">
       <button class="btn" id="btnMonth">월간</button>
       <button class="btn" id="btnWeek">주간</button>
@@ -173,7 +188,6 @@
         <div class="card">
           <h3>오늘</h3>
           <div id="todayLine" class="muted"></div>
-          <!-- 여기 align-items:center 추가! -->
           <div style="display:flex; gap:8px; margin-top:10px; align-items:center">
             <button class="btn" id="btnQuickToday">오늘 20:00로</button>
             <span class="chip" id="chipNow"></span>
@@ -220,7 +234,7 @@
           <div>
             <div class="hint">카테고리</div>
             <div style="display:flex; gap:8px; align-items:center">
-              <input id="fCat" type="text" list="catlist2" placeholder="예: CoC 7e / 룰: 전투" />
+              <input id="fCat" type="text" list="catlist2" placeholder="예: CoC 7e / 룰: 전투 / 세션" />
               <input id="fCatColor" type="color" title="카테고리 색" />
             </div>
             <datalist id="catlist2"></datalist>
@@ -255,7 +269,7 @@
   </div>
 </div>
 
-<!-- 퀵 편집 팝업 / 카테고리 관리자 팝업은 이전과 동일 (길어서 생략 안 함) -->
+<!-- 퀵 편집 팝업 -->
 <div class="qback" id="qback" aria-hidden="true">
   <div class="qpop" id="qpop" role="dialog" aria-modal="true">
     <input id="qTitle" class="qtitle" type="text" placeholder="제목 및 시간 추가" />
@@ -289,6 +303,7 @@
   </div>
 </div>
 
+<!-- 카테고리 관리자 -->
 <div class="qback" id="catBack" aria-hidden="true">
   <div class="qpop" id="catPop" role="dialog" aria-modal="true" style="width:min(760px, calc(100vw - 24px))">
     <h3 style="margin:0 0 6px">카테고리 색/목록 관리</h3>
@@ -305,7 +320,6 @@
     <div class="qactions">
       <button class="btn" id="catCancel">닫기</button>
       <button class="btn" id="catSave">카테고리 저장(GitHub)</button>
-      <!-- 필요하면 로컬 저장 버튼도 여기 추가 가능 -->
     </div>
   </div>
 </div>
@@ -455,11 +469,14 @@
 
   function initCalendar(events){
     calendar=new FullCalendar.Calendar(calEl,{
-      locale:'ko', timeZone:'Asia/Seoul', height:'100%', initialView:'dayGridMonth', headerToolbar:false,
+      locale:'ko', timeZone:'Asia/Seoul', height:'100%',
+      now: () => new Date(),               /* ← 오늘 기준 고정 방지 */
+      initialView:'dayGridMonth', headerToolbar:false,
       progressiveEventRendering:true, editable:true, selectable:true, selectMirror:true,
       events:[...holidayEvents, ...events.map(toFCEvt)],
       datesSet:(info)=>{
         updateYMBar(info);
+        applyTodayHighlight();             /* ← 뷰 바뀔 때마다 적용 */
         if(_isPopNavigating){ _isPopNavigating=false; return; }
         const st={view:info.view.type, date:ymd(calendar.getDate())};
         if(_fcFirstStateSet) history.pushState(st,'',''); else { history.replaceState(st,'',''); _fcFirstStateSet=true; }
@@ -487,6 +504,7 @@
       }
     });
     calendar.render();
+    applyTodayHighlight();                 /* ← 최초 렌더 후 한 번 */
 
     history.replaceState({view:calendar.view.type, date:ymd(calendar.getDate())}, '', ''); _fcFirstStateSet=true;
     window.addEventListener('popstate',e=>{
@@ -496,13 +514,13 @@
         if(view&&date) calendar.changeView(view,new Date(date));
         else if(date) calendar.gotoDate(new Date(date));
         else if(view) calendar.changeView(view);
-      }finally{ setTimeout(()=>{_isPopNavigating=false},0); }
+      }finally{ setTimeout(()=>{_isPopNavigating=false; applyTodayHighlight();},0); }
     });
 
-    btnMonth.onclick=()=>calendar.changeView('dayGridMonth');
-    btnWeek.onclick =()=>calendar.changeView('timeGridWeek');
-    btnList.onclick =()=>calendar.changeView('listMonth');
-    btnToday.onclick=()=>calendar.today();
+    btnMonth.onclick=()=>{ calendar.changeView('dayGridMonth'); setTimeout(applyTodayHighlight,0); };
+    btnWeek.onclick =()=>{ calendar.changeView('timeGridWeek'); };
+    btnList.onclick =()=>{ calendar.changeView('listMonth'); };
+    btnToday.onclick=()=>{ calendar.today(); setTimeout(applyTodayHighlight,0); };
     btnNew.onclick  =()=>{const s=roundToNextHalfHour(new Date()); openQuick({anchor:null,start:s,end:new Date(s.getTime()+2*3600*1000),allDay:false,title:''});};
     btnDel.onclick  =()=>{ if(selected){ if(confirm('선택된 일정을 삭제할까요?')){ selected.remove(); clearDetail(); markDirty(); renderRail(); renderCatUI(); } } else alert('선택된 일정이 없습니다.'); };
     btnDel2.onclick =()=>btnDel.onclick();
@@ -531,6 +549,16 @@
     const d=calendar.getDate(), p=n=>String(n).padStart(2,'0');
     lblYM.textContent=`${d.getFullYear()}.${p(d.getMonth()+1)}`;
     selYear.value=d.getFullYear(); selMonth.value=(d.getMonth()+1);
+  }
+
+  /* 오늘 셀 원형 배지 적용 */
+  function applyTodayHighlight(){
+    const today=new Date();
+    const y=today.getFullYear(), m=String(today.getMonth()+1).padStart(2,'0'), d=String(today.getDate()).padStart(2,'0');
+    const key=`${y}-${m}-${d}`;
+    calEl.querySelectorAll('.fc-daygrid-day.is-today').forEach(el=>el.classList.remove('is-today'));
+    const el=calEl.querySelector(`.fc-daygrid-day[data-date="${key}"]`);
+    if(el) el.classList.add('is-today');
   }
 
   /* Quick */
