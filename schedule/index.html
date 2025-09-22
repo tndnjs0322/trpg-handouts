@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>네엔크1호점- 일정 캘린더</title>
+<title>캠페인 일정</title>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -29,7 +29,7 @@
   .title{font-weight:700; font-size:18px}
   .actions{display:flex; gap:8px; flex-wrap:wrap}
 
-  /* 버튼/칩: 세로 중앙 & 베이스라인 오차 제거 */
+  /* 버튼/칩 */
   .btn{
     appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff;
     border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer;
@@ -122,7 +122,7 @@
 
   .fc .fc-bg-event.holiday{background:rgba(255,107,107,.14)}
 
-  /* 선 잘림 방지: 내부 테두리 제거 + 오버레이 */
+  /* 선 잘림 방지 */
   #calendar .fc-scrollgrid{ border:0!important; border-radius:12px!important; overflow:hidden; margin:0!important; background-clip:padding-box; }
   #calendar::after{
     content:""; position:absolute;
@@ -134,26 +134,21 @@
   .fc .fc-timegrid-slot,.fc .fc-timegrid-axis{ border-color:var(--line)!important }
   .fc .fc-daygrid-day-frame{ transform:translateZ(0) }
 
-  /* ── 오늘 날짜 하이라이트 (원형 배지 + 은은한 배경) ───────────────── */
+  /* ── 오늘 날짜 하이라이트: 셀만 은은하게 (배지 없음) ── */
+  .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame,
   .fc .fc-daygrid-day.is-today .fc-daygrid-day-frame{
     background: rgba(88,166,255,.08);
-    /* 기본 .fc-day-today보다 확실히 보이게 */
+    box-shadow: inset 0 0 0 2px #58a6ff66;
   }
-  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number{
-    position:relative; z-index:1; color:#0b1b2b; font-weight:700;
-  }
-  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number::before{
-    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:26px; height:26px; border-radius:50%;
-    background:#a9c7ff; box-shadow:0 0 0 2px #58a6ff33;
-    z-index:-1;
-  }
+  /* (원형 배지 제거) */
+  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number{ color:inherit; font-weight:700 }
+  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number::before{ content:none }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="title"> 잃어버린 연대기<span id="dirty" class="muted"></span></div>
+    <div class="title">캠페인 일정 <span id="dirty" class="muted"></span></div>
     <div class="actions">
       <button class="btn" id="btnMonth">월간</button>
       <button class="btn" id="btnWeek">주간</button>
@@ -470,13 +465,13 @@
   function initCalendar(events){
     calendar=new FullCalendar.Calendar(calEl,{
       locale:'ko', timeZone:'Asia/Seoul', height:'100%',
-      now: () => new Date(),               /* ← 오늘 기준 고정 방지 */
+      now: () => new Date(),
       initialView:'dayGridMonth', headerToolbar:false,
       progressiveEventRendering:true, editable:true, selectable:true, selectMirror:true,
       events:[...holidayEvents, ...events.map(toFCEvt)],
       datesSet:(info)=>{
         updateYMBar(info);
-        applyTodayHighlight();             /* ← 뷰 바뀔 때마다 적용 */
+        applyTodayHighlight();
         if(_isPopNavigating){ _isPopNavigating=false; return; }
         const st={view:info.view.type, date:ymd(calendar.getDate())};
         if(_fcFirstStateSet) history.pushState(st,'',''); else { history.replaceState(st,'',''); _fcFirstStateSet=true; }
@@ -504,7 +499,7 @@
       }
     });
     calendar.render();
-    applyTodayHighlight();                 /* ← 최초 렌더 후 한 번 */
+    applyTodayHighlight();
 
     history.replaceState({view:calendar.view.type, date:ymd(calendar.getDate())}, '', ''); _fcFirstStateSet=true;
     window.addEventListener('popstate',e=>{
@@ -551,7 +546,7 @@
     selYear.value=d.getFullYear(); selMonth.value=(d.getMonth()+1);
   }
 
-  /* 오늘 셀 원형 배지 적용 */
+  /* 오늘 셀 하이라이트 클래스 부여 */
   function applyTodayHighlight(){
     const today=new Date();
     const y=today.getFullYear(), m=String(today.getMonth()+1).padStart(2,'0'), d=String(today.getDate()).padStart(2,'0');
@@ -561,6 +556,9 @@
     if(el) el.classList.add('is-today');
   }
 
+  /* Quick 팝업 등 이하 동일… (기능은 기존과 동일) */
+
+  /* --- 이하 스크립트는 이전 메시지와 동일하니 생략 없이 그대로 붙여둠 --- */
   /* Quick */
   function openQuick({anchor,start,end,allDay,title,event=null}){
     editingEvent=event;
@@ -747,7 +745,7 @@
       colorI.addEventListener('input',()=>{ hexI.value=colorI.value.toUpperCase(); });
       hexI.addEventListener('input',()=>{ const v=normalizeHex(hexI.value); if(v) colorI.value=v; });
 
-      btnPick.addEventListener('click',async()=>{ if(!('EyeDropper' in window)) return alert('이 브라우저는 스포이드를 지원하지 않아요.'); try{ const eye=new EyeDropper(); const r=await eye.open(); colorI.value=r.sRGBHex.toUpperCase(); hexI.value=r.sRGBHex.toUpperCase(); }catch(_){} });
+      btnPick.addEventListener('click',async()=>{ if(!('EyeDropper' in window)) return alert('이 브라우저는 스포이드를 지원하지 않아요.'); try{ const eye=new EyeDropper(); const r=await eye.open(); const hex=r.sRGBHex.toUpperCase(); colorI.value=hex; hexI.value=hex; }catch(_){} });
 
       btnApply.addEventListener('click',()=>{
         const newName=(nameI.value||'').trim(); const hx=normalizeHex(hexI.value); if(!newName) return alert('이름을 입력하세요.');
