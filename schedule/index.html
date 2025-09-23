@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>네엔크 1호점- 일정 캘린더</title>
+<title>네엔크 1호점 - 일정 캘린더</title>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -133,7 +133,7 @@
   .fc .fc-timegrid-slot,.fc .fc-timegrid-axis{ border-color:var(--line)!important }
   .fc .fc-daygrid-day-frame{ transform:translateZ(0) }
 
-  /* ── 오늘 날짜 하이라이트: 셀만 은은하게 (배지 없음) ── */
+  /* ── 오늘 날짜 하이라이트 ── */
   .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame,
   .fc .fc-daygrid-day.is-today .fc-daygrid-day-frame{
     background: rgba(88,166,255,.08);
@@ -155,8 +155,7 @@
       <button class="btn" id="btnNew">새 일정</button>
       <button class="btn btn-danger" id="btnDel">선택 삭제</button>
       <button class="btn" id="btnSave">GitHub로 저장</button>
-      <button class="btn" id="btnBack">뒤로</button>
-      <!-- 메인으로 -->
+      <button class="btn" id="btnBack" type="button">뒤로</button>
       <a class="btn" href="../">메인</a>
     </div>
   </header>
@@ -344,17 +343,6 @@
   const btnDel=document.getElementById('btnDel');
   const btnSave=document.getElementById('btnSave');
   const btnBack=document.getElementById('btnBack');
-  if (btnBack) {
-  btnBack.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      // 히스토리가 없으면 메인으로 (원하면 다른 경로로 바꿔도 됨)
-      location.href = '../';
-    }
-  });
-}
 
   const navPrevYear=document.getElementById('navPrevYear');
   const navPrevMonth=document.getElementById('navPrevMonth');
@@ -442,7 +430,14 @@
   const pad=n=>String(n).padStart(2,'0');
   function toLocalInput(dt){ if(!dt) return ''; const d=new Date(dt); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}` }
   function toKSTISO(dt){ if(!dt) return null; const d=new Date(dt); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}+09:00` }
-  function fromLocalInput(str){ return str? new Date(str.replace('T',' ')+':00'):null }
+  /* ✅ datetime-local 안전 파서 (로컬 시각 그대로) */
+  function fromLocalInput(str){
+    if (!str) return null;
+    const d = new Date(str); // 'YYYY-MM-DDTHH:mm' 그대로 파싱
+    if (Number.isNaN(d.getTime())) return null;
+    d.setSeconds(0, 0);
+    return d;
+  }
   function fmtKST(d){ return new Date(d).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}) }
   function isoDate(d){ const x=new Date(d); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}` }
   function hhmm(d){ const x=new Date(d); return `${pad(x.getHours())}:${pad(x.getMinutes())}` }
@@ -515,28 +510,16 @@
     /* 🔵 실시간 시각 & 자정 처리 */
     function updateClockAndDaily() {
       const now = new Date();
-
-      // 칩(오후 HH:MM) 갱신
-      chipNow.textContent = now.toLocaleTimeString('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        hour: '2-digit',
-        minute: '2-digit',
-        // second: '2-digit', // 초까지 보이게 하려면 주석 해제
-      });
-
-      // 선택 이벤트 진행률 실시간 반영
+      chipNow.textContent = now.toLocaleTimeString('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit' });
       if (selected) updatePreview();
-
-      // 자정 넘어가면 오늘 관련 갱신
       const key = ymd(now);
       if (updateClockAndDaily.__lastKey !== key) {
         updateClockAndDaily.__lastKey = key;
-        renderRail();
-        applyTodayHighlight();
+        renderRail(); applyTodayHighlight();
       }
     }
     updateClockAndDaily();
-    setInterval(updateClockAndDaily, 1000); // 1초마다 갱신
+    setInterval(updateClockAndDaily, 1000);
 
     history.replaceState({view:calendar.view.type, date:ymd(calendar.getDate())}, '', ''); _fcFirstStateSet=true;
     window.addEventListener('popstate',e=>{
@@ -557,7 +540,18 @@
     btnDel.onclick  =()=>{ if(selected){ if(confirm('선택된 일정을 삭제할까요?')){ selected.remove(); clearDetail(); markDirty(); renderRail(); renderCatUI(); } } else alert('선택된 일정이 없습니다.'); };
     btnDel2.onclick =()=>btnDel.onclick();
     btnSave.onclick =saveAllToGitHub;
-    btnBack.addEventListener('click',e=>{e.preventDefault(); history.back();});
+
+    /* ✅ 뒤로 버튼 (히스토리 없으면 메인으로) */
+    if (btnBack) {
+      btnBack.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          location.href = new URL('..', location.href).href;
+        }
+      });
+    }
 
     btnQuickToday.onclick=()=>{ const base=new Date(); base.setHours(20,0,0,0);
       openQuick({anchor:null,start:base,end:new Date(base.getTime()+2*3600*1000),allDay:false,title:''}); };
@@ -642,15 +636,52 @@
     fTitle.value=ev.title||''; fStatus.value=ev.extendedProps?.status||''; fStart.value=toLocalInput(ev.start); fEnd.value=toLocalInput(ev.end||ev.start);
     fImage.value=ev.extendedProps?.image||''; fDesc.value=ev.extendedProps?.desc||''; const catName=ev.extendedProps?.category||''; fCat.value=catName; fCatColor.value=normalizeHex(catColor(catName))||'#58A6FF'; populateCatDatalists(); updatePreview(); }
   function clearDetail(){ selected=null; document.getElementById('card').style.display='none'; rail.style.display='grid'; imgEl.removeAttribute('src'); }
-  fCat.addEventListener('input',()=>{ fCatColor.value=normalizeHex(catColor(fCat.value))||'#58A6FF'; });
-  fCatColor.addEventListener('input',()=>{ const nm=(fCat.value||'').trim(); const hx=normalizeHex(fCatColor.value); if(nm&&hx){ catColors[nm]=hx; refreshEvents(); renderCatUI(); }});
+
+  /* ✅ 폼 변경 시 선택 이벤트에 즉시 반영 */
+  function applyFormToSelectedIfPossible() {
+    if (!selected) return;
+    const title = (fTitle.value || '').trim();
+    if (title) selected.setProp('title', title);
+
+    const start = fromLocalInput(fStart.value);
+    const end   = fromLocalInput(fEnd.value || fStart.value);
+    if (start && end && end > start) {
+      selected.setStart(start, { maintainDuration: false });
+      selected.setEnd(end);
+    }
+
+    const cat = (fCat.value || '').trim();
+    selected.setExtendedProp('category', cat);
+    const hx = (fCatColor.value || '').toUpperCase();
+    if (cat && /^#[0-9A-F]{6}$/.test(hx)) {
+      catColors[cat] = hx;
+    }
+
+    markDirty(true);
+    updatePreview();
+    renderRail();
+    renderCatUI();
+    applyCategoryFilter();
+    refreshEvents();
+  }
+
+  /* 변경 적용(버튼) — 안전망 */
   btnApply.onclick=()=>{ if(!selected) return alert('선택된 일정이 없습니다.');
     const title=fTitle.value.trim(), start=fromLocalInput(fStart.value), end=fromLocalInput(fEnd.value);
     if(!title||!start||!end) return alert('제목/시작/종료는 필수입니다.'); if(new Date(start)>new Date(end)) return alert('종료가 시작보다 빠를 수 없어요.');
-    selected.setProp('title',title); selected.setStart(new Date(start)); selected.setEnd(new Date(end));
-    selected.setExtendedProp('image',fImage.value.trim()); selected.setExtendedProp('desc',fDesc.value); selected.setExtendedProp('status',fStatus.value); selected.setExtendedProp('category',fCat.value.trim());
-    const hx=normalizeHex(fCatColor.value); if(fCat.value.trim()&&hx) catColors[fCat.value.trim()]=hx;
-    updatePreview(); markDirty(); alert('적용 완료(임시). 상단 "GitHub로 저장"을 눌러 커밋하세요!'); renderRail(); renderCatUI(); applyCategoryFilter(); refreshEvents(); };
+    selected.setProp('title',title); selected.setStart(new Date(start),{maintainDuration:false}); selected.setEnd(new Date(end));
+    selected.setExtendedProp('image',fImage.value.trim()); selected.setExtendedProp('desc',fDesc.value); selected.setExtendedProp('status',fStatus.value); selected.setExtendedProp('category',(fCat.value||'').trim());
+    const hx=normalizeHex(fCatColor.value); if((fCat.value||'').trim()&&hx) catColors[fCat.value.trim()]=hx;
+    updatePreview(); markDirty(true); renderRail(); renderCatUI(); applyCategoryFilter(); refreshEvents(); };
+
+  /* 즉시 반영 바인딩 */
+  [fTitle, fStart, fEnd, fCat, fCatColor].forEach(el => {
+    el.addEventListener('change', applyFormToSelectedIfPossible);
+  });
+  [fStatus, fImage, fDesc].forEach(el => {
+    el.addEventListener('input', () => { if (selected) { updatePreview(); markDirty(true); }});
+  });
+
   function updatePreview(){ if(!selected) return; const p=selected.extendedProps||{}; if(p.image){ imgEl.src=p.image; imgEl.style.display=''; } else { imgEl.removeAttribute('src'); imgEl.style.display='none'; } evtTime.textContent=[selected.start,selected.end||selected.start].filter(Boolean).map(fmtKST).join(' ~ ');
     if(selected.start&&(selected.end||selected.start)){ const now=new Date(), s=new Date(selected.start), e=new Date(selected.end||selected.start);
       if(now<s) evtProg.style.width='0%'; else if(now>e) evtProg.style.width='100%'; else evtProg.style.width=Math.min(100,Math.max(0,(now-s)/(e-s)*100)).toFixed(0)+'%'; } else evtProg.style.width='0%'; }
@@ -806,7 +837,7 @@
       catColors[nm]=hx.toUpperCase(); newCatName.value=''; renderCatManagerRows(); renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail(); };
   }
 
-  [fTitle,fStatus,fStart,fEnd,fImage,fDesc,fCat,fCatColor].forEach(el=>el.addEventListener('input',()=>{ if(selected){ updatePreview(); markDirty(); }}));
+  /* 기존의 "입력 → 프리뷰만 갱신" 리스너는 제거(즉시 반영으로 대체) */
   function refreshEvents(){ if(!calendar) return; calendar.batchRendering(()=>{ calendar.getEvents().forEach(ev=>{ ev.setExtendedProp('__refresh',(ev.extendedProps?.__refresh||0)+1); }); }); }
 })();
 </script>
