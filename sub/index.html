@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sub • iPhone ⟷ Newspaper</title>
+  <!-- NYT-ish serif for newspaper masthead/body -->
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Newsreader:opsz,wght@6..72,400;6..72,700;6..72,900&display=swap" rel="stylesheet">
+  <style>
+    /* =====================
+       THEME & RESETS
+    ====================== */
+    :root{
+      /* site shell */
+      --site-bg: #0d1a1f;
+      --shadow-1: 0 30px 60px rgba(0,0,0,.35);
+      --shadow-2: 0 8px 18px rgba(0,0,0,.18);
+
+      /* iPhone light theme (edge-to-edge, super rounded) */
+      --phone-bg: #ffffff;     /* pure white */
+      --phone-ink: #0b0f14;
+      --phone-muted: #566070;
+      --phone-subtle: #8891a0;
+      --phone-border: #e6e9ef; /* hairline */
+
+      /* iPhone frame variables */
+      --device-radius: 56px;  /* 외곽 프레임 라운드 */
+      --screen-radius: 48px;  /* 화면 라운드 */
+      --bezel: 6px;           /* 검정 베젤 두께 */
+
+      /* ⬇️ iPhone 내부 여백/간격(거리) 컨트롤 변수 */
+      --safe-top: 22px;       /* 상태바 상단 여백 (섬 제거 버전) */
+      --sp-x: 16px;           /* 좌우 기본 패딩 */
+      --sp-y: 12px;           /* 세로 기본 패딩 */
+      --cell-x: 18px;         /* 리스트 셀 좌우 패딩 */
+      --cell-y: 16px;         /* 리스트 셀 상하 패딩 */
+
+      /* Newspaper 1920s */
+      --ink: #121212;
+      --paper: #efe6d1; /* sepia */
+      --accent: #111;   /* strict black rules */
+      --muted: #655b4b;
+      --line: rgba(0,0,0,.2);
+      --radius-xl: 6px; /* papers are sharp */
+    }
+    *,*::before,*::after{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; font: 400 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:#e6eef2; background: var(--site-bg);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    a{ color:inherit; text-decoration: none; }
+    button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+
+    /* 🔒 스코프 리셋: 메인 CSS 누수 방지 */
+    :where(.wrap, .wrap *){ writing-mode: horizontal-tb !important; text-orientation: mixed !important; }
+
+    /* Layout frame */
+    .wrap{ min-height:100dvh; display:flex; flex-direction:column; align-items:center; gap:18px; padding:18px; }
+
+    /* Top bar */
+    .topbar{ width: min(1080px, 100%); display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid #1b2a35; border-radius:14px; background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00)); box-shadow: var(--shadow-2); }
+    .topbar .left,.topbar .right{ display:flex; align-items:center; gap:10px; }
+    .chip{ padding:8px 12px; border-radius:999px; border:1px solid #274150; }
+    .chip:hover{ background:#13212b; }
+    .mode-toggle{ display:none; border:1px solid #274150; border-radius:999px; padding:4px; gap:4px; max-width:100%; }
+    .admin .mode-toggle{ display:flex !important; }
+    .mode-toggle button{ padding:8px 14px; border-radius:999px; opacity:.8; transition: background .2s ease, box-shadow .2s ease; }
+    .mode-toggle button[aria-pressed="true"]{ background:#163244; opacity:1; box-shadow: inset 0 0 0 1px #2a5369; }
+
+    /* =====================
+       iPhone MODE — Edge-to-edge like mockup (no island)
+    ====================== */
+    #iphone{ display:none; }
+    body.mode-iphone #iphone{ display:block; }
+
+    .device{ position:relative; width: clamp(360px, 58vw, 440px); aspect-ratio: 390/844; border-radius: var(--device-radius); display:grid; place-items:center; padding: 14px; }
+    .device::before{ content:""; position:absolute; inset:0; border-radius: var(--device-radius); box-shadow: 0 30px 60px rgba(0,0,0,.35), 0 0 0 2px rgba(0,0,0,.85) inset, 0 0 0 3px rgba(21,22,60,.25), 0 0 32px 6px rgba(62,92,255,.25); pointer-events:none; }
+    .frame{ position:absolute; inset:4px; border-radius: calc(var(--device-radius) - 6px); background: linear-gradient(180deg,#0b0d10,#0b0d10); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+
+    /* 화면(흰색) + 베젤 */
+    .screen-wrap{ position:relative; width:100%; height:100%; border-radius: var(--screen-radius); overflow:hidden; background: radial-gradient(#eaeef3 1px, transparent 1px) 0 0/6px 6px, #fff; box-shadow: 0 0 0 var(--bezel) #0b0d10, 0 0 0 calc(var(--bezel) + 1px) rgba(0,0,0,.8); color: var(--phone-ink); }
+
+    /* ⏰ Lock-style clock (상단 중앙) */
+    .clock-strip{ display:flex; flex-direction:column; align-items:center; gap:2px; padding: 8px var(--sp-x) 10px; background:#fff; border-bottom:1px solid rgba(0,0,0,.04); }
+    .clock-date{ font-size: 13px; color:#6a7381; letter-spacing:.02em; }
+    .clock-time{ font-weight:900; font-size: clamp(40px, 8cqi, 64px); line-height:1; letter-spacing:-.5px; color:#0b0f14; }
+
+    /* ⛔ Dynamic Island 제거 */
+    .island{ display:none !important; }
+
+    /* translucent bars (glass) — 안전영역 */
+    .status{ display:none; }
+
+
+
+
+    .appbar{ display:flex; align-items:center; gap:10px; padding:14px var(--sp-x); border-bottom:1px solid rgba(0,0,0,.04); background: rgba(255,255,255,.78); backdrop-filter: saturate(160%) blur(12px); }
+    .appbar .title{ font-weight:600; letter-spacing:0; color:#0b0f14; flex:0 0 auto; }
+    .time-title{ font-variant-numeric: tabular-nums; display:inline-block; transform: translate(var(--time-nudge-x, 12px), var(--time-nudge-y, -4px)); }
+
+    /* iOS segmented control */
+    .seg{ margin-left:auto; display:flex; padding:4px; border:1px solid #e4e8ee; border-radius:999px; gap:4px; background:#f1f2f6; max-width:max(56%,240px); overflow-x:auto; scrollbar-width:none; }
+    .seg::-webkit-scrollbar{ display:none; }
+    .seg button{ padding:8px 14px; border-radius:999px; color:#0b0f14; flex:0 0 auto; white-space:nowrap; }
+    .seg button[aria-pressed="true"]{ background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); border: 1px solid #e8ebf1; }
+
+    .search{ display:flex; gap:8px; padding:12px var(--sp-x); border-bottom:1px solid rgba(0,0,0,.04); background: rgba(255,255,255,.7); backdrop-filter: blur(8px); }
+    .search input{ width:100%; padding:12px 14px; border-radius:18px; border:1px solid var(--phone-border); background:#fff; color:#0b0f14; outline:none; box-shadow: inset 0 1px 0 rgba(0,0,0,.02); }
+
+    .screen{ position:absolute; inset:0; display:grid; grid-template-rows:auto auto 1fr; transform: translateX(100%); transition: transform .35s ease; }
+    .screen.active{ transform: translateX(0); }
+    .screen.to-left{ transform: translateX(-20%); }
+
+    .list{ overflow:auto; padding:16px var(--sp-x) 24px; }
+    .list.group{ background:#fff; border:1px solid var(--phone-border); border-radius: 32px; box-shadow: 0 6px 18px rgba(0,0,0,.06); padding:6px 0; }
+    .list.group .card{ background:transparent; border:none; margin:0; padding: var(--cell-y) var(--cell-x); border-top:1px solid var(--phone-border); }
+    .list.group .card:first-child{ border-top:none; }
+
+    .card:active{ transform: scale(.995); }
+    .kicker{ font-size:12px; color:#006e64; letter-spacing:.8px; text-transform:uppercase; font-weight:800; }
+    .headline{ font-weight:900; color:#0b0f14; }
+    .snippet{ color: var(--phone-muted); font-size:14px; }
+    .meta{ font-size:12px; color: var(--phone-subtle); }
+
+    .detail{ overflow:auto; display:grid; grid-template-rows: auto 1fr; }
+    .detail .toolbar{ display:flex; align-items:center; gap:8px; padding:10px var(--sp-x); border-bottom:1px solid rgba(0,0,0,.04); position:sticky; top:0; background: rgba(255,255,255,.86); backdrop-filter: saturate(160%) blur(18px); z-index:3; color:#0b0f14; }
+    .btn{ padding:8px 12px; border:1px solid var(--phone-border); border-radius:14px; background:#fff; color:#0b0f14; box-shadow: 0 1px 0 rgba(0,0,0,.03); }
+    .btn:hover{ background:#f2f6fb; }
+
+    .article{ padding:18px var(--sp-x) 94px; word-break: keep-all; line-break: loose; color:#0b0f14; }
+    .article h1{ margin:.2rem 0 .6rem; font-size: clamp(20px, 4.4vw, 28px); line-height:1.22; color:#0b0f14; }
+    .article .by{ color:#5b6671; font-size:13px; margin-bottom:12px; }
+    .article p{ color:#18212b; margin:.7rem 0; }
+    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; background:#eefbf7; color:#0a3c31; border:1px solid #9be3d4; font-size:12px; }
+
+    .home-ind{ position:absolute; left:50%; bottom:14px; transform:translateX(-50%); width:34%; height:5px; border-radius:999px; background:#d9dde3; }
+
+    /* =====================
+       NEWSPAPER MODE — 1910s NYT-ish
+    ====================== */
+    #news{ display:none; }
+    body.mode-news #news{ display:block; }
+
+    .paper-wrap{ width:min(1120px, 100%); background: var(--paper); color: var(--ink); border-radius: var(--radius-xl); box-shadow: var(--shadow-1); border:1px solid rgba(0,0,0,.35); overflow:hidden; position:relative; font-family: 'Newsreader', Georgia, serif; }
+
+    /* Masthead row: motto boxes + name + weather box */
+    .mast-row{ display:grid; grid-template-columns: 1fr auto 1fr; align-items:end; gap:12px; padding: 10px clamp(10px, 2vw, 22px) 6px; border-bottom: 4px double var(--ink); }
+    .motto, .weather{ border:1.5px solid var(--ink); padding:6px 10px; font-size:13px; text-align:center; background:#f7efd9; }
+    .motto strong{ display:block; font-weight:900; font-variant-caps: small-caps; }
+    .paper-name{ font-family: 'UnifrakturCook', Georgia, 'Times New Roman', serif; font-weight:700; font-size: clamp(42px, 6vw, 78px); line-height:1; letter-spacing:.01em; text-align:center; }
+
+    /* Dateline */
+    .dateline{ text-align:center; font-size:14px; padding:6px 0; border-bottom: 1px solid var(--ink); color:#3e352a; }
+
+    /* Banner headline */
+    .banner{ padding: 10px clamp(10px,2vw,22px); border-bottom: 6px double var(--ink); }
+    .banner h1{ font-weight:900; text-transform:uppercase; letter-spacing:.03em; font-size: clamp(22px, 3.2vw, 44px); line-height:1.15; margin:0; }
+    .banner .deck{ font-size: 16px; color:#2c241b; margin-top:6px; }
+
+    /* 8-column front grid with vertical rules */
+    .front{ padding: 10px clamp(12px, 2vw, 24px) 20px; }
+    .grid-8{ display:grid; grid-template-columns: repeat(8, 1fr); gap: 14px 18px; position:relative; }
+    .grid-8::before{
+      content:""; position:absolute; inset:0; pointer-events:none; background:
+        repeating-linear-gradient(90deg, transparent 0, transparent calc((100%/8) - 1px), rgba(0,0,0,.25) calc((100%/8) - 1px), rgba(0,0,0,.25) calc((100%/8)));
+      opacity:.35; }
+
+    .story{ grid-column: span 2; }
+    .story h3{ font-weight:900; font-size: 18px; margin:.35rem 0 .2rem; text-transform: capitalize; }
+    .story .k{ text-transform:uppercase; font-weight:800; letter-spacing:.06em; font-size:12px; color:#2b241b; }
+    .story p{ color:#272018; font-size:15px; line-height:1.7; margin:.45rem 0; text-align:justify; }
+
+    /* Center photo area (blank allowed) */
+    .photo-lead{ grid-column: span 8; border: 2px solid rgba(0,0,0,.6); height: 220px; background: repeating-linear-gradient(45deg, #f1e9d5 0 6px, #efe6d1 6px 12px); display:grid; place-items:center; }
+    .photo-lead span{ color:#6a5f51; letter-spacing:.08em; }
+    .caption{ grid-column: span 8; text-align:center; font-size:13px; color:#3a3228; }
+
+    .box{ border:1.5px solid rgba(0,0,0,.5); padding:10px; background:#f7efda; }
+
+    /* Modal detail */
+    .modal{ position:fixed; inset:0; display:none; place-items:center; background: rgba(8,12,16,.55); backdrop-filter: blur(4px); }
+    .modal.show{ display:grid; }
+    .modal .sheet{ width:min(860px, 92vw); max-height: 86vh; overflow:auto; background: #f8f1dc; color:#1a130b; border-radius:8px; box-shadow: var(--shadow-1); border:2px solid rgba(26,19,11,.4); }
+    .modal .sheet .hd{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom: 2px solid rgba(26,19,11,.4); position:sticky; top:0; background:#f8f1dc; }
+    .modal .sheet .body{ padding:16px 14px 28px; column-count: 1; column-gap: 28px; column-rule: 1px solid rgba(26,19,11,.25); font-family: 'Newsreader', Georgia, serif; }
+    @media (min-width: 900px){ .modal .sheet .body{ column-count: 2; } }
+
+    /* Visibility by mode */
+    body.mode-iphone .paper-wrap{ display:none; }
+    body.mode-news .device{ display:none; }
+
+    @media (max-width: 560px){
+      .device{ width: 100%; aspect-ratio:auto; height: calc(100dvh - 140px); }
+      .screen-wrap{ border-radius: 32px; }
+      .grid-8::before{ display:none; }
+      .story{ grid-column: span 8; }
+    }
+  </style>
+</head>
+<body class="mode-iphone">
+  <div class="wrap">
+    <header class="topbar">
+      <div class="left">
+        <!-- ⚠️ Project Pages면 './' 또는 저장소 루트로 수정 필요 -->
+        <a class="chip" href="/index.html" title="메인으로">⟵ 메인으로</a>
+        <span class="chip" id="now">—</span>
+      </div>
+      <div class="right">
+        <div class="mode-toggle" role="tablist" aria-label="레이아웃 전환">
+          <button id="btnIphone" role="tab" aria-selected="true" aria-pressed="true">iPhone</button>
+          <button id="btnNews" role="tab" aria-selected="false" aria-pressed="false">신문</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ iPhone Layout (Edge-to-edge) ============ -->
+    <section id="iphone">
+      <div class="device">
+        <div class="frame" aria-hidden="true"></div>
+        <div class="screen-wrap">
+          
+          <!-- ⏰ Lock-style clock strip (진짜 아이폰 느낌) -->
+          <div class="clock-strip" aria-hidden="false">
+            <div class="clock-date" id="clockDate">—</div>
+            <div class="clock-time" id="clockBig">00:00</div>
+          </div>
+          <!-- List Screen -->
+          <div class="screen active" id="scrList" aria-label="목록 화면">
+            <div class="appbar">
+              <strong class="title time-title" id="iosTime">9:41</strong>
+              <div class="seg" role="tablist" aria-label="필터">
+                <button class="seg-btn" data-filter="all" aria-pressed="true">전체</button>
+                <button class="seg-btn" data-filter="notes" aria-pressed="false">노트</button>
+                <button class="seg-btn" data-filter="case" aria-pressed="false">케이스</button>
+              </div>
+            </div>
+            <div class="search"><input id="q" type="search" placeholder="검색 (제목/요약)" aria-label="검색" /></div>
+            <div class="list group" id="list"></div>
+          </div>
+          <!-- Detail Screen -->
+          <div class="screen" id="scrDetail" aria-label="상세 화면">
+            <div class="detail">
+              <div class="toolbar">
+                <button class="btn" id="back">⟵ 뒤로</button>
+                <span class="pill" id="dTag">TAG</span>
+              </div>
+              <article class="article" id="detail"></article>
+            </div>
+          </div>
+        </div>
+        <div class="home-ind"></div>
+      </div>
+    </section>
+
+    <!-- ============ Newspaper Layout (1910s front page) ============ -->
+    <section id="news">
+      <div class="paper-wrap">
+        <div class="mast-row">
+          <div class="motto"><strong>All the News</strong> That's Fit to Print</div>
+          <div class="paper-name">The Neverending Deltagre</div>
+          <div class="weather">The Weather<br/>— Fine —</div>
+        </div>
+        <div class="dateline" id="dateLine">—</div>
+        <div class="banner">
+          <h1 id="bannerHead"></h1>
+          <div class="deck" id="bannerDeck"></div>
+        </div>
+        <div class="front">
+          <div class="grid-8">
+            <div class="photo-lead"><span>PHOTO AREA</span></div>
+            <div class="caption">(설명 캡션 자리 — 비워도 됨)</div>
+            <section class="story" id="col1"></section>
+            <section class="story" id="col2"></section>
+            <section class="story" id="col3"></section>
+            <section class="story" id="col4"></section>
+            <section class="story" id="col5"></section>
+            <section class="story" id="col6"></section>
+            <section class="story box" id="col7"></section>
+            <section class="story box" id="col8"></section>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal" id="modal" aria-modal="true" role="dialog">
+        <div class="sheet">
+          <div class="hd">
+            <strong>상세</strong>
+            <button class="btn" id="mClose">닫기 (Esc)</button>
+          </div>
+          <article class="body" id="mBody"></article>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ====== Clock/Date utils ======
+    const SHOW_SECONDS_IPHONE = false;  // iPhone 상태바에 초 단위 노출 여부
+    const SHOW_SECONDS_NEWS   = true;   // 신문 Dateline에 초 단위 노출 여부
+    const CLOCK_TZ = 'Asia/Seoul';      // 필요 시 다른 타임존으로 변경
+    const NEWS_LOCALE = 'ko-KR';        // 신문 Dateline 로케일
+
+    const $ = (sel, el=document) => el.querySelector(sel);
+    // ── Owner-only (admin) lock ─────────────────────────────────────
+    // 설정 방법: 아래 OWNER_HASH 값을 본인만 아는 비밀문구의 SHA-256 해시로 교체하세요.
+    // (예: 브라우저 콘솔에서 `crypto.subtle.digest('SHA-256', new TextEncoder().encode('비밀'))`로 계산)
+    const OWNER_HASH = 'CHANGE_ME_TO_SHA256';
+    const DEFAULT_MODE = 'iphone';
+    const ADMIN_KEY = 'sub.admin';
+    function isAdmin(){ return localStorage.getItem(ADMIN_KEY) === '1'; }
+    function setAdmin(v){ if(v){ localStorage.setItem(ADMIN_KEY,'1'); document.body.classList.add('admin'); } else { localStorage.removeItem(ADMIN_KEY); document.body.classList.remove('admin'); } }
+    if(isAdmin()) document.body.classList.add('admin');
+    async function sha256(text){ const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+    async function promptUnlock(){ const code = prompt('관리자 코드 입력 (본인만)'); if(!code) return; const h = await sha256(code.trim()); if(h===OWNER_HASH){ setAdmin(true); alert('관리자 모드 ON'); } else alert('코드가 올바르지 않습니다'); }
+    function lockAdmin(){ setAdmin(false); alert('관리자 모드 OFF'); }
+    const $$ = (sel, el=document) => [...el.querySelectorAll(sel)];
+
+    const ARTICLES = [
+      { id:"a1", tag:"case", kicker:"CASE FILE", title:"서가 3번 칸 — 소금기와 초록 문양", dek:"그날 밤, 책등 사이로 한기가 흘렀다. 문양은 살아 있었다.", author:"Dana Scratch", time:"2025-09-22T18:30:00+09:00",
+        body:`<p>서가의 그림자 끝에서 작은 금속음이 났다. 표지 안쪽, <em>보통은 보이지 않는 곳</em>에 초록 잉크가 스며 있었다.</p>
+              <p>문양은 물의 방향을 바꾼다. 시계는 앞으로 가는데, 이야기만 거꾸로 흐른다. 우리는 그 강을 거슬러 올라가야 한다.</p>
+              <p><em>“남자가 죽은 이유는 이 책 때문일 거라고요.”</em> — D</p>
+              <p>후처리는 끝났다. 지금의 책은 평범해 보인다. 믿든 말든, 상관 없다.</p>` },
+      { id:"a2", tag:"notes", kicker:"NOTES", title:"장서 리스트 업데이트", dek:"분류 체계 정비 — 신문/아이폰 레이아웃 동기화", author:"Keeper", time:"2025-09-21T14:00:00+09:00",
+        body:`<p>카드 3번에서 진입하는 서브 페이지. 토글로 레이아웃 전환, 단일 데이터 소스.</p>
+              <ul><li>iPhone: 카드 목록 → 상세로 슬라이드</li>
+              <li>신문: 리드 + 카드 그리드, 모달 상세</li></ul>
+              <p>콘텐츠는 <code>ARTICLES</code> 배열을 수정해 관리.</p>` },
+      { id:"a3", tag:"case", kicker:"CASE FILE", title:"거울물 레포트 — 흔들리지 않는 파문", dek:"비가 오는데 물결이 서지 않는다. 빛만 흔들린다.", author:"Observer", time:"2025-09-19T09:40:00+09:00",
+        body:`<p>우물 안쪽의 빛은 멈춰 있었다. 하지만 냄새는 흘렀다. 시간의 표면 장력이 높아진다.</p>
+              <p>사건 메모: 접촉 전 장갑 필수. <strong>직접 응시 금지.</strong></p>` },
+      { id:"a4", tag:"notes", kicker:"NOTES", title:"UI 메모 — 가독성 조정", dek:"신문면 납작한 검은 틀 대신 종이 질감 강조", author:"UI", time:"2025-09-18T22:10:00+09:00",
+        body:`<p>행간 1.7, 본문 16px, 제목은 Georgia 계열로 대비. 포인트 컬러는 바다빛.</p>` }
+    ];
+
+    const fmt = (d, opts) => new Intl.DateTimeFormat('ko-KR', { ...opts, timeZone: CLOCK_TZ }).format(d);
+    const fmtTime = (d, withSec=false) => new Intl.DateTimeFormat('ko-KR', {
+      hour:'2-digit', minute:'2-digit', second: withSec ? '2-digit' : undefined, hour12:false, timeZone: CLOCK_TZ
+    }).format(d);
+
+    function updateClocks(){
+      const now = new Date();
+
+      // 상단 chip (공용)
+      const chip = fmt(now, { dateStyle:'full', timeStyle: SHOW_SECONDS_NEWS ? 'medium' : 'short' });
+      const chipEl = $('#now'); if(chipEl) chipEl.textContent = chip;
+
+      // iPhone 상태바 시계
+      const iosNode = $('#iosTime'); if(iosNode) iosNode.textContent = fmtTime(now, SHOW_SECONDS_IPHONE);
+
+      // Lock-style clock inside phone
+      const big = $('#clockBig'); if(big) big.textContent = fmtTime(now, false);
+      const dEl = $('#clockDate');
+      if(dEl){
+        const dateSmallFmt = new Intl.DateTimeFormat('ko-KR', { weekday:'long', month:'long', day:'numeric', timeZone: CLOCK_TZ });
+        dEl.textContent = dateSmallFmt.format(now);
+      }
+
+      // 신문 Dateline
+      const dateLine = $('#dateLine');
+      if(dateLine){
+        const line = new Intl.DateTimeFormat(NEWS_LOCALE, {
+          weekday:'long', year:'numeric', month:'long', day:'numeric',
+          hour:'2-digit', minute:'2-digit', second: SHOW_SECONDS_NEWS ? '2-digit' : undefined,
+          hour12:false, timeZone: CLOCK_TZ
+        }).format(now);
+        dateLine.textContent = line;
+      }
+    }
+
+    // ====== List / Detail rendering ======
+    function renderList(filter=localStorage.getItem('sub.filter') || 'all', q=''){
+      localStorage.setItem('sub.filter', filter);
+      const wrap = $('#list'); if(!wrap) return; wrap.innerHTML = '';
+      const items = ARTICLES.filter(a => (filter==='all' ? true : a.tag===filter))
+                            .filter(a => (q? (a.title+" "+a.dek).toLowerCase().includes(q.toLowerCase()) : true))
+                            .sort((a,b)=> new Date(b.time)-new Date(a.time));
+      for(const a of items){
+        const el = document.createElement('article');
+        el.className = 'card';
+        el.innerHTML = `<div class="kicker">${a.kicker}</div>
+                        <div class="headline">${a.title}</div>
+                        <div class="snippet">${a.dek}</div>
+                        <div class="meta">${a.author} • ${fmt(new Date(a.time), { dateStyle:'medium', timeStyle:'short' })}</div>`;
+        el.addEventListener('click', ()=> openDetail(a.id, 'iphone'));
+        wrap.appendChild(el);
+      }
+    }
+
+    function openDetail(id, mode){
+      const art = ARTICLES.find(x=>x.id===id); if(!art) return;
+      if(mode==='iphone'){
+        $('#detail').innerHTML = `<h1>${art.title}</h1>`+
+          `<div class="by">${art.author} • ${fmt(new Date(art.time), { dateStyle:'medium', timeStyle:'short' })}</div>`+
+          `<p><span class="pill">${art.tag.toUpperCase()}</span></p>${art.body}`;
+        $('#dTag').textContent = art.tag.toUpperCase();
+        $('#scrList').classList.add('to-left');
+        $('#scrDetail').classList.add('active');
+        history.replaceState(null, '', `#${id}`);
+      } else {
+        $('#mBody').innerHTML = `<h2 style="font-family:'Newsreader',serif; font-size: clamp(22px, 3vw, 34px); margin:.2rem 0 .6rem;">${art.title}</h2>`+
+          `<div style="color:#3b3227; margin-bottom:10px;">${art.author} • ${fmt(new Date(art.time), { dateStyle:'medium', timeStyle:'short' })}</div>`+
+          `<div>${art.body}</div>`;
+        $('#modal').classList.add('show');
+        history.replaceState(null, '', `#news-${id}`);
+      }
+      document.title = `${art.title} • Sub`; // 타이틀 보조
+    }
+
+    function backToList(){
+      $('#scrDetail').classList.remove('active');
+      $('#scrList').classList.remove('to-left');
+      const mode = document.body.classList.contains('mode-news') ? 'news' : 'iphone';
+      history.replaceState(null, '', `#${mode}`);
+      document.title = 'Sub • iPhone ⟷ Newspaper';
+    }
+
+    function enableSwipeBack(){
+      const target = $('#scrDetail'); let x0=null;
+      if(!target) return;
+      target.addEventListener('touchstart', e=>{ x0 = e.changedTouches[0].clientX; }, {passive:true});
+      target.addEventListener('touchend', e=>{
+        if(x0==null) return;
+        const dx = e.changedTouches[0].clientX - x0; x0=null;
+        if(dx>60) backToList();
+      }, {passive:true});
+    }
+
+    // ====== NEWSPAPER RENDER ======
+    function stripTags(html){ const t=document.createElement('div'); t.innerHTML=html; return t.textContent||t.innerText||''; }
+    function renderNews(){
+      const sorted = [...ARTICLES].sort((a,b)=> new Date(b.time)-new Date(a.time));
+      const leadArt = sorted.find(a=>a.tag==='case') || sorted[0];
+      $('#bannerHead').textContent = (leadArt.title).toUpperCase();
+      $('#bannerDeck').textContent = stripTags(leadArt.dek || '');
+      const cols = ['#col1','#col2','#col3','#col4','#col5','#col6','#col7','#col8'];
+      const pool = sorted.slice(0,8);
+      pool.forEach((a,i)=>{
+        const el = document.querySelector(cols[i]);
+        if(!el) return;
+        el.innerHTML = `<div class="k">${a.kicker}</div>
+          <h3>${a.title}</h3>
+          <p>${stripTags(a.body).slice(0, 260)}… <a href="#" onclick="openDetail('${a.id}','news');return false;">more</a></p>`;
+      });
+    }
+
+    // ====== Mode / Init ======
+    function setMode(mode){
+      // 비관리자는 모드 고정
+      if(!document.body.classList.contains('admin')){ mode = DEFAULT_MODE; }
+      document.body.classList.toggle('mode-iphone', mode==='iphone');
+      document.body.classList.toggle('mode-news', mode==='news');
+      $('#btnIphone').setAttribute('aria-pressed', mode==='iphone');
+      $('#btnNews').setAttribute('aria-pressed', mode==='news');
+      $('#btnIphone').setAttribute('aria-selected', mode==='iphone');
+      $('#btnNews').setAttribute('aria-selected', mode==='news');
+      localStorage.setItem('sub.mode', mode);
+      updateClocks();
+      if(!location.hash || /^(#)?(iphone|news)$/.test(location.hash)) history.replaceState(null,'',`#${mode}`);
+    }
+
+    function initFromHash(){
+      const admin = document.body.classList.contains('admin');
+      if(!admin){
+        // 공개 방문자는 강제로 기본 모드로
+        setMode(DEFAULT_MODE);
+        const h = (location.hash||'').replace('#','');
+        if(h && h!=='iphone') history.replaceState(null,'','#iphone');
+        return;
+      }
+      const hash = (location.hash || '').replace('#','');
+      if(hash==='news' || hash==='iphone'){ setMode(hash); return; }
+      if(hash.startsWith('news-')){ setMode('news'); openDetail(hash.slice(5), 'news'); return; }
+      if(hash){ setMode('iphone'); openDetail(hash, 'iphone'); return; }
+      setMode(localStorage.getItem('sub.mode') || 'iphone');
+    }
+      if(hash.startsWith('news-')){ setMode('news'); openDetail(hash.slice(5), 'news'); return; }
+      if(hash){ setMode('iphone'); openDetail(hash, 'iphone'); return; }
+      setMode(localStorage.getItem('sub.mode') || 'iphone');
+    }
+
+    function init(){
+      updateClocks();
+      setInterval(updateClocks, 1000); // 1초마다 실시간 반영
+      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) updateClocks(); });
+
+      renderList(localStorage.getItem('sub.filter') || 'all');
+      renderNews();
+
+      // 필터/검색
+      $$('.seg-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          $$('.seg-btn').forEach(b=> b.setAttribute('aria-pressed','false'));
+          btn.setAttribute('aria-pressed','true');
+          renderList(btn.dataset.filter, $('#q').value.trim());
+        });
+      });
+      $('#q').addEventListener('input', e=> renderList(localStorage.getItem('sub.filter') || 'all', e.currentTarget.value.trim()));
+
+      // 내비
+      $('#back').addEventListener('click', backToList); 
+      enableSwipeBack();
+      $('#btnIphone').addEventListener('click', ()=> setMode('iphone'));
+      $('#btnNews').addEventListener('click', ()=> setMode('news'));
+
+      // 모달
+      $('#mClose').addEventListener('click', ()=> $('#modal').classList.remove('show'));
+      $('#modal').addEventListener('click', (e)=>{ if(e.target.id==='modal') $('#modal').classList.remove('show'); });
+
+      // 키보드
+      document.addEventListener('keydown', (e)=>{
+        if($('#modal').classList.contains('show') && e.key==='Escape') $('#modal').classList.remove('show');
+        else if($('#scrDetail').classList.contains('active') && e.key==='Escape') backToList();
+      });
+
+      initFromHash();
+      window.addEventListener('hashchange', initFromHash);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+    // 관리자 진입: 상단 시각 chip 길게 누르기 or 단축키 (Ctrl+Shift+M)
+    (function(){
+      const chip = document.getElementById('now'); if(!chip) return;
+      let t; const start=()=>{ t=setTimeout(promptUnlock,800); }, stop=()=>{ clearTimeout(t); };
+      chip.addEventListener('mousedown', start); chip.addEventListener('touchstart', start, {passive:true});
+      ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=> chip.addEventListener(ev, stop));
+      document.addEventListener('keydown', (e)=>{ const k=(e.key||'').toLowerCase(); if(e.ctrlKey && e.shiftKey && k==='m') promptUnlock(); if(e.ctrlKey && e.shiftKey && k==='l') lockAdmin(); });
+    })();
+  </script>
+</body>
+</html>
