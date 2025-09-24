@@ -29,7 +29,6 @@
   .title{font-weight:700; font-size:18px}
   .actions{display:flex; gap:8px; flex-wrap:wrap}
 
-  /* 버튼/칩 */
   .btn{
     appearance:none; border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff;
     border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer;
@@ -43,7 +42,6 @@
     display:inline-flex; align-items:center; line-height:1;
     font-size:11px; padding:4px 10px; border-radius:999px;
     border:1px solid #334357; background:#0b1526; color:#cfe2ff;
-    vertical-align:middle;
   }
 
   .grid{display:grid; gap:16px; grid-template-columns:minmax(860px,1.8fr) minmax(420px,1fr)}
@@ -71,7 +69,7 @@
 
   .card{background:#0c1526; border:1px solid #213254; border-radius:14px; padding:12px}
   .card + .card{margin-top:12px}
-  .card h3{margin:0 0 8px; font-size:14px; letter-spacing:.2px}
+  .card h3{margin:0 0 8px; font-size:14px}
   .muted{color:var(--muted); font-size:13px}
 
   .list{margin:0; padding:0; list-style:none; display:grid; gap:8px}
@@ -80,8 +78,7 @@
   .li .dot{width:8px; height:8px; border-radius:50%}
   .li .title{font-size:13px; font-weight:600}
   .li .sub{font-size:12px; color:#a6b3c2}
-  .li .mini-btn{border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:8px; padding:4px 8px; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; line-height:1}
-  .li .mini-btn:hover{border-color:#38507d}
+  .li .mini-btn{border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:8px; padding:4px 8px; font-size:12px; cursor:pointer}
 
   .evt-img{width:100%; height:160px; object-fit:cover; border-radius:10px; background:#09121f; margin-bottom:8px}
   .evt-time{font-size:12px; opacity:.85; margin:6px 0}
@@ -97,7 +94,7 @@
 
   .chips{display:flex; flex-wrap:wrap; gap:8px}
   .chip-cat{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
-    border:1px solid #2a3a58; background:#0b1526; color:#cfe2ff; font-size:12px; cursor:pointer; line-height:1}
+    border:1px solid #2a3a58; background:#0b1526; color:#cfe2ff; font-size:12px; cursor:pointer}
   .chip-cat .dot{width:8px; height:8px; border-radius:50%}
   .chip-cat.active{outline:2px solid #35507d}
 
@@ -108,7 +105,6 @@
   .qtitle{width:100%; padding:10px; border:1px solid #2a3a58; border-radius:10px; background:#0c1526; color:#e6eef2; font-size:14px}
   .qsub{font-size:12px; color:#a6b3c2}
   .qactions{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
-  .qpop .btn{padding:8px 10px}
   .qtoggle{display:flex; align-items:center; gap:8px}
   .qtoggle input{accent-color:#58a6ff}
 
@@ -116,8 +112,7 @@
   .cat-row:last-child{border-bottom:none}
   .pill{font-size:12px; padding:8px; background:#0c1526; border:1px solid #2a3a58; border-radius:8px}
   .color-hex{width:110px; padding:8px; border:1px solid #2a3a58; border-radius:8px; background:#0c1526; color:#e6eef2}
-  .ico-btn{border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; line-height:1}
-  .ico-btn:hover{border-color:#38507d}
+  .ico-btn{border:1px solid #2a3a58; background:#111a2f; color:#cfe2ff; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer}
 
   .fc .fc-bg-event.holiday{background:rgba(255,107,107,.14)}
 
@@ -133,14 +128,13 @@
   .fc .fc-timegrid-slot,.fc .fc-timegrid-axis{ border-color:var(--line)!important }
   .fc .fc-daygrid-day-frame{ transform:translateZ(0) }
 
-  /* ── 오늘 날짜 하이라이트 ── */
+  /* 오늘 날짜 하이라이트 */
   .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame,
   .fc .fc-daygrid-day.is-today .fc-daygrid-day-frame{
     background: rgba(88,166,255,.08);
     box-shadow: inset 0 0 0 2px #58a6ff66;
   }
-  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number{ color:inherit; font-weight:700 }
-  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number::before{ content:none }
+  .fc .fc-daygrid-day.is-today .fc-daygrid-day-number{ font-weight:700 }
 </style>
 </head>
 <body>
@@ -414,13 +408,26 @@
   function markDirty(v=true){ dirty=v; dirtyEl.textContent=v?'· 수정됨':'' }
   window.addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; }});
 
+  /* ----- 데이터 로드 (없거나 비어도 OK) + UTC(Z) → KST 복원 ----- */
+  function migrateLegacyUTC(list){
+    const KST = 9*60*60*1000;
+    return (Array.isArray(list)?list:[]).map(ev=>{
+      if (ev.allDay) return ev;
+      const hasZ = typeof ev.start==='string' && /Z$/i.test(ev.start);
+      if (!hasZ) return ev;
+      const s = new Date(ev.start), e = new Date(ev.end||ev.start);
+      const sK = new Date(s.getTime()+KST), eK = new Date(e.getTime()+KST);
+      return {...ev, start: toKSTISO(sK), end: toKSTISO(eK)};
+    });
+  }
+
   Promise.all([
     fetch(SRC,{cache:'no-store'}).then(r=>r.ok?r.json():[]).catch(()=>[]),
     fetch(CAT_SRC,{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})),
     fetch(HOLI_SRC,{cache:'no-store'}).then(r=>r.ok?r.json():[]).catch(()=>[])
   ]).then(([events,colors,holidays])=>{
     catColors=colors||{}; holidayEvents=Array.isArray(holidays)?holidaysToEvents(holidays):[];
-    initCalendar(Array.isArray(events)?events:[]);
+    initCalendar(migrateLegacyUTC(events||[]));
   });
 
   const PALETTE=['#57d19a','#58a6ff','#b08ad6','#ef7d7d','#f6c951','#6adcb3','#96a6ff','#ffb86c','#ff99cc','#8bd3dd','#a5ffd6','#c792ea','#9cdcfe'];
@@ -430,21 +437,14 @@
   const pad=n=>String(n).padStart(2,'0');
   function toLocalInput(dt){ if(!dt) return ''; const d=new Date(dt); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}` }
   function toKSTISO(dt){ if(!dt) return null; const d=new Date(dt); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}+09:00` }
-  /* ✅ datetime-local 안전 파서 (로컬 시각 그대로) */
-  function fromLocalInput(str){
-    if (!str) return null;
-    const d = new Date(str); // 'YYYY-MM-DDTHH:mm' 그대로 파싱
-    if (Number.isNaN(d.getTime())) return null;
-    d.setSeconds(0, 0);
-    return d;
-  }
+  function fromLocalInput(str){ if(!str) return null; const d=new Date(str); if(Number.isNaN(d.getTime())) return null; d.setSeconds(0,0); return d; }
   function fmtKST(d){ return new Date(d).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}) }
   function isoDate(d){ const x=new Date(d); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}` }
   function hhmm(d){ const x=new Date(d); return `${pad(x.getHours())}:${pad(x.getMinutes())}` }
   function parseDateTime(d,t){ if(!d) return null; const s=t||'00:00'; return new Date(`${d}T${s}:00`) }
   function parseDateOnly(s){ if(!s) return null; const [y,m,dd]=s.split('-').map(Number); return new Date(y,m-1,dd) }
   function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x }
-  function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&gt;','>':'&lt;', '"':'&quot;', "'":'&#39;' }[c])) }
+  function escapeHtml(s){ return s==null?'':s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])) }
   function roundToNextHalfHour(d){ const x=new Date(d); x.setSeconds(0,0); const m=x.getMinutes(); x.setMinutes(m<30?30:60); return x }
   function isYMD(s){ return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s) }
 
@@ -507,7 +507,7 @@
     calendar.render();
     applyTodayHighlight();
 
-    /* 🔵 실시간 시각 & 자정 처리 */
+    /* 실시간 시계 & 자정 전환 */
     function updateClockAndDaily() {
       const now = new Date();
       chipNow.textContent = now.toLocaleTimeString('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit' });
@@ -541,17 +541,12 @@
     btnDel2.onclick =()=>btnDel.onclick();
     btnSave.onclick =saveAllToGitHub;
 
-    /* ✅ 뒤로 버튼 (히스토리 없으면 메인으로) */
-    if (btnBack) {
-      btnBack.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          location.href = new URL('..', location.href).href;
-        }
-      });
-    }
+    /* 뒤로 버튼: 히스토리 있으면 뒤로, 없으면 메인 */
+    btnBack.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.history.length > 1) history.back();
+      else location.href = new URL('..', location.href).href;
+    });
 
     btnQuickToday.onclick=()=>{ const base=new Date(); base.setHours(20,0,0,0);
       openQuick({anchor:null,start:base,end:new Date(base.getTime()+2*3600*1000),allDay:false,title:''}); };
@@ -577,7 +572,6 @@
     selYear.value=d.getFullYear(); selMonth.value=(d.getMonth()+1);
   }
 
-  /* 오늘 셀 하이라이트 */
   function applyTodayHighlight(){
     const today=new Date();
     const y=today.getFullYear(), m=String(today.getMonth()+1).padStart(2,'0'), d=String(today.getDate()).padStart(2,'0');
@@ -637,7 +631,7 @@
     fImage.value=ev.extendedProps?.image||''; fDesc.value=ev.extendedProps?.desc||''; const catName=ev.extendedProps?.category||''; fCat.value=catName; fCatColor.value=normalizeHex(catColor(catName))||'#58A6FF'; populateCatDatalists(); updatePreview(); }
   function clearDetail(){ selected=null; document.getElementById('card').style.display='none'; rail.style.display='grid'; imgEl.removeAttribute('src'); }
 
-  /* ✅ 폼 변경 시 선택 이벤트에 즉시 반영 */
+  /* 폼 변경 → 즉시 이벤트 반영 */
   function applyFormToSelectedIfPossible() {
     if (!selected) return;
     const title = (fTitle.value || '').trim();
@@ -653,9 +647,7 @@
     const cat = (fCat.value || '').trim();
     selected.setExtendedProp('category', cat);
     const hx = (fCatColor.value || '').toUpperCase();
-    if (cat && /^#[0-9A-F]{6}$/.test(hx)) {
-      catColors[cat] = hx;
-    }
+    if (cat && /^#[0-9A-F]{6}$/.test(hx)) catColors[cat] = hx;
 
     markDirty(true);
     updatePreview();
@@ -665,7 +657,7 @@
     refreshEvents();
   }
 
-  /* 변경 적용(버튼) — 안전망 */
+  /* 변경 적용 버튼(안전망) */
   btnApply.onclick=()=>{ if(!selected) return alert('선택된 일정이 없습니다.');
     const title=fTitle.value.trim(), start=fromLocalInput(fStart.value), end=fromLocalInput(fEnd.value);
     if(!title||!start||!end) return alert('제목/시작/종료는 필수입니다.'); if(new Date(start)>new Date(end)) return alert('종료가 시작보다 빠를 수 없어요.');
@@ -674,19 +666,23 @@
     const hx=normalizeHex(fCatColor.value); if((fCat.value||'').trim()&&hx) catColors[fCat.value.trim()]=hx;
     updatePreview(); markDirty(true); renderRail(); renderCatUI(); applyCategoryFilter(); refreshEvents(); };
 
-  /* 즉시 반영 바인딩 */
-  [fTitle, fStart, fEnd, fCat, fCatColor].forEach(el => {
-    el.addEventListener('change', applyFormToSelectedIfPossible);
+  /* ✅ input + change 모두 바인딩 */
+  ['input','change'].forEach(type => {
+    [fTitle, fStart, fEnd, fCat, fCatColor].forEach(el =>
+      el.addEventListener(type, applyFormToSelectedIfPossible)
+    );
   });
-  [fStatus, fImage, fDesc].forEach(el => {
-    el.addEventListener('input', () => { if (selected) { updatePreview(); markDirty(true); }});
+  ['input','change'].forEach(type => {
+    [fStatus, fImage, fDesc].forEach(el =>
+      el.addEventListener(type, () => { if (selected) { updatePreview(); markDirty(true); }})
+    );
   });
 
   function updatePreview(){ if(!selected) return; const p=selected.extendedProps||{}; if(p.image){ imgEl.src=p.image; imgEl.style.display=''; } else { imgEl.removeAttribute('src'); imgEl.style.display='none'; } evtTime.textContent=[selected.start,selected.end||selected.start].filter(Boolean).map(fmtKST).join(' ~ ');
     if(selected.start&&(selected.end||selected.start)){ const now=new Date(), s=new Date(selected.start), e=new Date(selected.end||selected.start);
       if(now<s) evtProg.style.width='0%'; else if(now>e) evtProg.style.width='100%'; else evtProg.style.width=Math.min(100,Math.max(0,(now-s)/(e-s)*100)).toFixed(0)+'%'; } else evtProg.style.width='0%'; }
 
-  /* Categories */
+  /* 카테고리 */
   function catUnion(){ const set=new Set(Object.keys(catColors)); calendar?.getEvents().forEach(ev=>{ const c=(ev.extendedProps?.category||'').trim(); if(c)set.add(c); else set.add('미분류'); }); set.delete(''); return [...set].sort((a,b)=>a.localeCompare(b,'ko')); }
   function renderCatUI(){ const cats=catUnion(); catsEl.innerHTML=cats.map(name=>{ const real=(name==='미분류')?'':name; const color=catColor(real); const active=activeCats.size&&activeCats.has(real);
       return `<button class="chip-cat ${active?'active':''}" data-cat="${escapeHtml(real)}"><span class="dot" style="background:${color}"></span>${escapeHtml(name)}</button>`; }).join('');
@@ -697,7 +693,7 @@
   function applyCategoryFilter(){ const showAll=activeCats.size===0; calendar.getEvents().forEach(ev=>{ const c=(ev.extendedProps?.category||''); ev.setProp('display', showAll||activeCats.has(c)?'auto':'none'); }); renderRail(); }
   function populateCatDatalists(){ const cats=catUnion().filter(v=>v!=='미분류'); catlist.innerHTML=cats.map(c=>`<option value="${escapeHtml(c)}">`).join(''); catlist2.innerHTML=cats.map(c=>`<option value="${escapeHtml(c)}">`).join(''); }
 
-  /* Rail */
+  /* 오른쪽 레일 */
   function renderRail(){
     const now=new Date(); chipNow.textContent=now.toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});
     const todayStr=isoDate(now);
@@ -837,7 +833,6 @@
       catColors[nm]=hx.toUpperCase(); newCatName.value=''; renderCatManagerRows(); renderCatUI(); applyCategoryFilter(); refreshEvents(); renderRail(); };
   }
 
-  /* 기존의 "입력 → 프리뷰만 갱신" 리스너는 제거(즉시 반영으로 대체) */
   function refreshEvents(){ if(!calendar) return; calendar.batchRendering(()=>{ calendar.getEvents().forEach(ev=>{ ev.setExtendedProp('__refresh',(ev.extendedProps?.__refresh||0)+1); }); }); }
 })();
 </script>
